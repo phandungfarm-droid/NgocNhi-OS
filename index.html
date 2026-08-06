@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hệ Thống Dịch Vụ Ngọc Nhi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+<!-- Firebase SDK (compat) — dùng cho cơ chế lưu ảnh module qua Storage + Realtime Database -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-storage-compat.js"></script>
+<script src="firebase-config.js"></script>
+<style>
+  :root{
+    --green:#0E9245;
+    --green-dark:#0B7A3A;
+    --green-bar:#19934D;
+    --green-tint:#F2FAF5;
+    --green-tint2:#E9F7EE;
+
+    --orange:#F16B03;
+    --orange-dark:#E86A05;
+    --orange-tint:#FFF8F2;
+    --orange-tint2:#FFEFE1;
+
+    --pink:#E4295F;
+    --pink-dark:#D31F55;
+    --pink-tint:#FFF5F8;
+    --pink-tint2:#FDE7EE;
+
+    --blue:#0A65F1;
+    --blue-dark:#0957D6;
+    --blue-tint:#F3F7FF;
+    --blue-tint2:#E8F0FF;
+
+    --ink:#16172B;
+    --ink-soft:#3A3D52;
+    --gray:#6B7280;
+    --gray-light:#9CA3AF;
+    --border:#E7E9F0;
+    --page-bg:#FAFBFD;
+    --card-bg:#FFFFFF;
+
+    --radius-lg:16px;
+    --radius-md:12px;
+    --radius-sm:8px;
+    --shadow-card:0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'Be Vietnam Pro', sans-serif;
+    background:var(--page-bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  .material-symbols-outlined{
+    font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+    font-size:20px;
+    line-height:1;
+    vertical-align:middle;
+  }
+  a{text-decoration:none;color:inherit;}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;}
+
+  /* ===== LAYOUT ===== */
+  .app{
+    display:flex;
+    min-height:100vh;
+    max-width:1536px;
+    margin:0 auto;
+  }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar{
+    width:230px;
+    flex-shrink:0;
+    background:#FFFFFF;
+    border-right:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    padding:20px 14px;
+  }
+  .sidebar-logo{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:6px 8px 20px 8px;
+  }
+  .sidebar-logo .leaf-icon{
+    width:36px;height:36px;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--green-tint2);
+    border-radius:10px;
+    color:var(--green);
+  }
+  .sidebar-logo .logo-text{display:flex;flex-direction:column;line-height:1.2;}
+  .sidebar-logo .logo-text .title{font-weight:800;font-size:15px;color:var(--ink);letter-spacing:.2px;}
+  .sidebar-logo .logo-text .subtitle{font-weight:500;font-size:10px;color:var(--gray-light);letter-spacing:.3px;}
+
+  .nav-list{display:flex;flex-direction:column;gap:4px;margin-top:4px;}
+  .nav-item{
+    display:flex;align-items:center;gap:12px;
+    padding:11px 14px;
+    border-radius:10px;
+    font-size:14px;font-weight:600;
+    color:var(--ink-soft);
+  }
+  .nav-item .material-symbols-outlined{font-size:20px;color:var(--gray);}
+  .nav-item.active{
+    background:var(--blue);
+    color:#fff;
+  }
+  .nav-item.active .material-symbols-outlined{color:#fff;}
+
+  .sidebar-divider{height:1px;background:var(--border);margin:18px 4px;}
+
+  .admin-label{
+    display:flex;align-items:center;gap:6px;
+    font-size:11px;font-weight:700;letter-spacing:.4px;
+    color:var(--blue);
+    padding:4px 14px 10px 14px;
+  }
+  .admin-label .material-symbols-outlined{font-size:14px;}
+
+  .nav-item.admin-item{color:var(--ink-soft);justify-content:space-between;}
+  .nav-item.admin-item .left{display:flex;align-items:center;gap:12px;}
+  .nav-item.admin-item .chevron{font-size:16px;color:var(--gray-light);}
+  .nav-badge{background:var(--red,#EF4444);color:#fff;font-size:10.5px;font-weight:800;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 5px;}
+  .nav-badge.zero{background:#D1D5DB;}
+
+  .sidebar-spacer{flex:1;}
+
+  .sidebar-user{
+    display:flex;align-items:center;gap:10px;
+    padding:12px;
+    border-radius:12px;
+    background:var(--blue-tint);
+    margin-top:12px;
+  }
+  .sidebar-user .avatar{
+    width:36px;height:36px;border-radius:50%;
+    background:#C7D2E8;
+    display:flex;align-items:center;justify-content:center;
+    color:#5C6B8A;font-weight:700;font-size:13px;
+    flex-shrink:0;
+  }
+  .sidebar-user .info{flex:1;line-height:1.25;}
+  .sidebar-user .info .name{font-size:13px;font-weight:700;color:var(--ink);}
+  .sidebar-user .info .role{font-size:11px;color:var(--gray);}
+  .sidebar-user .material-symbols-outlined{color:var(--gray-light);font-size:18px;}
+
+  /* ===== MAIN ===== */
+  .main{flex:1;min-width:0;padding:20px 24px 32px 24px;display:flex;flex-direction:column;gap:20px;}
+
+  /* ---- Topbar ---- */
+  .topbar{
+    background:linear-gradient(135deg, #ffffff 0%, #F6FBF7 45%, #EEF8F1 100%);
+    border:1px solid #E6F2EA;
+    border-radius:var(--radius-lg);
+    box-shadow:0 4px 18px rgba(0,0,0,.05);
+    padding:20px 28px;
+    display:flex;align-items:center;justify-content:space-between;
+    gap:24px;
+  }
+  .topbar-title{flex:1;text-align:center;}
+  .topbar-title h1{font-size:26px;font-weight:800;color:var(--ink);letter-spacing:.2px;}
+  .topbar-title p{font-size:13px;color:var(--gray);margin-top:4px;font-weight:500;}
+
+  .topbar-contact{
+    display:flex;align-items:center;gap:14px;
+  }
+  .topbar-contact .contact-lines{font-size:12.5px;color:var(--ink-soft);line-height:1.6;font-weight:500;}
+  .topbar-contact .contact-lines .row{display:flex;align-items:center;gap:6px;}
+  .topbar-contact .contact-lines .material-symbols-outlined{font-size:15px;color:var(--gray);}
+  .qr-placeholder{
+    width:64px;height:64px;
+    border:1.5px dashed var(--gray-light);
+    border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+    background:repeating-linear-gradient(45deg,#f2f2f4,#f2f2f4 3px,#ffffff 3px,#ffffff 6px);
+  }
+  .qr-placeholder .material-symbols-outlined{font-size:26px;color:var(--gray-light);}
+
+  /* ---- Module cards ---- */
+  .module-cards{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:16px;
+  }
+  .module-card{
+    border-radius:var(--radius-lg);
+    border:1px solid var(--border);
+    padding:18px;
+    display:flex;flex-direction:column;gap:14px;
+    min-width:0;
+  }
+  .module-card.card-farm{background:var(--green-tint);border-color:#DCEFE2;}
+  .module-card.card-restaurant{background:var(--orange-tint);border-color:#FBE4CF;}
+  .module-card.card-wedding{background:var(--pink-tint);border-color:#FBDCE6;}
+  .module-card.card-admin{background:var(--blue-tint);border-color:#DCE6FB;}
+
+  .module-card .card-title{
+    display:flex;align-items:center;gap:8px;
+    font-size:14.5px;font-weight:800;letter-spacing:.2px;
+  }
+  .card-farm .card-title{color:var(--green-dark);}
+  .card-restaurant .card-title{color:var(--orange-dark);}
+  .card-wedding .card-title{color:var(--pink-dark);}
+  .card-admin .card-title{color:var(--blue-dark);}
+  .module-card .card-title .material-symbols-outlined{font-size:19px;}
+
+  .card-photo-placeholder{
+    width:100%;height:118px;
+    border-radius:10px;
+    border:1.5px dashed #C9CDD8;
+    background:#FFFFFFAA;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:4px;
+    color:var(--gray-light);
+  }
+  .card-photo-placeholder .material-symbols-outlined{font-size:26px;}
+  .card-photo-placeholder span{font-size:10.5px;font-weight:600;text-align:center;padding:0 8px;}
+
+  /* Trạng thái đã có ảnh module (do Admin cấu hình) — không đổi kích thước/bo góc,
+     chỉ thay viền chấm bằng ảnh phủ kín khung theo object-fit:cover */
+  .card-photo-placeholder.has-image{
+    border-style:solid;
+    border-color:transparent;
+    background:none;
+    padding:0;
+  }
+  .card-photo-placeholder .module-photo-img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    border-radius:9px;
+    display:block;
+  }
+
+  .module-card.card-admin .card-body{display:flex;flex-direction:column;gap:14px;}
+
+  .check-list{display:flex;flex-direction:column;gap:8px;flex:1;}
+  .check-list .item{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink-soft);}
+  .check-list .item .material-symbols-outlined{font-size:16px;}
+  .card-farm .check-list .material-symbols-outlined{color:var(--green);}
+  .card-restaurant .check-list .material-symbols-outlined{color:var(--orange);}
+  .card-wedding .check-list .material-symbols-outlined{color:var(--pink);}
+  .card-admin .check-list .material-symbols-outlined{color:var(--blue);}
+
+  .card-cta{
+    display:block;
+    width:100%;
+    padding:11px;
+    border-radius:10px;
+    color:#fff;font-weight:700;font-size:13.5px;
+    text-align:center;
+  }
+  .card-farm .card-cta{background:var(--green);}
+  .card-restaurant .card-cta{background:var(--orange);}
+  .card-wedding .card-cta{background:var(--pink);}
+  .card-admin .card-cta{background:var(--blue);}
+
+  /* two-column layout inside admin card (photo + checklist side by side like others but content differs) */
+  .card-admin .top-row{display:flex;flex-direction:column;gap:14px;}
+
+  /* ---- Quick info ---- */
+  .quick-info-header{
+    display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;gap:8px;
+  }
+  .quick-info-header h2{font-size:14.5px;font-weight:700;color:var(--ink);}
+  .quick-info-header h2 span{font-weight:500;color:var(--gray);font-size:13px;}
+  .quick-info-note{
+    display:flex;align-items:center;gap:6px;
+    font-size:12px;color:var(--gray);font-weight:500;
+  }
+  .quick-info-note .material-symbols-outlined{font-size:15px;color:var(--gray-light);}
+
+  .quick-info-grid{
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    gap:14px;
+  }
+  .quick-card{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:var(--radius-md);
+    box-shadow:var(--shadow-card);
+    padding:16px;
+    display:flex;flex-direction:column;gap:12px;
+    min-width:0;
+  }
+  .quick-card .icon-circle{
+    width:38px;height:38px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .quick-card .icon-circle .material-symbols-outlined{font-size:20px;}
+  .qc-green .icon-circle{background:var(--green-tint2);color:var(--green);}
+  .qc-orange .icon-circle{background:var(--orange-tint2);color:var(--orange);}
+  .qc-pink .icon-circle{background:var(--pink-tint2);color:var(--pink);}
+  .qc-blue .icon-circle{background:var(--blue-tint2);color:var(--blue);}
+  .qc-purple .icon-circle{background:#F1E9FB;color:#8B3DD1;}
+  .qc-navy .icon-circle{background:#E6EEFC;color:#1D4ED8;}
+
+  .quick-card .label{font-size:10.5px;font-weight:700;letter-spacing:.3px;color:var(--ink-soft);text-transform:uppercase;}
+  .quick-card .sub{font-size:11.5px;color:var(--gray);font-weight:500;margin-top:2px;}
+  .quick-card .value{font-size:22px;font-weight:800;color:var(--ink);}
+  .quick-card .detail-btn{
+    align-self:flex-start;
+    background:#F3F4F7;
+    color:var(--ink-soft);
+    font-size:11.5px;font-weight:600;
+    padding:6px 12px;border-radius:8px;
+  }
+
+  /* ---- Overview panels ---- */
+  .overview-panels{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+    align-items:start;
+  }
+  .panel{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-card);
+    overflow:hidden;
+    min-width:0;
+  }
+  .panel-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 18px;
+    color:#fff;
+  }
+  .panel-header .title{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:800;}
+  .panel-header .title .material-symbols-outlined{font-size:19px;}
+  .panel-header .view-all{
+    border:1.5px solid rgba(255,255,255,.7);
+    color:#fff;
+    font-size:11.5px;font-weight:700;
+    padding:6px 12px;border-radius:8px;
+  }
+  .panel.p-farm .panel-header{background:linear-gradient(90deg,var(--green-bar),var(--green));}
+  .panel.p-restaurant .panel-header{background:linear-gradient(90deg,var(--orange-dark),var(--orange));}
+  .panel.p-wedding .panel-header{background:linear-gradient(90deg,var(--pink-dark),var(--pink));}
+
+  .panel-body{padding:16px 18px;display:flex;flex-direction:column;gap:16px;}
+  .section-label{font-size:12.5px;font-weight:700;color:var(--ink-soft);}
+
+  .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .stat-box{
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px 8px;
+    text-align:center;
+    min-width:0;
+  }
+  .stat-box .stat-label{font-size:9.5px;color:var(--gray);font-weight:600;}
+  .stat-box .stat-value{font-size:16px;font-weight:800;color:var(--ink);margin-top:3px;}
+
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;min-width:0;}
+  .two-col > div{min-width:0;}
+
+  .task-list{display:flex;flex-direction:column;gap:9px;}
+  .task-list .task{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--ink-soft);}
+  .task-list .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .dot-red{background:#EF4444;}
+  .dot-orange{background:#F59E0B;}
+  .dot-green{background:#22C55E;}
+  .task-list .task .count{margin-left:auto;font-weight:700;color:var(--ink);}
+
+  .chart-box{display:flex;flex-direction:column;gap:8px;}
+  .chart-legend{display:flex;gap:10px;font-size:10.5px;font-weight:600;color:var(--ink-soft);}
+  .chart-legend .lg{display:flex;align-items:center;gap:4px;}
+  .chart-legend .sw{width:8px;height:8px;border-radius:2px;}
+  .sw-blue{background:#3B82F6;}
+  .sw-green{background:#22C55E;}
+  .sw-orange{background:#F59E0B;}
+
+  .bar-chart{display:flex;align-items:flex-end;gap:10px;height:110px;padding-top:6px;border-bottom:1px solid var(--border);position:relative;}
+  .bar-chart .bar-group{display:flex;align-items:flex-end;gap:2px;flex:1;height:100%;justify-content:center;}
+  .bar-chart .bar{width:6px;border-radius:2px 2px 0 0;}
+  .bar-labels{display:flex;gap:10px;}
+  .bar-labels span{flex:1;text-align:center;font-size:9.5px;color:var(--gray);}
+
+  .mini-list{display:flex;flex-direction:column;gap:10px;}
+  .mini-list .row{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--ink-soft);}
+  .mini-list .num-badge{
+    width:20px;height:20px;border-radius:50%;
+    background:var(--orange-tint2);color:var(--orange-dark);
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:800;flex-shrink:0;
+  }
+  .mini-list .icon-badge{
+    width:20px;height:20px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;color:var(--gray);
+  }
+  .mini-list .icon-badge .material-symbols-outlined{font-size:14px;}
+  .mini-list .name{flex:1;}
+  .mini-list .count{color:var(--gray);font-weight:600;font-size:11.5px;}
+
+  .status-badge{
+    font-size:10.5px;font-weight:700;
+    padding:4px 10px;border-radius:20px;
+  }
+  .status-low{background:#FDECD8;color:#C2650A;}
+  .status-ok{background:#DCF5E7;color:#128A4A;}
+
+  .link-btn{
+    text-align:center;
+    padding:10px;border-radius:9px;
+    background:#F3F4F7;
+    font-size:12px;font-weight:700;
+    color:var(--ink-soft);
+  }
+  .link-btn.tint-green{color:var(--green-dark);}
+  .link-btn.tint-pink{color:var(--pink-dark);}
+
+  .schedule-list{display:flex;flex-direction:column;gap:11px;}
+  .schedule-list .row{display:flex;align-items:center;gap:8px;font-size:11.5px;}
+  .schedule-list .date{font-weight:700;color:var(--ink);width:38px;flex-shrink:0;}
+  .schedule-list .who{flex:1;color:var(--ink-soft);font-weight:600;}
+  .schedule-list .guests{color:var(--gray);font-weight:600;white-space:nowrap;}
+
+  /* ---- Trung tâm điều hành — Tài chính & Báo cáo ---- */
+  .hidden-view{display:none !important;}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:6px;}
+  .panel-head h2{font-size:16px;font-weight:800;}
+  .btn-primary-sm{background:var(--pink,#E4295F);color:#fff;font-size:12px;font-weight:700;padding:9px 14px;border-radius:9px;}
+  .txn-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .txn-table th{text-align:left;font-size:10.5px;color:var(--gray);text-transform:uppercase;padding:8px;border-bottom:1px solid var(--border);}
+  .txn-table td{padding:8px;border-bottom:1px solid var(--border);}
+  .txn-badge{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;}
+  .txn-thu{background:#DCF5E7;color:#128A4A;}
+  .txn-chi{background:#FDECEC;color:#B91C1C;}
+  .txn-del{background:#FDECEC;color:#B91C1C;font-size:11px;font-weight:700;padding:6px 9px;border-radius:7px;}
+  .modal-overlay-fc{position:fixed;inset:0;background:rgba(15,20,35,.45);display:flex;align-items:center;justify-content:center;z-index:80;padding:20px;}
+  .modal-fc{background:#fff;border-radius:16px;padding:22px;max-width:420px;width:100%;}
+  .modal-fc h3{font-size:15px;font-weight:800;margin-bottom:14px;}
+  .modal-fc .field{margin-bottom:12px;}
+  .modal-fc label{font-size:11.5px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:4px;}
+  .modal-fc input,.modal-fc select{width:100%;font-size:13px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;}
+  .modal-fc-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;}
+  .live-dot{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#059669;background:#DCF5E7;padding:5px 10px;border-radius:20px;}
+  .dot-ping{width:7px;height:7px;border-radius:50%;background:#10B981;display:inline-block;animation:dotping 1.4s infinite;}
+  @keyframes dotping{0%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(1.5);}100%{opacity:1;transform:scale(1);}}
+  .alert-src{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+  .alert-src-farm{background:#DCF5E7;color:#128A4A;}
+  .alert-src-restaurant{background:#FDECD8;color:#C2650A;}
+  .alert-src-wedding{background:#FDE7EE;color:#D31F55;}
+
+  /* ---- Role info row ---- */
+  .role-row{
+    display:grid;
+    grid-template-columns:3fr 1fr;
+    gap:16px;
+  }
+  .role-card{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-card);
+    display:flex;
+    overflow:hidden;
+  }
+  .role-highlight{
+    width:110px;flex-shrink:0;
+    background:var(--blue);
+    color:#fff;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:8px;
+    padding:16px;
+  }
+  .role-highlight .material-symbols-outlined{font-size:26px;}
+  .role-highlight span{font-size:11px;font-weight:800;letter-spacing:.4px;}
+
+  .role-cols{flex:1;display:flex;}
+  .role-col{
+    flex:1;padding:16px 18px;
+    display:flex;flex-direction:column;gap:8px;
+    min-width:0;
+  }
+  .role-col + .role-col{border-left:1px solid var(--border);}
+  .role-col .head{display:flex;align-items:center;gap:8px;}
+  .role-col .head .material-symbols-outlined{font-size:18px;}
+  .role-col .head h3{font-size:12px;font-weight:800;letter-spacing:.2px;}
+  .role-col p{font-size:11.5px;color:var(--gray);line-height:1.5;font-weight:500;}
+  .role-col.staff .head{color:var(--blue);}
+  .role-col.customer .head{color:var(--orange-dark);}
+  .role-col.admin .head{color:var(--ink);}
+
+  .legend-card{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-card);
+    padding:16px 18px;
+    display:flex;flex-direction:column;gap:12px;
+  }
+  .legend-card h3{font-size:12px;font-weight:800;color:var(--ink);}
+  .legend-card .row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-soft);font-weight:600;}
+  .legend-card .row .material-symbols-outlined{font-size:14px;color:var(--gray);}
+
+  /* ---- Footer ---- */
+  .footer{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:6px 4px 0 4px;
+    font-size:11.5px;color:var(--gray-light);font-weight:500;
+  }
+
+  /* =========================================================
+     RESPONSIVE — chỉ sắp xếp lại số cột / hướng flex khi màn
+     hình hẹp hơn kích thước ảnh mẫu (1536px). Không đổi màu,
+     không đổi khoảng cách, không đổi kiểu component — chỉ đổi
+     grid-template-columns / flex-direction để tránh vỡ layout.
+     ========================================================= */
+  @media (max-width:1200px){
+    .module-cards{grid-template-columns:repeat(2,1fr);}
+    .quick-info-grid{grid-template-columns:repeat(3,1fr);}
+    .overview-panels{grid-template-columns:1fr;}
+    .role-row{grid-template-columns:1fr;}
+  }
+
+  @media (max-width:860px){
+    .app{flex-direction:column;}
+    .sidebar{
+      width:100%;
+      flex-direction:row;
+      flex-wrap:wrap;
+      align-items:center;
+      padding:12px 16px;
+    }
+    .sidebar-logo{padding:0 12px 0 0;}
+    .nav-list{flex-direction:row;flex-wrap:wrap;gap:4px;}
+    .nav-item{padding:8px 10px;font-size:13px;}
+    .sidebar-divider{display:none;}
+    .admin-label{display:none;}
+    .sidebar .nav-list:nth-of-type(2){display:none;}
+    .sidebar-spacer{display:none;}
+    .sidebar-user{margin-top:0;margin-left:auto;}
+    .main{padding:16px;}
+    .topbar{flex-direction:column;gap:14px;padding:18px;}
+    .topbar > div:first-child{display:none;}
+    .topbar-contact{flex-direction:row;}
+    .module-cards{grid-template-columns:1fr;}
+    .quick-info-grid{grid-template-columns:repeat(2,1fr);}
+  }
+
+  @media (max-width:520px){
+    .stat-row{grid-template-columns:repeat(2,1fr);}
+    .two-col{grid-template-columns:1fr;}
+    .quick-info-grid{grid-template-columns:1fr;}
+    .role-cols{flex-direction:column;}
+    .role-col + .role-col{border-left:none;border-top:1px solid var(--border);}
+    .role-card{flex-direction:column;}
+    .role-highlight{width:100%;flex-direction:row;padding:12px;}
+    .topbar-title h1{font-size:20px;}
+    .schedule-list .row{flex-wrap:wrap;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="leaf-icon">
+        <span class="material-symbols-outlined">eco</span>
+      </div>
+      <div class="logo-text">
+        <span class="title">NGỌC NHI</span>
+        <span class="subtitle">HỆ THỐNG DỊCH VỤ</span>
+      </div>
+    </div>
+
+    <nav class="nav-list">
+      <a class="nav-item active" id="navHome"><span class="material-symbols-outlined">home</span>Trang chủ</a>
+      <a class="nav-item" href="trang_trai.html"><span class="material-symbols-outlined">cottage</span>Trang trại Dúi</a>
+      <a class="nav-item" href="quan_an.html"><span class="material-symbols-outlined">storefront</span>Quán ăn Ngọc Nhi</a>
+      <a class="nav-item" href="tiec_cuoi.html"><span class="material-symbols-outlined">hub</span>Dịch vụ Tiệc cưới</a>
+      <a class="nav-item" id="navFinance"><span class="material-symbols-outlined">account_balance</span>Trung tâm điều hành</a>
+    </nav>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="admin-label"><span class="material-symbols-outlined">lock</span>TRUNG TÂM ĐIỀU HÀNH</div>
+    <nav class="nav-list">
+      <a class="nav-item admin-item" id="admFinance" data-target="finance-panel">
+        <span class="left"><span class="material-symbols-outlined">payments</span>Tài chính &amp; Báo cáo</span>
+        <span class="material-symbols-outlined chevron">chevron_right</span>
+      </a>
+      <a class="nav-item admin-item" id="admAlerts" data-target="alerts-panel">
+        <span class="left"><span class="material-symbols-outlined">notifications_active</span>Cảnh báo hệ thống</span>
+        <span class="nav-badge" id="navAlertBadge">0</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-spacer"></div>
+
+    <div class="sidebar-user">
+      <div class="avatar"><span class="material-symbols-outlined">person</span></div>
+      <div class="info">
+        <div class="name">Phan Văn Dũng</div>
+        <div class="role">Administrator</div>
+      </div>
+      <span class="material-symbols-outlined">expand_more</span>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div style="width:230px;flex-shrink:0"></div>
+      <div class="topbar-title">
+        <h1>HỆ THỐNG DỊCH VỤ NGỌC NHI</h1>
+        <p>Quản lý toàn diện – Kết nối mọi dịch vụ</p>
+      </div>
+      <div class="topbar-contact">
+        <div class="contact-lines">
+          <div class="row"><span class="material-symbols-outlined">location_on</span>KP 9, Phường Lộc Ninh,</div>
+          <div class="row" style="padding-left:21px">Thành phố Đồng Nai</div>
+          <div class="row"><span class="material-symbols-outlined">call</span>0977 834 679 - 0988 168 113</div>
+        </div>
+        <div class="qr-placeholder"><span class="material-symbols-outlined">qr_code_2</span></div>
+      </div>
+    </header>
+
+    <!-- 4 module cards -->
+    <div id="dashboardView">
+    <section class="module-cards">
+      <div class="module-card card-farm">
+        <div class="card-title"><span class="material-symbols-outlined">pets</span>TRANG TRẠI DÚI</div>
+        <div class="card-photo-placeholder" data-module-image="farm" data-default-label="Ảnh Trang trại Dúi&lt;br&gt;(chờ upload)"><span class="material-symbols-outlined">image</span><span>Ảnh Trang trại Dúi<br>(chờ upload)</span></div>
+        <div class="check-list">
+          <div class="item"><span class="material-symbols-outlined">check_circle</span>Quản lý chuồng trại</div>
+          <div class="item"><span class="material-symbols-outlined">check_circle</span>Theo dõi sinh sản</div>
+          <div class="item"><span class="material-symbols-outlined">check_circle</span>Thương phẩm</div>
+          <div class="item"><span class="material-symbols-outlined">check_circle</span>Lịch chăm sóc</div>
+        </div>
+        <a href="trang_trai.html" class="card-cta">Vào hệ thống</a>
+      </div>
+
+      <div class="module-card card-restaurant">
+        <div class="card-title"><span class="material-symbols-outlined">skillet</span>QUÁN ĂN NGỌC NHI</div>
+        <div class="card-photo-placeholder" data-module-image="restaurant" data-default-label="Ảnh Quán ăn&lt;br&gt;(chờ upload)"><span class="material-symbols-outlined">image</span><span>Ảnh Quán ăn<br>(chờ upload)</span></div>
+        <div class="check-list">
+          <div class="item"><span class="material-symbols-outlined">check_circle</span>Quản lý menu</div>
+          <div class="item"><span class="material-symbols-outlined">check_circle</span>Đặt món online</div>
+          <div class="item"><span class="material-symbols-outlined">check_circle</span>Quản lý bàn</div>
+          <div class="item"><span class="material-symbols-outlined">check_circle</span>Theo dõi đơn hàng</div>
+        </div>
+        <a href="quan_an.html" class="card-cta">Vào hệ thống</a>
+      </div>
+
+      <div class="module-card card-wedding">
+        <div class="card-title"><span class="material-symbols-outlined">favorite</span>DỊCH VỤ TIỆC CƯỚI</div>
+        <div class="card-photo-placeholder" data-module-image="wedding" data-default-label="Ảnh Tiệc cưới&lt;br&gt;(chờ upload)"><span class="material-symbols-outlined">image</span><span>Ảnh Tiệc cưới<br>(chờ upload)</span></div>
+        <div class="check-list">
+          <div class="item"><span class="material-symbols-outlined">favorite</span>Quản lý tiệc cưới</div>
+          <div class="item"><span class="material-symbols-outlined">favorite</span>Lịch đặt tiệc</div>
+          <div class="item"><span class="material-symbols-outlined">favorite</span>Thực đơn tiệc</div>
+          <div class="item"><span class="material-symbols-outlined">favorite</span>Hợp đồng</div>
+        </div>
+        <a href="tiec_cuoi.html" class="card-cta">Vào hệ thống</a>
+      </div>
+
+      <div class="module-card card-admin">
+        <div class="card-title"><span class="material-symbols-outlined">account_balance</span>TRUNG TÂM ĐIỀU HÀNH</div>
+        <div class="card-body">
+          <div class="card-photo-placeholder" data-module-image="admin" data-default-label="Ảnh Trung tâm điều hành&lt;br&gt;(chờ upload)"><span class="material-symbols-outlined">image</span><span>Ảnh Trung tâm điều hành<br>(chờ upload)</span></div>
+          <div class="check-list">
+            <div class="item"><span class="material-symbols-outlined">check_circle</span>Kho &amp; nguyên liệu</div>
+            <div class="item"><span class="material-symbols-outlined">check_circle</span>Tài chính - Thu chi</div>
+            <div class="item"><span class="material-symbols-outlined">check_circle</span>Khách hàng</div>
+            <div class="item"><span class="material-symbols-outlined">check_circle</span>Báo cáo tổng hợp</div>
+            <div class="item"><span class="material-symbols-outlined">check_circle</span>Nhà cung cấp</div>
+            <div class="item"><span class="material-symbols-outlined">check_circle</span>Thông báo hệ thống</div>
+          </div>
+        </div>
+        <button class="card-cta" id="btnGoFinance">Vào trung tâm</button>
+      </div>
+    </section>
+
+    <!-- Quick info -->
+    <section style="display:flex;flex-direction:column;gap:12px;">
+      <div class="quick-info-header">
+        <h2>THÔNG TIN NHANH <span>(Hiển thị cho tất cả người dùng)</span></h2>
+        <div class="quick-info-note">
+          <span class="material-symbols-outlined">visibility</span>
+          Nhân viên và khách hàng chỉ xem được thông tin theo quyền được cấp.
+          <span class="material-symbols-outlined">lock</span>
+        </div>
+      </div>
+
+      <div class="quick-info-grid">
+        <div class="quick-card qc-green">
+          <div class="icon-circle"><span class="material-symbols-outlined">cottage</span></div>
+          <div><div class="label">Trang trại dúi</div><div class="sub">Tổng số ô chuồng</div></div>
+          <div class="value" id="qiFarmCells">—</div>
+          <button class="detail-btn" data-goto="trang_trai.html">Xem chi tiết</button>
+        </div>
+        <div class="quick-card qc-orange">
+          <div class="icon-circle"><span class="material-symbols-outlined">restaurant</span></div>
+          <div><div class="label">Quán ăn</div><div class="sub">Món đang phục vụ</div></div>
+          <div class="value" id="qiRestaurantItems">—</div>
+          <button class="detail-btn" data-goto="quan_an.html">Xem chi tiết</button>
+        </div>
+        <div class="quick-card qc-pink">
+          <div class="icon-circle"><span class="material-symbols-outlined">favorite</span></div>
+          <div><div class="label">Tiệc cưới</div><div class="sub">Tiệc sắp diễn ra</div></div>
+          <div class="value" id="qiWeddingUpcoming">—</div>
+          <button class="detail-btn" data-goto="tiec_cuoi.html">Xem chi tiết</button>
+        </div>
+        <div class="quick-card qc-blue">
+          <div class="icon-circle"><span class="material-symbols-outlined">group</span></div>
+          <div><div class="label">Khách hàng</div><div class="sub">Khách hàng tiệc cưới</div></div>
+          <div class="value" id="qiWeddingCustomers">—</div>
+          <button class="detail-btn" data-goto="tiec_cuoi.html">Xem chi tiết</button>
+        </div>
+        <div class="quick-card qc-purple">
+          <div class="icon-circle"><span class="material-symbols-outlined">notifications</span></div>
+          <div><div class="label">Thông báo</div><div class="sub">Phiếu đặt mới (Quán ăn)</div></div>
+          <div class="value" id="qiTicketsNew">—</div>
+          <button class="detail-btn" data-goto="quan_an.html">Xem chi tiết</button>
+        </div>
+        <div class="quick-card qc-navy">
+          <div class="icon-circle"><span class="material-symbols-outlined">calendar_month</span></div>
+          <div><div class="label">Lịch làm việc</div><div class="sub">Hôm nay</div></div>
+          <div class="value" id="qiToday">—</div>
+          <button class="detail-btn" id="btnGoFinance2">Xem chi tiết</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Overview panels -->
+    <section class="overview-panels">
+
+      <!-- FARM -->
+      <div class="panel p-farm">
+        <div class="panel-header">
+          <div class="title"><span class="material-symbols-outlined">pets</span>TRANG TRẠI DÚI (Tổng quan)</div>
+          <button class="view-all">Xem đầy đủ</button>
+        </div>
+        <div class="panel-body">
+          <div>
+            <div class="section-label" style="margin-bottom:10px">Tình trạng chuồng trại</div>
+            <div class="stat-row">
+              <div class="stat-box"><div class="stat-label">Đang sinh sản</div><div class="stat-value" id="fpBreeding">—</div></div>
+              <div class="stat-box"><div class="stat-label">Thương phẩm</div><div class="stat-value" id="fpCommercial">—</div></div>
+              <div class="stat-box"><div class="stat-label">Hậu bị</div><div class="stat-value" id="fpJuvenile">—</div></div>
+              <div class="stat-box"><div class="stat-label">Trống</div><div class="stat-value" id="fpVacant">—</div></div>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div>
+              <div class="section-label" style="margin-bottom:10px">Việc cần làm hôm nay</div>
+              <div class="task-list" id="fpTasks"><div class="task">Đang tải…</div></div>
+              <button class="link-btn" style="margin-top:12px" data-goto="trang_trai.html">Xem tất cả công việc</button>
+            </div>
+            <div class="chart-box">
+              <div class="section-label">Cảnh báo gần đây</div>
+              <div class="mini-list" id="fpAlerts"><div class="row">Đang tải…</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESTAURANT -->
+      <div class="panel p-restaurant">
+        <div class="panel-header">
+          <div class="title"><span class="material-symbols-outlined">skillet</span>QUÁN ĂN NGỌC NHI (Tổng quan)</div>
+          <button class="view-all">Xem đầy đủ</button>
+        </div>
+        <div class="panel-body">
+          <div>
+            <div class="section-label" style="margin-bottom:10px">Tổng quan hoạt động</div>
+            <div class="stat-row">
+              <div class="stat-box"><div class="stat-label">Món đang phục vụ</div><div class="stat-value" id="rpAvailable">—</div></div>
+              <div class="stat-box"><div class="stat-label">Bàn đang dùng</div><div class="stat-value" id="rpOccupied">—</div></div>
+              <div class="stat-box"><div class="stat-label">Đơn hôm nay</div><div class="stat-value" id="rpOrdersToday">—</div></div>
+              <div class="stat-box"><div class="stat-label">Đơn đang phục vụ</div><div class="stat-value" id="rpServing">—</div></div>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div>
+              <div class="section-label" style="margin-bottom:10px">Món bán chạy (đơn đã hoàn thành)</div>
+              <div class="mini-list" id="rpTopItems"><div class="row">Đang tải…</div></div>
+            </div>
+            <div>
+              <div class="section-label" style="margin-bottom:10px">Đồng bộ tồn kho Trang trại</div>
+              <div class="mini-list" id="rpDuiStock"><div class="row">Đang tải…</div></div>
+              <button class="link-btn" style="margin-top:12px" data-goto="quan_an.html">Xem thực đơn</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WEDDING -->
+      <div class="panel p-wedding">
+        <div class="panel-header">
+          <div class="title"><span class="material-symbols-outlined">favorite</span>DỊCH VỤ TIỆC CƯỚI (Tổng quan)</div>
+          <button class="view-all">Xem đầy đủ</button>
+        </div>
+        <div class="panel-body">
+          <div>
+            <div class="section-label" style="margin-bottom:10px">Tình hình tiệc cưới</div>
+            <div class="stat-row">
+              <div class="stat-box"><div class="stat-label">Tổng hợp đồng</div><div class="stat-value" id="wpTotal">—</div></div>
+              <div class="stat-box"><div class="stat-label">Đang xử lý</div><div class="stat-value" id="wpProcessing">—</div></div>
+              <div class="stat-box"><div class="stat-label">Chờ sếp duyệt</div><div class="stat-value" id="wpPending">—</div></div>
+              <div class="stat-box"><div class="stat-label">Xung đột kho</div><div class="stat-value" id="wpConflict">—</div></div>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div>
+              <div class="section-label" style="margin-bottom:10px">Lịch tiệc sắp tới (Đang xử lý)</div>
+              <div class="schedule-list" id="wpUpcoming"><div class="row">Đang tải…</div></div>
+              <button class="link-btn tint-pink" style="margin-top:12px" data-goto="tiec_cuoi.html">Xem tất cả hợp đồng</button>
+            </div>
+            <div>
+              <div class="section-label" style="margin-bottom:10px">Gói dịch vụ được dùng nhiều</div>
+              <div class="mini-list" id="wpTopPackages"><div class="row">Đang tải…</div></div>
+              <button class="link-btn" style="margin-top:12px" data-goto="tiec_cuoi.html">Xem chi tiết</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Role info row -->
+    <section class="role-row">
+      <div class="role-card">
+        <div class="role-highlight">
+          <span class="material-symbols-outlined">info</span>
+          <span>LƯU Ý</span>
+        </div>
+        <div class="role-cols">
+          <div class="role-col staff">
+            <div class="head"><span class="material-symbols-outlined">person</span><h3>ĐỐI VỚI NHÂN VIÊN</h3></div>
+            <p>Bạn chỉ xem được thông tin tổng quan, công việc và hoạt động. Các số liệu tài chính được ẩn để bảo mật.</p>
+          </div>
+          <div class="role-col customer">
+            <div class="head"><span class="material-symbols-outlined">person</span><h3>ĐỐI VỚI KHÁCH HÀNG</h3></div>
+            <p>Bạn chỉ xem được thông tin công khai như menu, dịch vụ, hình ảnh, tin tức. Các thông tin tài chính được ẩn.</p>
+          </div>
+          <div class="role-col admin">
+            <div class="head"><span class="material-symbols-outlined">shield</span><h3>ĐỐI VỚI ADMIN</h3></div>
+            <p>Bạn có toàn quyền xem thông tin chi tiết, tài chính, báo cáo và quản trị toàn bộ hệ thống.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="legend-card">
+        <h3>CHÚ THÍCH</h3>
+        <div class="row"><span class="material-symbols-outlined">lock</span>Chỉ Admin xem được thông tin quản trị.</div>
+        <div class="row"><span class="material-symbols-outlined">visibility</span>Thông tin hiển thị cho tất cả người dùng.</div>
+      </div>
+    </section>
+
+    </div><!-- /#dashboardView -->
+
+    <!-- Trung tâm điều hành — Dashboard quản lý trung tâm toàn hệ thống -->
+    <div id="financeView" class="hidden-view">
+      <section class="module-cards" style="grid-template-columns:1fr;">
+        <div class="panel" id="finance-panel" style="padding:18px;">
+          <div class="panel-head">
+            <h2><span class="material-symbols-outlined" style="vertical-align:middle;color:#0EA5E9;">account_balance</span> Trung tâm điều hành — Tài chính &amp; Báo cáo</h2>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="live-dot" id="liveDot" title="Dữ liệu tự động cập nhật realtime qua Firebase"><span class="dot-ping"></span>Realtime</span>
+              <button class="link-btn" id="btnBackDashboard">← Về Trang chủ</button>
+            </div>
+          </div>
+          <p style="font-size:12.5px;color:#6B7280;margin-bottom:16px;">
+            Toàn bộ số liệu bên dưới lắng nghe trực tiếp Firebase (<code>on('value')</code>) từ Trang trại, Quán ăn
+            và Tiệc cưới — tự động cập nhật ngay khi dữ liệu gốc thay đổi, không cần tải lại trang. Doanh thu Trang
+            trại/Quán ăn được ghi nhận tại Sổ Thu Chi bên dưới (2 module đó chủ động không lưu giá bán/thanh toán
+            nội bộ theo quyết định kiến trúc đã thống nhất); doanh thu Tiệc cưới đọc trực tiếp từ hợp đồng.
+          </p>
+          <div class="stat-row" style="margin-bottom:12px;">
+            <div class="stat-box"><div class="stat-label">Doanh thu Tiệc cưới</div><div class="stat-value" id="fnWedding">—</div></div>
+            <div class="stat-box"><div class="stat-label">Thu (Sổ chung)</div><div class="stat-value" id="fnThu">—</div></div>
+            <div class="stat-box"><div class="stat-label">Chi (Sổ chung)</div><div class="stat-value" id="fnChi">—</div></div>
+            <div class="stat-box"><div class="stat-label">Tổng doanh thu hệ thống</div><div class="stat-value" id="fnTotal">—</div></div>
+          </div>
+          <div class="stat-row" style="margin-bottom:18px;">
+            <div class="stat-box"><div class="stat-label">Doanh thu Trang trại (Sổ chung)</div><div class="stat-value" id="fnFarm">—</div></div>
+            <div class="stat-box"><div class="stat-label">Doanh thu Quán ăn (Sổ chung)</div><div class="stat-value" id="fnRestaurant">—</div></div>
+            <div class="stat-box"><div class="stat-label">Doanh thu Tiệc cưới</div><div class="stat-value" id="fnWedding2">—</div></div>
+            <div class="stat-box"><div class="stat-label">Khác</div><div class="stat-value" id="fnOther">—</div></div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+            <h3 style="font-size:14px;font-weight:800;">Sổ Thu Chi — Trang trại &amp; Quán ăn</h3>
+            <button class="btn-primary-sm" id="btnAddTxn">+ Ghi khoản Thu/Chi</button>
+          </div>
+          <div style="overflow:auto;">
+          <table class="txn-table">
+            <thead><tr><th>Ngày</th><th>Loại</th><th>Nguồn</th><th>Số tiền</th><th>Ghi chú</th><th></th></tr></thead>
+            <tbody id="fnTxnBody"><tr><td colspan="6">Đang tải…</td></tr></tbody>
+          </table>
+          </div>
+        </div>
+
+        <div class="panel" id="alerts-panel" style="padding:18px;">
+          <div class="panel-head">
+            <h2><span class="material-symbols-outlined" style="vertical-align:middle;color:#EF4444;">notifications_active</span> Cảnh báo hệ thống</h2>
+            <span class="nav-badge" id="alertCountBig">0</span>
+          </div>
+          <p style="font-size:12.5px;color:#6B7280;margin-bottom:14px;">
+            Tổng hợp realtime cảnh báo từ Trang trại (chuồng cần xử lý), Quán ăn (phiếu đặt online mới) và Tiệc cưới
+            (hợp đồng xung đột kho dúi).
+          </p>
+          <div id="alertsFeed"><div class="row" style="color:var(--gray);">Đang tải…</div></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span>© 2026 Hệ thống dịch vụ Ngọc Nhi. Tất cả quyền được bảo lưu.</span>
+      <span>Phiên bản 2.0.0</span>
+    </footer>
+
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   MODULE IMAGE SETTINGS — cơ chế cấu hình ảnh đại diện 4 module (Firebase)
+   -------------------------------------------------------------------------
+   Ảnh của 4 module (Trang trại Dúi / Quán ăn / Tiệc cưới / Trung tâm điều
+   hành) KHÔNG hardcode trong HTML. Nguồn dữ liệu:
+     - File ảnh gốc  → Firebase Storage:  system/module-images/{module}.webp
+                        (tên file cố định, ghi đè mỗi lần Admin upload)
+     - URL ảnh hiện hành → Firebase Realtime Database:
+                        SystemSettings/ModuleImages/{FarmImage|RestaurantImage
+                        |WeddingImage|AdminCenterImage}
+   Trang chủ LẮNG NGHE REALTIME node trên (on('value')) — bất kỳ thiết bị
+   nào cũng tự cập nhật ảnh ngay khi Admin lưu ảnh mới ở nơi khác, không
+   cần tải lại trang.
+
+   Chỉ tài khoản Administrator (Firebase Authentication hiện có của DA2)
+   mới được phép ghi ảnh mới — mọi lượt ghi đều được chặn ở phía client
+   nếu chưa đăng nhập hoặc không phải Administrator (xem isCurrentUserAdmin).
+   Quy tắc bảo mật ở phía Firebase (Realtime Database Rules / Storage
+   Rules) cần được cấu hình tương ứng ở phía dự án Firebase — client-side
+   check ở đây là lớp chặn UX, không thay thế cho Security Rules.
+   ========================================================================= */
+(function(){
+  "use strict";
+
+  // ---- 1) FIREBASE CONFIG — nạp dùng chung từ firebase-config.js ----
+  var FIREBASE_CONFIG = window.FIREBASE_CONFIG || {};
+
+  var MODULE_SETTING_KEY = {
+    farm:       "FarmImage",
+    restaurant: "RestaurantImage",
+    wedding:    "WeddingImage",
+    admin:      "AdminCenterImage"
+  };
+  var MODULE_STORAGE_FILENAME = {
+    farm:       "farm.webp",
+    restaurant: "restaurant.webp",
+    wedding:    "wedding.webp",
+    admin:      "admin.webp"
+  };
+  var DB_ROOT_PATH   = "SystemSettings/ModuleImages";
+  var STORAGE_FOLDER = "system/module-images";
+  var ACCEPTED_MIME  = ["image/jpeg", "image/png", "image/webp"];
+
+  // ---- 2) Khởi tạo Firebase — an toàn ngay cả khi config còn là placeholder:
+  // mọi lỗi kết nối đều rơi về hiển thị Placeholder trên Trang chủ, không
+  // làm vỡ giao diện. Khi bạn điền config thật, mọi thứ chạy ngay không
+  // cần sửa gì thêm ở phần dưới. ----
+  var app = null, db = null, storage = null, auth = null, firebaseReady = false;
+  try{
+    app      = firebase.apps.length ? firebase.apps[0] : firebase.initializeApp(FIREBASE_CONFIG);
+    db       = firebase.database();
+    storage  = firebase.storage();
+    auth     = firebase.auth();
+    firebaseReady = true;
+  }catch(err){
+    console.warn("Firebase chưa sẵn sàng (config còn là placeholder?). Trang chủ sẽ hiển thị Placeholder cho tới khi kết nối được.", err);
+  }
+
+  // ---- 3) Kiểm tra quyền Administrator (Firebase Authentication hiện có của DA2) ----
+  // GHI CHÚ CẤU HÌNH: DA2 hiện xác định vai trò Administrator theo cơ chế
+  // đăng nhập Admin hiện có của hệ thống. Ở đây mặc định coi MỌI tài khoản
+  // đã đăng nhập thành công qua Firebase Authentication là Administrator
+  // (đúng với mô hình DA2 hiện tại: khách hàng/nhân viên dùng luồng không
+  // đăng nhập, chỉ chủ trại/quản trị mới đăng nhập). Nếu DA2 có thêm vai
+  // trò khác đăng nhập qua Firebase Auth, chỉ cần sửa DUY NHẤT hàm này để
+  // đọc đúng field phân quyền (custom claims hoặc node Users/{uid}/role).
+  function isCurrentUserAdmin(){
+    if(!firebaseReady || !auth) return false;
+    return !!auth.currentUser;
+  }
+
+  // ---- 4) Render 1 khung ảnh module theo đúng khung/kích thước/bo góc hiện có ----
+  function renderPlaceholder(container, label){
+    container.classList.remove("has-image");
+    container.innerHTML =
+      '<span class="material-symbols-outlined">image</span><span>' + label + "</span>";
+  }
+
+  function renderModuleImageFromUrl(moduleKey, imageUrl){
+    var container = document.querySelector('[data-module-image="' + moduleKey + '"]');
+    if(!container) return;
+    var label = container.getAttribute("data-default-label") || "";
+
+    // Chưa có ảnh (node rỗng/không tồn tại) → Placeholder mặc định
+    if(!imageUrl){
+      renderPlaceholder(container, label);
+      return;
+    }
+
+    // Có URL ảnh → thử tải; lỗi/không tồn tại → tự rơi về Placeholder
+    // (không để khung trắng hoặc ảnh vỡ)
+    var probe = new Image();
+    probe.onload = function(){
+      container.innerHTML = "";
+      var img = document.createElement("img");
+      img.className = "module-photo-img";
+      img.src = imageUrl;
+      img.alt = label.replace(/<br\s*\/?>/gi, " ");
+      container.appendChild(img);
+      container.classList.add("has-image");
+    };
+    probe.onerror = function(){
+      renderPlaceholder(container, label);
+    };
+    probe.src = imageUrl;
+  }
+
+  function renderAllPlaceholders(){
+    Object.keys(MODULE_SETTING_KEY).forEach(function(moduleKey){
+      var container = document.querySelector('[data-module-image="' + moduleKey + '"]');
+      if(!container) return;
+      renderPlaceholder(container, container.getAttribute("data-default-label") || "");
+    });
+  }
+
+  // ---- 5) Lắng nghe realtime Firebase Realtime Database ----
+  // Mọi thiết bị đang mở Trang chủ đều tự cập nhật ảnh ngay khi giá trị
+  // trong SystemSettings/ModuleImages thay đổi (không cần tải lại trang).
+  function startRealtimeListener(){
+    if(!firebaseReady || !db){
+      // Chưa có Firebase (config còn placeholder) → hiển thị Placeholder
+      renderAllPlaceholders();
+      return;
+    }
+    db.ref(DB_ROOT_PATH).on("value", function(snapshot){
+      var data = snapshot.val() || {};
+      Object.keys(MODULE_SETTING_KEY).forEach(function(moduleKey){
+        var settingKey = MODULE_SETTING_KEY[moduleKey];
+        renderModuleImageFromUrl(moduleKey, data[settingKey] || null);
+      });
+    }, function(err){
+      console.warn("Không đọc được SystemSettings/ModuleImages, hiển thị Placeholder.", err);
+      renderAllPlaceholders();
+    });
+  }
+
+  // ---- 6) Chuyển ảnh upload (JPG/PNG/WEBP bất kỳ) → WEBP trước khi lưu,
+  // vì tên file trên Storage cố định là {module}.webp ----
+  function convertFileToWebpBlob(file){
+    return new Promise(function(resolve, reject){
+      var img = new Image();
+      var objectUrl = URL.createObjectURL(file);
+      img.onload = function(){
+        URL.revokeObjectURL(objectUrl);
+        var canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob(function(blob){
+          if(blob) resolve(blob);
+          else reject(new Error("webp-conversion-failed"));
+        }, "image/webp", 0.92);
+      };
+      img.onerror = function(){
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("image-decode-failed"));
+      };
+      img.src = objectUrl;
+    });
+  }
+
+  // ---- 7) API công khai — GIỮ NGUYÊN chữ ký như bản trước ----
+  // Ví dụ dùng trong màn "Cài đặt hệ thống" (Admin) sau này:
+  //   NgocNhiModuleSettings.setImageFromFile('farm', fileInput.files[0]);
+  //   NgocNhiModuleSettings.setImageUrl('wedding', 'https://.../anh.webp');
+  //   NgocNhiModuleSettings.resetImage('restaurant');
+  //   NgocNhiModuleSettings.getSettings().then(settings => ...);
+  // LƯU Ý THAY ĐỔI SO VỚI BẢN localStorage: các hàm ghi/đọc giờ là bất
+  // đồng bộ (trả về Promise) vì phải gọi Firebase Storage/Database qua
+  // mạng — đúng bản chất của lưu trữ thật thay vì bộ nhớ cục bộ trình duyệt.
+  var api = {
+    // Chọn module + upload ảnh (JPG/PNG/WEBP) → convert sang .webp → ghi đè
+    // Storage (system/module-images/{module}.webp) → ghi URL vào Realtime
+    // Database → mọi thiết bị tự cập nhật qua listener ở mục 5.
+    setImageFromFile: function(moduleKey, file){
+      if(!firebaseReady){
+        return Promise.reject(new Error("firebase-not-configured"));
+      }
+      if(!isCurrentUserAdmin()){
+        console.warn("Chỉ tài khoản Administrator mới được phép thay đổi ảnh module.");
+        return Promise.reject(new Error("permission-denied"));
+      }
+      if(!MODULE_SETTING_KEY[moduleKey]){
+        return Promise.reject(new Error("invalid-module"));
+      }
+      if(!file || ACCEPTED_MIME.indexOf(file.type) === -1){
+        console.warn("Định dạng ảnh không hỗ trợ. Chỉ chấp nhận JPG, PNG, WEBP.");
+        return Promise.reject(new Error("invalid-file-type"));
+      }
+      return convertFileToWebpBlob(file).then(function(webpBlob){
+        var fileName = MODULE_STORAGE_FILENAME[moduleKey];
+        var storageRef = storage.ref(STORAGE_FOLDER + "/" + fileName);
+        return storageRef.put(webpBlob, { contentType: "image/webp" });
+      }).then(function(uploadSnapshot){
+        return uploadSnapshot.ref.getDownloadURL();
+      }).then(function(downloadUrl){
+        return db.ref(DB_ROOT_PATH + "/" + MODULE_SETTING_KEY[moduleKey])
+                 .set(downloadUrl)
+                 .then(function(){ return downloadUrl; });
+      });
+    },
+    // Gán ảnh bằng URL có sẵn trực tiếp vào Realtime Database (không qua
+    // Storage) — dùng khi ảnh đã có sẵn trên server/CDN khác.
+    setImageUrl: function(moduleKey, url){
+      if(!firebaseReady) return Promise.reject(new Error("firebase-not-configured"));
+      if(!isCurrentUserAdmin()){
+        console.warn("Chỉ tài khoản Administrator mới được phép thay đổi ảnh module.");
+        return Promise.reject(new Error("permission-denied"));
+      }
+      if(!MODULE_SETTING_KEY[moduleKey]) return Promise.reject(new Error("invalid-module"));
+      return db.ref(DB_ROOT_PATH + "/" + MODULE_SETTING_KEY[moduleKey]).set(url);
+    },
+    // Xoá ảnh đã cấu hình (Database + file trên Storage) → quay về Placeholder
+    resetImage: function(moduleKey){
+      if(!firebaseReady) return Promise.reject(new Error("firebase-not-configured"));
+      if(!isCurrentUserAdmin()){
+        console.warn("Chỉ tài khoản Administrator mới được phép thay đổi ảnh module.");
+        return Promise.reject(new Error("permission-denied"));
+      }
+      if(!MODULE_SETTING_KEY[moduleKey]) return Promise.reject(new Error("invalid-module"));
+      var fileName = MODULE_STORAGE_FILENAME[moduleKey];
+      return storage.ref(STORAGE_FOLDER + "/" + fileName).delete().catch(function(){
+        /* File có thể chưa từng tồn tại — bỏ qua lỗi, vẫn xoá node Database */
+      }).then(function(){
+        return db.ref(DB_ROOT_PATH + "/" + MODULE_SETTING_KEY[moduleKey]).remove();
+      });
+    },
+    // Đọc cấu hình hiện tại của toàn bộ 4 module (đọc 1 lần, không lắng nghe)
+    getSettings: function(){
+      if(!firebaseReady) return Promise.resolve({});
+      return db.ref(DB_ROOT_PATH).once("value").then(function(snapshot){
+        return snapshot.val() || {};
+      });
+    },
+    // Tiện ích cho màn "Cài đặt hệ thống" kiểm tra quyền trước khi hiển thị nút upload
+    isAdmin: isCurrentUserAdmin
+  };
+
+  window.NgocNhiModuleSettings = api;
+
+  document.addEventListener("DOMContentLoaded", startRealtimeListener);
+})();
+</script>
+
+<script>
+/* =========================================================================
+   TRUNG TÂM ĐIỀU HÀNH — DASHBOARD REALTIME + SỔ THU CHI + CẢNH BÁO HỆ THỐNG
+   -------------------------------------------------------------------------
+   Toàn bộ số liệu bên dưới dùng Firebase `on('value')` (lắng nghe realtime),
+   KHÔNG dùng `once('value')` — mọi thay đổi phát sinh ở Farm/*, Restaurant/*,
+   Wedding/* tự động phản ánh vào Trung tâm điều hành ngay lập tức, đúng yêu
+   cầu "tự động cập nhật qua Firebase". Trung tâm điều hành chỉ ĐỌC 3 nhánh
+   đó (không ghi, không tạo nghiệp vụ mới cho 3 module). Riêng "Sổ Thu Chi"
+   (AdminCenter/Transactions) LÀ nhánh dữ liệu thuộc chính Trung tâm điều
+   hành — nơi ghi nhận doanh thu cho Trang trại & Quán ăn, vì 2 module đó đã
+   chủ động KHÔNG lưu giá bán/thanh toán (xem ghi chú kiến trúc trong
+   trang_trai.html mục "Ghi nhận xuất" và quan_an.html mục "Hoàn thành đơn").
+   ========================================================================= */
+(function(){
+  "use strict";
+  var db = null, dashReady = false;
+  try{
+    if(typeof firebase !== "undefined" && firebase.apps.length){
+      db = firebase.database();
+      dashReady = true;
+    }
+  }catch(err){ console.warn("Trung tâm điều hành: Firebase chưa sẵn sàng.", err && err.message); }
+
+  function esc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function fmtVND(n){ if(n==null) return "—"; return Number(n).toLocaleString("vi-VN")+"đ"; }
+  function todayStr(d){ d = d || new Date(); return d.toISOString().slice(0,10); }
+  function fmtDateShort(dateStr){ if(!dateStr) return "—"; var p = dateStr.split("-"); if(p.length!==3) return dateStr; return p[2]+"/"+p[1]; }
+  function fmtDateFull(dateStr){ if(!dateStr) return "—"; var p = dateStr.split("-"); if(p.length!==3) return dateStr; return p[2]+"/"+p[1]+"/"+p[0]; }
+  function setEl(id, text){ var el = document.getElementById(id); if(el) el.textContent = text; }
+  // Lắng nghe realtime — trả về hàm huỷ đăng ký (không dùng ở đây vì trang không unmount, nhưng giữ đúng chuẩn).
+  function listen(path, cb){
+    var r = db.ref(path);
+    r.on("value", function(snap){ cb(snap.val()); }, function(err){ console.warn("Lỗi lắng nghe "+path+":", err && err.message); });
+    return function(){ r.off("value"); };
+  }
+
+  var todayEl = document.getElementById("qiToday");
+  if(todayEl) todayEl.textContent = fmtDateFull(todayStr());
+
+  /* ---------------- Điều hướng "Xem chi tiết" trên các thẻ ---------------- */
+  document.querySelectorAll("[data-goto]").forEach(function(b){
+    b.addEventListener("click", function(){ window.location.href = b.getAttribute("data-goto"); });
+  });
+
+  /* ---------------- Chuyển đổi Trang chủ ⇄ Trung tâm điều hành ---------------- */
+  function showDashboard(){
+    document.getElementById("dashboardView").classList.remove("hidden-view");
+    document.getElementById("financeView").classList.add("hidden-view");
+    var home = document.getElementById("navHome"), fin = document.getElementById("navFinance");
+    if(home) home.classList.add("active");
+    if(fin) fin.classList.remove("active");
+  }
+  function showFinance(scrollTargetId){
+    document.getElementById("dashboardView").classList.add("hidden-view");
+    document.getElementById("financeView").classList.remove("hidden-view");
+    var home = document.getElementById("navHome"), fin = document.getElementById("navFinance");
+    if(home) home.classList.remove("active");
+    if(fin) fin.classList.add("active");
+    if(scrollTargetId){
+      var t = document.getElementById(scrollTargetId);
+      if(t) setTimeout(function(){ t.scrollIntoView({behavior:"smooth", block:"start"}); }, 50);
+    }
+  }
+  ["navFinance","btnGoFinance","btnGoFinance2"].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.addEventListener("click", function(e){ e.preventDefault(); showFinance(); });
+  });
+  ["admFinance","admAlerts"].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.addEventListener("click", function(e){ e.preventDefault(); showFinance(el.getAttribute("data-target")); });
+  });
+  var navHome = document.getElementById("navHome");
+  if(navHome) navHome.addEventListener("click", function(e){ e.preventDefault(); showDashboard(); });
+  var btnBack = document.getElementById("btnBackDashboard");
+  if(btnBack) btnBack.addEventListener("click", function(e){ e.preventDefault(); showDashboard(); });
+
+  if(!dashReady){
+    ["qiFarmCells","qiRestaurantItems","qiWeddingUpcoming","qiWeddingCustomers","qiTicketsNew"].forEach(function(id){ setEl(id,"—"); });
+    var af = document.getElementById("alertsFeed");
+    if(af) af.innerHTML = '<div class="row" style="color:var(--gray);">Chưa cấu hình Firebase — điền firebase-config.js để dùng đầy đủ.</div>';
+    return; // Chưa cấu hình Firebase — giữ nguyên trạng thái chờ, không chặn giao diện.
+  }
+
+  /* =========================================================================
+     TRẠNG THÁI DÙNG CHUNG — mỗi listener realtime cập nhật đúng 1 phần của
+     state, sau đó gọi renderAlerts()/renderFinanceStats() để vẽ lại phần phụ
+     thuộc. Tránh mỗi listener tự vẽ riêng lẻ (dễ vẽ đè, mất đồng bộ số liệu).
+     ========================================================================= */
+  var state = {
+    farmAlerts: [],            // Farm/AlertLog
+    ticketsNew: [],            // Restaurant/Tickets (status=new)
+    weddingConflicts: [],      // Wedding/Contracts (status=conflict)
+    weddingRevenue: 0,         // tổng đã thu Tiệc cưới (payments + external)
+    txns: {}                   // AdminCenter/Transactions
+  };
+
+  /* ---------------- Quick info grid (realtime) ---------------- */
+  var latestDuiStock = 0;
+  listen("Farm/CommercialStock/total", function(stock){
+    latestDuiStock = stock || 0;
+    recomputeRestaurantAvailability();
+  });
+  var latestMenuItems = {};
+  listen("Restaurant/MenuItems", function(items){
+    latestMenuItems = items || {};
+    recomputeRestaurantAvailability();
+  });
+  function recomputeRestaurantAvailability(){
+    var count = 0;
+    Object.keys(latestMenuItems).forEach(function(id){
+      var it = latestMenuItems[id];
+      var isDui = (it.name||"").toLowerCase().indexOf("dúi") !== -1;
+      var avail = isDui ? (latestDuiStock > 0) : (it.available !== false);
+      if(avail) count++;
+    });
+    setEl("qiRestaurantItems", count+" món");
+    renderRestaurantPanel();
+  }
+
+  listen("Farm/Cells", function(cells){ setEl("qiFarmCells", Object.keys(cells||{}).length+" ô"); renderFarmPanel(cells); });
+
+  listen("Restaurant/Tickets", function(tickets){
+    tickets = tickets || {};
+    var newOnes = Object.keys(tickets).filter(function(id){ return tickets[id].status==="new"; })
+      .map(function(id){ return Object.assign({id:id}, tickets[id]); });
+    setEl("qiTicketsNew", newOnes.length+" phiếu");
+    state.ticketsNew = newOnes;
+    renderAlerts();
+  });
+
+  listen("Wedding/Customers", function(c){
+    latestCustomers = c || {};
+    setEl("qiWeddingCustomers", Object.keys(latestCustomers).length+" khách");
+    renderWeddingPanel();
+  });
+
+  /* ---------------- Panel Trang trại (realtime) ---------------- */
+  var latestZones = {};
+  listen("Farm/Zones", function(zones){ latestZones = zones || {}; renderFarmPanel(latestCells); });
+  var latestCells = {};
+  function renderFarmPanel(cells){
+    if(cells !== undefined) latestCells = cells || {};
+    cells = latestCells; var zones = latestZones;
+    var breeding=0, breedingVacant=0, juvenile=0, commercial=0;
+    Object.keys(cells).forEach(function(id){
+      var c = cells[id]; var zone = zones[c.zoneId]; if(!zone) return;
+      if(zone.type==="breeding"){ if(c.state==="vacant") breedingVacant++; else breeding++; }
+      else if(zone.type==="juvenile" && c.compartments){
+        ["male","female"].forEach(function(sex){ var comp=c.compartments[sex]; if(comp && comp.occupied) juvenile++; });
+      } else if(zone.type==="commercial"){ commercial += (c.quantity||0); }
+    });
+    setEl("fpBreeding", breeding+" ô"); setEl("fpCommercial", commercial+" con");
+    setEl("fpJuvenile", juvenile+" con"); setEl("fpVacant", breedingVacant+" ô");
+
+    // Việc cần làm hôm nay — quét nextTask trên từng ô/khoang (tương tự collectTasks() của trang_trai.html)
+    var today = todayStr(); var tasks = [];
+    Object.keys(cells).forEach(function(id){
+      var c = cells[id];
+      if(c.nextTask && c.nextTask.dueDate && c.nextTask.dueDate <= today){
+        tasks.push({code:c.code, type:c.nextTask.type, overdue:c.nextTask.dueDate<today});
+      }
+      if(c.compartments){
+        ["male","female"].forEach(function(sex){
+          var comp = c.compartments[sex];
+          if(comp && comp.nextTask && comp.nextTask.dueDate && comp.nextTask.dueDate <= today){
+            tasks.push({code:c.code, type:comp.nextTask.type, overdue:comp.nextTask.dueDate<today});
+          }
+        });
+      }
+    });
+    var taskEl = document.getElementById("fpTasks");
+    if(taskEl){
+      taskEl.innerHTML = tasks.slice(0,6).map(function(t){
+        return '<div class="task"><span class="dot '+(t.overdue?"dot-red":"dot-orange")+'"></span>Ô '+esc(t.code)+' — '+esc(t.type)+'</div>';
+      }).join("") || '<div class="task" style="color:var(--gray);">Không có việc nào đến hạn hôm nay.</div>';
+    }
+  }
+
+  listen("Farm/AlertLog", function(log){
+    log = log || {};
+    var items = Object.keys(log).map(function(k){ return log[k]; }).sort(function(a,b){return (b.reportedAt||0)-(a.reportedAt||0);});
+    var el = document.getElementById("fpAlerts");
+    if(el){
+      el.innerHTML = items.slice(0,5).map(function(i){
+        return '<div class="row"><span class="icon-badge"><span class="material-symbols-outlined">warning</span></span>'+
+          '<span class="name">Ô '+esc(i.cellCode)+' — '+(i.kind==="treat"?"cần theo dõi sức khoẻ":"đến hạn công việc")+'</span></div>';
+      }).join("") || '<div class="row" style="color:var(--gray);">Chưa có cảnh báo nào.</div>';
+    }
+    state.farmAlerts = items.slice(0,10);
+    renderAlerts();
+  });
+
+  /* ---------------- Panel Quán ăn (realtime) ---------------- */
+  var latestTables = {}, latestOrders = {};
+  listen("Restaurant/Tables", function(tables){ latestTables = tables || {}; renderRestaurantPanel(); });
+  listen("Restaurant/Orders", function(orders){ latestOrders = orders || {}; renderRestaurantPanel(); });
+  function renderRestaurantPanel(){
+    var items = latestMenuItems, tables = latestTables, orders = latestOrders, stock = latestDuiStock;
+    function isAvail(it){
+      var isDui = (it.name||"").toLowerCase().indexOf("dúi") !== -1;
+      return isDui ? (stock>0) : (it.available !== false);
+    }
+    var availableCount = Object.keys(items).filter(function(id){ return isAvail(items[id]); }).length;
+    var occupiedTables = Object.keys(tables).filter(function(id){ return tables[id].status==="occupied"; }).length;
+    var today = todayStr();
+    var ordersToday = Object.keys(orders).filter(function(id){ return orders[id].createdAt && todayStr(new Date(orders[id].createdAt))===today; }).length;
+    var servingNow = Object.keys(orders).filter(function(id){ return orders[id].status==="serving"; }).length;
+    setEl("rpAvailable", availableCount+" món"); setEl("rpOccupied", occupiedTables+" bàn");
+    setEl("rpOrdersToday", ordersToday+" đơn"); setEl("rpServing", servingNow+" đơn");
+
+    var qtyByItem = {};
+    Object.keys(orders).forEach(function(id){
+      var o = orders[id]; if(o.status!=="completed") return;
+      Object.keys(o.items||{}).forEach(function(iid){ qtyByItem[iid] = (qtyByItem[iid]||0) + o.items[iid]; });
+    });
+    var ranked = Object.keys(qtyByItem).map(function(iid){ return {name: items[iid]?items[iid].name:"(món đã xoá)", qty:qtyByItem[iid]}; })
+      .sort(function(a,b){ return b.qty-a.qty; }).slice(0,5);
+    var topEl = document.getElementById("rpTopItems");
+    if(topEl){
+      topEl.innerHTML = ranked.map(function(r,idx){
+        return '<div class="row"><span class="num-badge">'+(idx+1)+'</span><span class="name">'+esc(r.name)+'</span><span class="count">'+r.qty+' suất</span></div>';
+      }).join("") || '<div class="row" style="color:var(--gray);">Chưa có đơn hoàn thành nào.</div>';
+    }
+    var duiEl = document.getElementById("rpDuiStock");
+    if(duiEl){
+      duiEl.innerHTML = '<div class="row"><span class="icon-badge"><span class="material-symbols-outlined">set_meal</span></span>'+
+        '<span class="name">Dúi thương phẩm khả dụng</span>'+
+        '<span class="status-badge '+(stock>0?"status-ok":"status-low")+'">'+(stock>0?(stock+" con"):"Hết hàng")+'</span></div>';
+    }
+  }
+
+  /* ---------------- Panel Tiệc cưới (realtime) ---------------- */
+  var latestCustomers={}, latestPackages={}, latestContracts={}, latestExternal={};
+  listen("Wedding/Packages", function(p){ latestPackages = p || {}; renderWeddingPanel(); });
+  listen("Wedding/ExternalRevenue", function(e){ latestExternal = e || {}; renderWeddingPanel(); });
+  listen("Wedding/Contracts", function(c){ latestContracts = c || {}; renderWeddingPanel(); });
+  function renderWeddingPanel(){
+    var customers = latestCustomers, packages = latestPackages, contracts = latestContracts, external = latestExternal;
+    var total = Object.keys(contracts).length;
+    var processing = 0, pending = 0, conflict = 0, revenue = 0;
+    var conflictList = [];
+    Object.keys(contracts).forEach(function(id){
+      var c = contracts[id];
+      if(c.status==="processing") processing++;
+      else if(c.status==="pending_approval") pending++;
+      else if(c.status==="conflict"){ conflict++; conflictList.push(Object.assign({id:id}, c)); }
+      var payments = c.payments||{};
+      Object.keys(payments).forEach(function(pid){ revenue += (payments[pid].amount||0); });
+    });
+    Object.keys(external).forEach(function(id){ revenue += (external[id].amount||0); });
+    state.weddingRevenue = revenue;
+    state.weddingConflicts = conflictList;
+    setEl("wpTotal", total+"");  setEl("wpProcessing", processing+"");
+    setEl("wpPending", pending+""); setEl("wpConflict", conflict+"");
+    setEl("fnWedding", fmtVND(revenue)); setEl("fnWedding2", fmtVND(revenue));
+    renderFinanceStats(); renderAlerts();
+
+    var upcoming = Object.keys(contracts).filter(function(id){ return contracts[id].status==="processing"; })
+      .map(function(id){ return Object.assign({id:id}, contracts[id]); })
+      .sort(function(a,b){ return (a.eventDate||"").localeCompare(b.eventDate||""); }).slice(0,5);
+    var upEl = document.getElementById("wpUpcoming");
+    if(upEl){
+      upEl.innerHTML = upcoming.map(function(c){
+        var cust = customers[c.customerId];
+        return '<div class="row"><span class="date">'+fmtDateShort(c.eventDate)+'</span><span class="who">'+(cust?esc(cust.name):"(khách hàng)")+'</span></div>';
+      }).join("") || '<div class="row" style="color:var(--gray);">Không có hợp đồng nào sắp diễn ra.</div>';
+    }
+
+    var countByPkg = {};
+    Object.keys(contracts).forEach(function(id){ var pid = contracts[id].packageId; if(pid) countByPkg[pid] = (countByPkg[pid]||0)+1; });
+    var topPkg = Object.keys(countByPkg).map(function(pid){ return {name: packages[pid]?packages[pid].name:"(gói đã xoá)", n:countByPkg[pid]}; })
+      .sort(function(a,b){ return b.n-a.n; }).slice(0,5);
+    var pkgEl = document.getElementById("wpTopPackages");
+    if(pkgEl){
+      pkgEl.innerHTML = topPkg.map(function(p){
+        return '<div class="row"><span class="icon-badge"><span class="material-symbols-outlined">card_giftcard</span></span><span class="name">'+esc(p.name)+'</span><span class="count">'+p.n+' hợp đồng</span></div>';
+      }).join("") || '<div class="row" style="color:var(--gray);">Chưa có hợp đồng nào.</div>';
+    }
+  }
+
+  /* ---------------- Sổ Thu Chi (Trung tâm điều hành) — AdminCenter/Transactions (realtime) ---------------- */
+  var MODULE_LABEL = {farm:"Trang trại", restaurant:"Quán ăn", khac:"Khác"};
+  function renderFinanceStats(){
+    var txns = state.txns;
+    var thu=0, chi=0, byModule={farm:0, restaurant:0, khac:0};
+    Object.keys(txns).forEach(function(id){
+      var t = txns[id]; var signed = (t.type==="thu"?1:-1) * (t.amount||0);
+      if(t.type==="thu") thu += (t.amount||0); else chi += (t.amount||0);
+      byModule[t.module] = (byModule[t.module]||0) + signed;
+    });
+    setEl("fnThu", fmtVND(thu)); setEl("fnChi", fmtVND(chi));
+    setEl("fnTotal", fmtVND((state.weddingRevenue||0) + thu - chi));
+    setEl("fnFarm", fmtVND(byModule.farm||0));
+    setEl("fnRestaurant", fmtVND(byModule.restaurant||0));
+    setEl("fnOther", fmtVND(byModule.khac||0));
+  }
+  listen("AdminCenter/Transactions", function(txns){
+    state.txns = txns || {};
+    renderFinanceStats();
+    var body = document.getElementById("fnTxnBody");
+    if(!body) return;
+    var ids = Object.keys(state.txns).sort(function(a,b){ return (state.txns[b].date||"").localeCompare(state.txns[a].date||""); });
+    body.innerHTML = ids.map(function(id){
+      var t = state.txns[id];
+      return '<tr><td>'+fmtDateFull(t.date)+'</td><td><span class="txn-badge '+(t.type==="thu"?"txn-thu":"txn-chi")+'">'+(t.type==="thu"?"Thu":"Chi")+'</span></td>'+
+        '<td>'+esc(MODULE_LABEL[t.module]||t.module||"—")+'</td><td>'+fmtVND(t.amount)+'</td><td>'+esc(t.note||"")+'</td>'+
+        '<td><button class="txn-del" data-id="'+id+'">Xoá</button></td></tr>';
+    }).join("") || '<tr><td colspan="6" style="color:var(--gray);">Chưa có giao dịch nào.</td></tr>';
+    body.querySelectorAll(".txn-del").forEach(function(b){
+      b.addEventListener("click", function(){
+        if(confirm("Xoá giao dịch này?")) db.ref("AdminCenter/Transactions/"+b.getAttribute("data-id")).remove();
+      });
+    });
+  });
+
+  var btnAddTxn = document.getElementById("btnAddTxn");
+  if(btnAddTxn) btnAddTxn.addEventListener("click", openAddTxnModal);
+  function openAddTxnModal(){
+    var root = document.createElement("div");
+    root.innerHTML =
+      '<div class="modal-overlay-fc"><div class="modal-fc"><h3>Ghi khoản Thu/Chi</h3>'+
+      '<div class="field"><label>Loại</label><select id="txnType"><option value="thu">Thu</option><option value="chi">Chi</option></select></div>'+
+      '<div class="field"><label>Nguồn</label><select id="txnModule"><option value="farm">Trang trại</option><option value="restaurant">Quán ăn</option><option value="khac">Khác</option></select></div>'+
+      '<div class="field"><label>Ngày</label><input id="txnDate" type="date" value="'+todayStr()+'"></div>'+
+      '<div class="field"><label>Số tiền *</label><input id="txnAmount" type="number" value="0"></div>'+
+      '<div class="field"><label>Ghi chú</label><input id="txnNote"></div>'+
+      '<div id="txnErr" style="color:#B91C1C;font-size:12px;"></div>'+
+      '<div class="modal-fc-actions"><button class="link-btn" id="txnCancel" style="padding:9px 14px;">Huỷ</button><button class="btn-primary-sm" id="txnSave">Lưu</button></div>'+
+      '</div></div>';
+    document.body.appendChild(root);
+    document.getElementById("txnCancel").onclick = function(){ root.remove(); };
+    document.getElementById("txnSave").onclick = function(){
+      var amount = parseInt(document.getElementById("txnAmount").value,10)||0;
+      if(amount<=0){ document.getElementById("txnErr").textContent = "Vui lòng nhập số tiền hợp lệ."; return; }
+      var entry = {
+        type: document.getElementById("txnType").value,
+        module: document.getElementById("txnModule").value,
+        date: document.getElementById("txnDate").value || todayStr(),
+        amount: amount,
+        note: document.getElementById("txnNote").value.trim(),
+        createdAt: Date.now()
+      };
+      db.ref("AdminCenter/Transactions").push(entry).then(function(){ root.remove(); })
+        .catch(function(err){ document.getElementById("txnErr").textContent = err.message; });
+    };
+  }
+
+  /* ---------------- Cảnh báo hệ thống (hợp nhất realtime) ---------------- */
+  function renderAlerts(){
+    var rows = [];
+    state.farmAlerts.forEach(function(a){
+      rows.push({src:"farm", srcLabel:"Trang trại", icon:"cottage",
+        text:"Ô "+(a.cellCode||"?")+" — "+(a.kind==="treat"?"cần theo dõi sức khoẻ":"đến hạn công việc"), time:a.reportedAt||0});
+    });
+    state.ticketsNew.forEach(function(t){
+      rows.push({src:"restaurant", srcLabel:"Quán ăn", icon:"storefront",
+        text:"Phiếu đặt "+(t.type==="party"?"tiệc":"món")+" mới — "+(t.customerName||"khách online"), time:t.createdAt||0});
+    });
+    state.weddingConflicts.forEach(function(c){
+      rows.push({src:"wedding", srcLabel:"Tiệc cưới", icon:"favorite",
+        text:"Hợp đồng xung đột kho dúi — "+(c.statusNote||"cần kiểm tra lại kho"), time:c.createdAt||0});
+    });
+    rows.sort(function(a,b){ return b.time-a.time; });
+
+    var count = rows.length;
+    [document.getElementById("navAlertBadge"), document.getElementById("alertCountBig")].forEach(function(b){
+      if(!b) return; b.textContent = count; b.classList.toggle("zero", count===0);
+    });
+
+    var feed = document.getElementById("alertsFeed");
+    if(feed){
+      feed.innerHTML = '<div class="mini-list">'+ (rows.map(function(r){
+        return '<div class="row"><span class="icon-badge"><span class="material-symbols-outlined">'+r.icon+'</span></span>'+
+          '<span class="name">'+esc(r.text)+'</span><span class="alert-src alert-src-'+r.src+'">'+esc(r.srcLabel)+'</span></div>';
+      }).join("") || '<div class="row" style="color:var(--gray);">Không có cảnh báo nào — mọi thứ đang ổn định.</div>') + '</div>';
+    }
+  }
+  renderAlerts();
+})();
+</script>
+</body>
+</html>
