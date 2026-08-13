@@ -1,0 +1,25 @@
+--- audit/trang_trai.html	2026-08-13 01:05:48.000000000 +0000
++++ work/trang_trai.html	2026-08-13 01:47:53.085119269 +0000
+@@ -655,6 +655,13 @@
+   var pass  = document.getElementById("loginPassword").value;
+   var errEl = document.getElementById("loginError");
+   errEl.textContent = "";
++  // Chặn gọi Identity Toolkit với email/mật khẩu rỗng hoặc sai định dạng —
++  // đây là nguyên nhân thật của lỗi "Firebase Identity Toolkit trả HTTP 400"
++  // (submit thiếu dữ liệu vẫn được gửi thẳng lên API). Xác thực tại đây
++  // trước khi gọi signIn() để không còn request lỗi dạng nào được gửi đi.
++  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
++  if(!email || !EMAIL_RE.test(email)){ errEl.textContent = "Nhập đúng định dạng email."; return; }
++  if(!pass){ errEl.textContent = "Nhập mật khẩu."; return; }
+   FirebaseService.signIn(email, pass).then(function(){
+     document.getElementById("loginOverlay").classList.add("hidden");
+   }).catch(function(){
+@@ -1727,7 +1734,7 @@
+   var el = document.getElementById("viewContent");
+   el.innerHTML = '<div class="card">Đang tải…</div>';
+   Promise.all([computeStats(), FirebaseService.read("Farm/Info")]).then(function(res){
+-    var s = res[0], info = res[1];
++    var s = res[0], info = res[1] || {};
+     var babyHtml = Object.keys(s.babyBySegment).map(function(k){
+       return '<div class="stat-box"><div class="v">'+s.babyBySegment[k]+'</div><div class="l">Baby '+esc(k)+'</div></div>';
+     }).join("");
