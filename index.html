@@ -1383,20 +1383,54 @@
         console.warn("Chỉ tài khoản Administrator mới được phép thay đổi video module.");
         return Promise.reject(new Error("permission-denied"));
       }
-      if(!MODULE_VIDEO_KEY[moduleKey]) return Promise.reject(new Error("invalid-module"));
-      if(!file || ACCEPTED_VIDEO_MIME.indexOf(file.type) === -1){
-        console.warn("Định dạng video không hỗ trợ. Chỉ chấp nhận MP4, WEBM.");
-        return Promise.reject(new Error("invalid-file-type"));
-      }
+     if (!MODULE_VIDEO_KEY[moduleKey]) return Promise.reject(new Error("invalid-module"));
+    if (!file) return Promise.reject(new Error("no-file-selected"));
+
+    // 1. XỬ LÝ NẾU LÀ TỆP ẢNH (Gửi lên ImgBB)
+    if (file.type.startsWith("image/")) {
+      return uploadImageToImgBB(file).then(function(downloadUrl) {
+        if (!downloadUrl) {
+          return Promise.reject(new Error("upload-failed"));
+        }
+        return db.ref(VIDEO_DB_ROOT_PATH + "/" + MODULE_VIDEO_KEY[moduleKey])
+          .set(downloadUrl)
+          .then(function() {
+            return downloadUrl;
+          });
+      });
+    } 
+    // 2. XỬ LÝ NẾU LÀ TỆP VIDEO (Gửi lên Firebase Storage)
+    else if (ACCEPTED_VIDEO_MIME.indexOf(file.type) !== -1) {
       var fileName = MODULE_VIDEO_STORAGE_FILENAME[moduleKey];
       var storageRef = storage.ref(VIDEO_STORAGE_FOLDER + "/" + fileName);
-      return storageRef.put(file, { contentType: file.type }).then(function(uploadSnapshot){
+
+      return storageRef.put(file, { contentType: file.type }).then(function(uploadSnapshot) {
         return uploadSnapshot.ref.getDownloadURL();
-      }).then(function(downloadUrl){
+      }).then(function(downloadUrl) {
         return db.ref(VIDEO_DB_ROOT_PATH + "/" + MODULE_VIDEO_KEY[moduleKey])
-                 .set(downloadUrl)
-                 .then(function(){ return downloadUrl; });
+          .set(downloadUrl)
+          .then(function() {
+            return downloadUrl;
+          });
       });
+    } 
+    // 3. NẾU ĐỊNH DẠNG KHÔNG HỢP LỆ
+    else {
+      console.warn("Định dạng tệp không được hỗ trợ.");
+      return Promise.reject(new Error("invalid-file-type"));
+    }
+            .set(downloadUrl)
+            .then(function() {
+                return downloadUrl;
+            });
+    });
+} 
+
+// 3. NẾU KHÔNG PHẢI ẢNH HOẶC VIDEO ĐƯỢC HỖ TRỢ
+else {
+    console.warn("Định dạng không hỗ trợ. Chỉ chấp nhận Ảnh hoặc Video (MP4, WEBM).");
+    return Promise.reject(new Error("invalid-file-type"));
+}
     },
     setVideoUrl: function(moduleKey, url){
       if(!firebaseReady) return Promise.reject(new Error("firebase-not-configured"));
