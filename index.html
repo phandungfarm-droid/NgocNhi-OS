@@ -1328,13 +1328,10 @@
         console.warn("Định dạng ảnh không hỗ trợ. Chỉ chấp nhận JPG, PNG, WEBP.");
         return Promise.reject(new Error("invalid-file-type"));
       }
-      return convertFileToWebpBlob(file).then(function(webpBlob){
-        var fileName = MODULE_STORAGE_FILENAME[moduleKey];
-        var storageRef = storage.ref(STORAGE_FOLDER + "/" + fileName);
-        return storageRef.put(webpBlob, { contentType: "image/webp" });
-      }).then(function(uploadSnapshot){
-        return uploadSnapshot.ref.getDownloadURL();
-      }).then(function(downloadUrl){
+     return uploadImageToImgBB(file).then(function(downloadUrl){
+            if(!downloadUrl){
+                return Promise.reject(new Error("upload-failed"));
+            }
         return db.ref(DB_ROOT_PATH + "/" + MODULE_SETTING_KEY[moduleKey])
                  .set(downloadUrl)
                  .then(function(){ return downloadUrl; });
