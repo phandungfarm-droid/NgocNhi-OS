@@ -1,5 +1,5 @@
 // Cấu hình API Key ImgBB dùng chung cho toàn bộ hệ thống NgocNhi-OS
-const IMGBB_API_KEY = "5b8ea1cc85f152fe0ba5b15d1e1d345a";
+const IMGBB_API_KEY = "deb05009b627d89158a533a177701b3a";
 
 /**
  * Hàm upload ảnh lên ImgBB dùng chung cho tất cả các trang (Trang trại, Quán ăn, Tiệc cưới)
