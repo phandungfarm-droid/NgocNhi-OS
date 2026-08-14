@@ -8,5 +8,5 @@
    có: chỉ Trung tâm điều hành mới có chức năng upload ảnh.
    ========================================================================= */
 window.IMGBB_CONFIG = {
-  apiKey: "REPLACE_WITH_IMGBB_API_KEY"
+  apiKey: "deb05009b627d89158a533a177701b3a"
 };
