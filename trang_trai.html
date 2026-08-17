@@ -111,26 +111,24 @@
   .worker-btn.sick{background:var(--red-tint);color:#B91C1C;} .worker-btn.sick.active{background:var(--red);color:#fff;}
   .worker-btn.fed{background:var(--green-tint2);color:var(--green-dark);} .worker-btn.fed:disabled{background:#F1F2F4;color:var(--gray-light);}
 
-  @media (max-width:900px){ .app{flex-direction:column;} .sidebar{width:100%;flex-direction:row;flex-wrap:wrap;} .sidebar-spacer{display:none;} }
-  /* Modern farm dashboard skin */
-  /* Modern farm dashboard skin */
-  .main{background:linear-gradient(135deg,#fbfefd 0%,#f6faf8 44%,#f8fbff 100%);}
-  .topbar{border-radius:22px;padding:18px 22px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);box-shadow:0 16px 40px rgba(18,38,63,.07);}
-  .topbar h1{font-size:24px;letter-spacing:-.03em;} .topbar .sub{font-size:13px;display:flex;align-items:center;gap:7px;} .topbar .sub:before{content:"";width:8px;height:8px;border-radius:50%;background:#16a34a;box-shadow:0 0 0 4px #dcfce7;display:inline-block;}
-  .sidebar{width:248px;padding:22px 16px;background:linear-gradient(180deg,#fff 0%,#fbfdfc 100%);box-shadow:12px 0 34px rgba(15,23,42,.04);}
-  .nav-list:before{content:"DANH MỤC QUẢN LÝ";font-size:11px;color:#7b8498;font-weight:800;letter-spacing:.04em;padding:8px 8px 6px;}
-  .nav-item{border-radius:12px;padding:13px 14px;transition:.18s ease;background:transparent;} .nav-item:hover{background:#f1f8f4;color:#0b7a3a;} .nav-item.active{background:linear-gradient(135deg,#0e9245,#14a951);box-shadow:0 10px 24px rgba(14,146,69,.24);}
-  .btn{border:1px solid var(--border);box-shadow:0 8px 20px rgba(15,23,42,.04);background:#fff;} .btn-primary{border-color:transparent;background:linear-gradient(135deg,#0e9245,#19a956);} .btn-secondary{background:#fff;color:#1f2a44;}
-  .dashboard-shell{display:flex;flex-direction:column;gap:14px;}
-  .farm-hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(360px,.95fr);gap:8px;min-height:218px;border-radius:18px;overflow:hidden;background:#0f2f20;box-shadow:0 18px 45px rgba(15,23,42,.12);}
-  .hero-panel{position:relative;min-height:218px;padding:30px;color:#fff;display:flex;flex-direction:column;justify-content:center;background:linear-gradient(90deg,rgba(5,35,20,.82),rgba(5,35,20,.52)),var(--hero-bg,linear-gradient(135deg,#24583b,#96c47f));background-size:cover;background-position:center;}
-  .hero-panel h2{font-size:25px;line-height:1.15;letter-spacing:-.03em;margin-bottom:10px;} .hero-panel p{max-width:520px;font-size:14px;line-height:1.7;color:#eefdf4;}
-  .hero-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.hero-pill{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.24);border-radius:999px;padding:7px 11px;font-size:12px;font-weight:700;backdrop-filter:blur(10px)}
-  .hero-media-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4px;background:#fff;padding:0}.hero-tile{position:relative;background:#dbeee2;overflow:hidden;min-height:106px}.hero-tile img{width:100%;height:100%;object-fit:cover;display:block}.hero-empty{display:flex;align-items:center;justify-content:center;color:#44845c;font-size:12px;font-weight:800;background:linear-gradient(135deg,#e7f7ed,#f9fffb)}
-  .play-fab{width:56px;height:56px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#fff;color:#111827;box-shadow:0 12px 30px rgba(0,0,0,.18)}
-  .stat-box{position:relative;display:flex;align-items:center;gap:12px;text-align:left;border-radius:14px;padding:16px 14px;background:#fff;box-shadow:0 10px 28px rgba(15,23,42,.06)}.stat-box .v{font-size:22px;letter-spacing:-.03em}.stat-box .l{font-size:12px;color:#4b5563}.stat-box:before{content:attr(data-icon);width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#eaf8ef;color:#0e9245;font-family:'Material Symbols Outlined';font-size:23px;flex:0 0 42px;}
-  .dashboard-grid{display:grid;grid-template-columns:1.05fr .95fr 1fr;gap:14px}.dash-card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:0 12px 32px rgba(15,23,42,.06)}.dash-card h3{font-size:15px;margin-bottom:12px;display:flex;gap:8px;align-items:center}.empty-state{border:1px dashed #cbd5d1;border-radius:14px;min-height:150px;display:flex;align-items:center;justify-content:center;text-align:center;color:#64748b;font-size:13px;background:#fbfffc}.mini-list{display:flex;flex-direction:column;gap:8px}.mini-row{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:#fbfcfe;border:1px solid #eef1f4;font-size:12.5px}.mini-row .grow{flex:1}.quick-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}.quick-actions .btn{justify-content:center;padding:14px;border-radius:14px}
-  @media (max-width:1180px){.farm-hero,.dashboard-grid{grid-template-columns:1fr}.hero-media-grid{min-height:220px}} @media (max-width:720px){.main{padding:14px}.topbar{align-items:flex-start;flex-direction:column}.farm-hero{display:block}.hero-media-grid{grid-template-columns:1fr 1fr}.grid-stats{grid-template-columns:1fr 1fr}.sidebar{width:100%;}}
+  /* Dashboard tổng quan — chỉ trình bày dữ liệu hiện có, không tạo dữ liệu mẫu. */
+  .farm-dashboard{display:flex;flex-direction:column;gap:16px;padding:4px 0 22px;}
+  .farm-hero{display:grid;grid-template-columns:minmax(0,1.22fr) minmax(300px,.78fr);min-height:258px;border-radius:20px;overflow:hidden;background:#123525;box-shadow:0 16px 38px rgba(15,45,30,.14);}
+  .farm-hero-copy{position:relative;padding:32px;display:flex;flex-direction:column;justify-content:center;background:linear-gradient(90deg,rgba(8,38,23,.88),rgba(8,38,23,.58));color:#fff;z-index:1;}
+  .farm-hero-copy:before{content:"";position:absolute;inset:0;z-index:-1;background:var(--farm-hero-image,linear-gradient(135deg,#174c31,#74a96f));background-size:cover;background-position:center;opacity:.75;}
+  .farm-status{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#ddf9e6;margin-bottom:13px;}.farm-status:before{content:"";width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 0 4px rgba(74,222,128,.17);}
+  .farm-hero-copy h2{font-size:28px;line-height:1.15;letter-spacing:-.03em;margin:0 0 10px;}.farm-hero-copy p{max-width:520px;color:#ebf8ef;font-size:14px;line-height:1.65;margin:0;}
+  .farm-hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;}.farm-hero-actions .btn{background:#fff;color:var(--ink);border-color:#fff;}.farm-hero-actions .btn:hover{background:#f0fff4;}
+  .farm-hero-media{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:#d8eadc;padding:4px;}.farm-media-tile{min-height:126px;position:relative;overflow:hidden;background:linear-gradient(135deg,#d6eadb,#f5fbf6);display:flex;align-items:center;justify-content:center;color:#43835a;}.farm-media-tile:first-child{grid-row:span 2;}.farm-media-tile img{width:100%;height:100%;object-fit:cover;display:block;}.farm-media-tile .media-caption{position:absolute;inset:auto 8px 8px 8px;padding:7px 9px;border-radius:8px;background:rgba(10,27,18,.62);color:#fff;font-size:11px;font-weight:700;backdrop-filter:blur(5px);}.farm-media-tile .media-play{position:absolute;width:48px;height:48px;border-radius:50%;background:#fff;color:var(--green);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.2);}
+  .farm-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(142px,1fr));gap:10px;}.farm-kpi{display:flex;align-items:center;gap:11px;padding:14px 13px;border:1px solid var(--border);border-radius:14px;background:#fff;box-shadow:var(--shadow-card);min-width:0;}.farm-kpi-icon{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 42px;background:var(--tint,#edf8f0);color:var(--accent,var(--green));}.farm-kpi-icon .material-symbols-outlined{font-size:22px;}.farm-kpi .v{font-size:21px;font-weight:800;line-height:1.1;letter-spacing:-.02em;}.farm-kpi .l{margin-top:3px;font-size:11.5px;line-height:1.25;color:var(--gray);font-weight:600;}
+  .farm-dashboard-grid{display:grid;grid-template-columns:1.05fr .82fr .93fr;gap:14px;}.farm-panel{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:var(--shadow-card);min-width:0;}.farm-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px;}.farm-panel-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;}.farm-panel-title .material-symbols-outlined{padding:6px;border-radius:8px;background:var(--green-tint2);color:var(--green);font-size:18px;}.farm-panel-link{font-size:12px;color:var(--blue);font-weight:700;cursor:pointer;}
+  .farm-photo-main,.farm-video-main{height:150px;border-radius:12px;overflow:hidden;position:relative;background:linear-gradient(135deg,#e8f5eb,#fafdfa);display:flex;align-items:center;justify-content:center;color:var(--gray);}.farm-photo-main img,.farm-video-main img{width:100%;height:100%;object-fit:cover;display:block;}.farm-video-main button{position:absolute;width:58px;height:58px;border-radius:50%;background:#fff;color:var(--green);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(0,0,0,.23);}.farm-media-meta{margin-top:11px;font-size:12px;color:var(--gray);line-height:1.45;}.farm-media-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:7px;}.farm-media-strip div{height:43px;border-radius:7px;background:var(--green-tint);overflow:hidden;}.farm-media-strip img{width:100%;height:100%;object-fit:cover;}
+  .farm-metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}.farm-metric{border:1px solid var(--metric-border,#dbeee0);border-radius:11px;padding:12px;background:var(--metric-bg,#f5fcf7);}.farm-metric b{font-size:23px;line-height:1.1;display:block;color:var(--metric-color,var(--green));}.farm-metric span{font-size:11.5px;color:var(--gray);font-weight:700;}.farm-metric small{display:block;margin-top:6px;font-size:11px;color:var(--metric-color,var(--green));font-weight:700;}.farm-panel-summary{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--gray);}.farm-panel-summary strong{color:var(--ink);}
+  .farm-bottom-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}.farm-list{display:flex;flex-direction:column;gap:8px;}.farm-list-row{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid #eef1f0;font-size:12px;}.farm-list-row:last-child{border-bottom:none;}.farm-list-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 28px;background:var(--icon-bg,#fff4df);color:var(--icon-color,#e88700);}.farm-list-icon .material-symbols-outlined{font-size:17px;}.farm-list-main{min-width:0;flex:1;font-weight:700;}.farm-list-main small{display:block;margin-top:2px;color:var(--gray);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.farm-list-time{font-size:11px;color:var(--gray);white-space:nowrap;}.farm-empty{min-height:92px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--gray);font-size:12px;border:1px dashed #d8e3da;border-radius:11px;background:#fbfefc;padding:12px;}.farm-revenue{font-size:26px;font-weight:800;color:var(--green);letter-spacing:-.03em;margin-top:4px;}.farm-revenue-note{font-size:12px;color:var(--gray);margin-top:7px;}.farm-revenue-chart{height:78px;margin-top:16px;border-radius:12px;background:linear-gradient(180deg,rgba(22,163,74,.18),rgba(22,163,74,.02));position:relative;overflow:hidden;}.farm-revenue-chart:after{content:"";position:absolute;left:-5%;right:-4%;bottom:15px;height:36px;border-top:3px solid #16a34a;border-radius:50% 42% 15% 52% / 80% 32% 70% 20%;transform:rotate(-3deg);}.farm-quick-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}.farm-quick{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:9px;border:1px solid var(--border);border-radius:12px;background:#fff;color:var(--ink);font-size:12px;font-weight:800;box-shadow:var(--shadow-card);text-align:center;}.farm-quick:hover{border-color:#b9ddc4;background:var(--green-tint);}.farm-quick .material-symbols-outlined{color:var(--green);font-size:20px;}
+
+  @media (max-width:1100px){.farm-dashboard-grid{grid-template-columns:1fr 1fr;}.farm-dashboard-grid .farm-panel:last-child{grid-column:span 2;}.farm-bottom-grid{grid-template-columns:1fr 1fr;}.farm-bottom-grid .farm-panel:last-child{grid-column:span 2;}.farm-quick-actions{grid-template-columns:repeat(2,minmax(0,1fr));}}
+  @media (max-width:900px){ .app{flex-direction:column;} .sidebar{width:100%;flex-direction:row;flex-wrap:wrap;} .sidebar-spacer{display:none;} .farm-hero{grid-template-columns:1fr;}.farm-hero-media{min-height:200px;}.farm-dashboard-grid,.farm-bottom-grid{grid-template-columns:1fr;}.farm-dashboard-grid .farm-panel:last-child,.farm-bottom-grid .farm-panel:last-child{grid-column:auto;} }
+  @media (max-width:560px){.farm-hero-copy{padding:24px;}.farm-hero-copy h2{font-size:24px;}.farm-kpis{grid-template-columns:1fr 1fr;}.farm-kpi{padding:11px 10px;}.farm-kpi-icon{width:36px;height:36px;flex-basis:36px;}.farm-quick-actions{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -219,6 +217,9 @@
 var FIREBASE_CONFIG = window.FIREBASE_CONFIG || {};
 
 var currentView = "overview";
+// Media do Trung tâm điều hành quản lý. Dashboard chỉ đọc realtime, không
+// lưu hay sửa media/dữ liệu nghiệp vụ tại đây.
+var farmDashboardMedia = { imageUrl:null, videoUrl:null };
 
 /* =========================================================================
    KHỞI TẠO FIREBASE APP (chính) — theo tài liệu chính thức:
@@ -247,27 +248,35 @@ try{
    TOÀN CỤC, không thuộc "Farm/..." nên KHÔNG đi qua điều hướng đa cơ sở)
    rồi hiển thị trong hộp thoại nhỏ khi bấm nút — không có nút tải lên nào.
    ========================================================================= */
-(function initModuleVideoReadOnly(){
+(function initModuleMediaReadOnly(){
   if(!firebaseReady || !db) return;
   var btn = document.getElementById("btnModuleVideo");
   if(!btn) return;
-  var currentVideoUrl = null;
   db.ref("SystemSettings/ModuleVideos/FarmVideo").on("value", function(snap){
-    currentVideoUrl = snap.val() || null;
-    btn.classList.toggle("hidden", !currentVideoUrl);
+    farmDashboardMedia.videoUrl = snap.val() || null;
+    btn.classList.toggle("hidden", !farmDashboardMedia.videoUrl);
+    if(currentView === "overview") renderOverview();
   }, function(err){ console.warn("Không đọc được video giới thiệu:", err && err.message); });
+  db.ref("SystemSettings/ModuleImages/FarmImage").on("value", function(snap){
+    farmDashboardMedia.imageUrl = snap.val() || null;
+    if(currentView === "overview") renderOverview();
+  }, function(err){ console.warn("Không đọc được ảnh đại diện trang trại:", err && err.message); });
   btn.addEventListener("click", function(){
-    if(!currentVideoUrl) return;
+    openFarmMediaVideo();
+  });
+})();
+
+function openFarmMediaVideo(){
+  if(!farmDashboardMedia.videoUrl) return;
     var overlay = document.createElement("div");
     overlay.style.cssText = "position:fixed;inset:0;background:rgba(15,20,35,.7);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;";
     overlay.innerHTML = '<div style="max-width:720px;width:100%;background:#000;border-radius:12px;overflow:hidden;position:relative;">'+
-      '<video src="'+currentVideoUrl+'" controls autoplay style="width:100%;display:block;"></video>'+
+      '<video src="'+esc(farmDashboardMedia.videoUrl)+'" controls autoplay style="width:100%;display:block;"></video>'+
       '<button style="position:absolute;top:8px;right:8px;background:#fff;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-weight:800;">✕</button></div>';
     overlay.querySelector("button").onclick = function(){ overlay.remove(); };
     overlay.onclick = function(e){ if(e.target===overlay) overlay.remove(); };
     document.body.appendChild(overlay);
-  });
-})();
+}
 
 /* =========================================================================
    LỚP FirebaseService — điểm truy cập DUY NHẤT tới Firebase Database & Auth.
@@ -1739,7 +1748,7 @@ function renderCurrentView(){
   else if(currentView === "facilities") renderFacilities();
   else if(currentView === "accounts") renderAccounts();
 }
-function stat(v,l,icon){ return '<div class="stat-box" data-icon="'+esc(icon||"analytics")+'"><div><div class="v">'+esc(v)+'</div><div class="l">'+esc(l)+'</div></div></div>'; }
+function stat(v,l){ return '<div class="stat-box"><div class="v">'+esc(v)+'</div><div class="l">'+esc(l)+'</div></div>'; }
 /* ---- Thông tin trang trại (mục 1.1): tên, địa chỉ, SĐT, ngày vệ sinh/khử trùng gần nhất ---- */
 function farmInfoCardHtml(info){
   info = info || {};
@@ -1755,37 +1764,43 @@ function farmInfoCardHtml(info){
       '<div><div style="color:var(--gray);">Khử trùng gần nhất</div><div style="font-weight:700;">'+(info.lastDisinfectDate?fmtDate(info.lastDisinfectDate):"Chưa ghi nhận")+'</div></div>'+
     '</div></div>';
 }
-function mediaListFromInfo(info){
-  var imgs = [];
-  ["heroImageUrl","coverImageUrl","imageUrl","photoUrl"].forEach(function(k){ if(info && info[k]) imgs.push(info[k]); });
-  ["images","photos","gallery"].forEach(function(k){
-    var v = info && info[k];
-    if(Array.isArray(v)) v.forEach(function(x){ if(x) imgs.push(typeof x === "string" ? x : (x.url || x.src)); });
-    else if(v && typeof v === "object") Object.keys(v).forEach(function(id){ var x=v[id]; if(x) imgs.push(typeof x === "string" ? x : (x.url || x.src)); });
-  });
-  var seen = {}; imgs = imgs.filter(function(u){ if(!u || seen[u]) return false; seen[u]=true; return true; });
-  var videos = [];
-  ["videoUrl","introVideoUrl"].forEach(function(k){ if(info && info[k]) videos.push({url:info[k], title:"Video trang trại"}); });
-  ["videos"].forEach(function(k){ var v=info&&info[k]; if(Array.isArray(v)) v.forEach(function(x){ if(x) videos.push(typeof x==="string"?{url:x,title:"Video trang trại"}:x); }); else if(v&&typeof v==="object") Object.keys(v).forEach(function(id){ var x=v[id]; if(x) videos.push(typeof x==="string"?{url:x,title:"Video trang trại"}:x); }); });
-  return {images:imgs, videos:videos.filter(function(v){ return v && v.url; })};
-}
 function renderOverview(){
   var el = document.getElementById("viewContent");
   el.innerHTML = '<div class="card">Đang tải…</div>';
-  Promise.all([computeStats(), FirebaseService.read("Farm/Info")]).then(function(res){
-    var s = res[0], info = res[1] || {};
-    var babyHtml = Object.keys(s.babyBySegment).map(function(k){
-      return '<div class="stat-box"><div class="v">'+s.babyBySegment[k]+'</div><div class="l">Baby '+esc(k)+'</div></div>';
-    }).join("");
-    el.innerHTML = farmInfoCardHtml(info) +
-      '<div class="card"><div class="grid-stats">'+
-        stat(s.totalCells,"Tổng số ô")+stat(s.vacantCells,"Ô trống")+stat(s.totalPop,"Tổng đàn hiện có")+
-        stat(s.males,"Tổng đực")+stat(s.females,"Tổng cái")+
-        stat(s.nursingMothers,"Mẹ đang nuôi con")+stat(s.totalPups,"Tổng con đang nuôi")+
-        babyHtml+ stat(s.totalCommercial,"Tổng thương phẩm")+
-        stat(s.treatingSick,"Ca đang điều trị bệnh")+stat(s.treatingInjured,"Ca đang điều trị thương tích")+
-        stat(s.reproductionRate===null?"—":s.reproductionRate+"%","Tỉ lệ đạt năng suất sinh sản")+
-      '</div></div>';
+  Promise.all([computeStats(), FirebaseService.read("Farm/Info"), collectTasks(), FirebaseService.read("Farm/AlertLog"), loadSalesData().catch(function(){ return null; })]).then(function(res){
+    var s = res[0], info = res[1] || {}, tasks = res[2] || [], alertLog = res[3] || {}, salesData = res[4];
+    var imageUrl = farmDashboardMedia.imageUrl;
+    var videoUrl = farmDashboardMedia.videoUrl;
+    var heroStyle = imageUrl ? ' style="--farm-hero-image:url(\''+esc(imageUrl)+'\')"' : "";
+    function kpi(value,label,icon,tint,accent){ return '<div class="farm-kpi"><div class="farm-kpi-icon" style="--tint:'+tint+';--accent:'+accent+'"><span class="material-symbols-outlined">'+icon+'</span></div><div><div class="v">'+esc(value)+'</div><div class="l">'+esc(label)+'</div></div></div>'; }
+    function mediaImage(cls, label){ return imageUrl ? '<img src="'+esc(imageUrl)+'" alt="'+esc(label)+'">' : '<span class="material-symbols-outlined" style="font-size:28px;">image</span>'; }
+    var babyKpis = Object.keys(s.babyBySegment||{}).map(function(k){ return kpi(s.babyBySegment[k],"Baby "+k,"child_care","#fff4df","#e88700"); }).join("");
+    var kpis = kpi(s.totalPop,"Tổng số dúi","pets","#e8f8ed","#0e9245")+
+      kpi(s.totalCells,"Ô chuồng","grid_view","#fff0e3","#f16b03")+
+      kpi(s.nursingMothers,"Đàn sinh sản","group","#e8f0ff","#0a65f1")+
+      kpi(s.males,"Đực giống","male","#eef2ff","#3857d6")+
+      kpi(s.females,"Cái giống","female","#fff0f7","#df3c9c")+
+      kpi(s.totalPups,"Dúi con đang nuôi","cruelty_free","#fff7e6","#e88700")+babyKpis;
+    var alertItems = Object.keys(alertLog).map(function(id){ return alertLog[id]||{}; }).sort(function(a,b){ return (b.reportedAt||0)-(a.reportedAt||0); }).slice(0,3);
+    var alertRows = alertItems.length ? alertItems.map(function(a){ return '<div class="farm-list-row"><div class="farm-list-icon"><span class="material-symbols-outlined">warning</span></div><div class="farm-list-main">'+esc(a.cellCode||"Trang trại")+'<small>'+esc(a.kind==="treat"?"Cần theo dõi sức khỏe":"Đến hạn công việc")+'</small></div><div class="farm-list-time">'+(a.dueDate?esc(fmtDate(a.dueDate)):"—")+'</div></div>'; }).join("") : '<div class="farm-empty">Chưa có cảnh báo nào cần xử lý.</div>';
+    var taskRows = tasks.slice(0,3).map(function(t){ return '<div class="farm-list-row"><div class="farm-list-icon" style="--icon-bg:#e8f8ed;--icon-color:#0e9245;"><span class="material-symbols-outlined">'+(t.overdue?"priority_high":"check_circle")+'</span></div><div class="farm-list-main">'+esc(t.type)+'<small>'+esc(t.code||"Trang trại")+'</small></div><div class="farm-list-time">'+esc(fmtDate(t.dueDate))+'</div></div>'; }).join("") || '<div class="farm-empty">Không có việc nào đến hạn hôm nay.</div>';
+    var monthSales = salesData ? computeSalesSummary(salesData,"month") : null;
+    var mediaTiles = imageUrl ? '<div class="farm-media-tile">'+mediaImage("", "Ảnh trang trại")+'<span class="media-caption">Ảnh đang quản lý</span></div><div class="farm-media-tile">'+mediaImage("", "Ảnh trang trại")+'</div><div class="farm-media-tile">'+(videoUrl?'<button class="media-play" id="btnHeroVideo"><span class="material-symbols-outlined">play_arrow</span></button>':'<span class="material-symbols-outlined" style="font-size:28px;">photo_library</span>')+'</div>' : '<div class="farm-media-tile" style="grid-column:span 2;grid-row:span 2;"><span class="material-symbols-outlined" style="font-size:34px;">add_photo_alternate</span></div>';
+    el.innerHTML = '<div class="farm-dashboard">'+
+      '<section class="farm-hero"><div class="farm-hero-copy"'+heroStyle+'><div class="farm-status">Trạng thái: Hoạt động tốt</div><h2>'+esc(info.name||"Trang trại Dúi")+' <span class="material-symbols-outlined" style="font-size:22px;vertical-align:middle;">verified</span></h2><p>'+esc(info.address||"Theo dõi vận hành trang trại theo dữ liệu thời gian thực.")+'</p><div class="farm-hero-actions">'+(videoUrl?'<button class="btn btn-secondary" id="btnHeroVideoMain"><span class="material-symbols-outlined">play_circle</span>Xem video trang trại</button>':'')+'<button class="btn btn-secondary" id="btnHeroQR"><span class="material-symbols-outlined">qr_code_2</span>QR trang trại</button></div></div><div class="farm-hero-media">'+mediaTiles+'</div></section>'+
+      '<section class="farm-kpis">'+kpis+'</section>'+
+      '<section class="farm-dashboard-grid"><article class="farm-panel"><div class="farm-panel-head"><div class="farm-panel-title"><span class="material-symbols-outlined">photo_camera</span>Hình ảnh trang trại</div><span class="farm-panel-link">Media động</span></div><div class="farm-photo-main">'+mediaImage("", "Ảnh trang trại")+'</div><div class="farm-media-strip"><div>'+mediaImage("", "Ảnh thu nhỏ")+'</div><div>'+mediaImage("", "Ảnh thu nhỏ")+'</div><div>'+mediaImage("", "Ảnh thu nhỏ")+'</div><div>'+mediaImage("", "Ảnh thu nhỏ")+'</div></div><div class="farm-media-meta">Ảnh được cập nhật tự động từ phần quản lý media của Trung tâm điều hành.</div></article>'+
+      '<article class="farm-panel"><div class="farm-panel-head"><div class="farm-panel-title"><span class="material-symbols-outlined">smart_display</span>Video nổi bật</div><span class="farm-panel-link">Media động</span></div><div class="farm-video-main">'+mediaImage("", "Video trang trại")+(videoUrl?'<button id="btnVideoCard" aria-label="Xem video"><span class="material-symbols-outlined">play_arrow</span></button>':'')+'</div><div class="farm-media-meta">'+(videoUrl?'Video hiện tại được quản lý từ Trung tâm điều hành.':'Chưa có video được gán cho Trang trại.')+'</div></article>'+
+      '<article class="farm-panel"><div class="farm-panel-head"><div class="farm-panel-title"><span class="material-symbols-outlined">monitoring</span>Thống kê nhanh</div><span class="farm-panel-link">Thời gian thực</span></div><div class="farm-metric-grid"><div class="farm-metric"><span>Năng suất sinh sản</span><b>'+esc(s.reproductionRate===null?"—":s.reproductionRate+"%")+'</b><small>Theo dữ liệu hiện có</small></div><div class="farm-metric" style="--metric-bg:#fff8f2;--metric-border:#ffe1c6;--metric-color:#e86a05"><span>Dúi thương phẩm</span><b>'+esc(s.totalCommercial)+'</b><small>Số lượng khả dụng</small></div></div><div class="farm-panel-summary">Ô trống: <strong>'+esc(s.vacantCells)+'</strong> · Đang điều trị: <strong>'+esc((s.treatingSick||0)+(s.treatingInjured||0))+'</strong></div></article></section>'+
+      '<section class="farm-bottom-grid"><article class="farm-panel"><div class="farm-panel-head"><div class="farm-panel-title"><span class="material-symbols-outlined">warning</span>Cảnh báo</div><button class="farm-panel-link" id="btnGoAlerts">Xem tất cả</button></div><div class="farm-list">'+alertRows+'</div></article><article class="farm-panel"><div class="farm-panel-head"><div class="farm-panel-title"><span class="material-symbols-outlined">event_available</span>Công việc hôm nay</div><button class="farm-panel-link" id="btnGoTasks">Xem tất cả</button></div><div class="farm-list">'+taskRows+'</div></article><article class="farm-panel"><div class="farm-panel-head"><div class="farm-panel-title"><span class="material-symbols-outlined">payments</span>Doanh thu tháng này</div><button class="farm-panel-link" id="btnGoSales">Xem chi tiết</button></div><div class="farm-revenue">'+(monthSales?fmtVND(monthSales.totalRevenue):"—")+'</div><div class="farm-revenue-note">'+(monthSales?('Lợi nhuận tạm tính: '+fmtVND(monthSales.profit)):'Chưa có dữ liệu doanh thu.')+'</div><div class="farm-revenue-chart"></div></article></section>'+
+      '<section class="farm-quick-actions"><button class="farm-quick" data-dashboard-view="zones"><span class="material-symbols-outlined">add_home</span>Quản lý ô chuồng</button><button class="farm-quick" data-dashboard-view="tasks"><span class="material-symbols-outlined">checklist</span>Việc cần làm</button><button class="farm-quick" data-dashboard-view="sales"><span class="material-symbols-outlined">payments</span>Bán dúi</button><button class="farm-quick" data-dashboard-view="alerts"><span class="material-symbols-outlined">analytics</span>Xem cảnh báo</button></section></div>';
+    var editBtn = isOwner() ? '<button class="btn btn-secondary" id="btnEditFarmInfo"><span class="material-symbols-outlined">edit</span>Sửa thông tin</button>' : "";
+    document.getElementById("topbarActions").innerHTML = (videoUrl?'<button class="btn btn-secondary" id="btnTopVideo"><span class="material-symbols-outlined">play_circle</span>Xem video giới thiệu</button>':'')+'<button class="btn btn-secondary" id="btnQRFarm"><span class="material-symbols-outlined">qr_code_2</span>QR trang trại</button>'+editBtn;
+    var openVideo = function(){ openFarmMediaVideo(); };
+    ["btnHeroVideo","btnHeroVideoMain","btnVideoCard","btnTopVideo"].forEach(function(id){ var b=document.getElementById(id); if(b) b.onclick=openVideo; });
+    ["btnHeroQR","btnQRFarm"].forEach(function(id){ var b=document.getElementById(id); if(b) b.onclick=function(){ openQRModal("QR Trang trại", qrFarmUrl()); }; });
+    ["btnGoAlerts","btnGoTasks","btnGoSales"].forEach(function(id){ var b=document.getElementById(id); if(b) b.onclick=function(){ var target={btnGoAlerts:"alerts",btnGoTasks:"tasks",btnGoSales:"sales"}[id]; currentView=target; document.querySelectorAll(".nav-item").forEach(function(n){ n.classList.toggle("active",n.getAttribute("data-view")===target); }); renderCurrentView(); }; });
+    el.querySelectorAll("[data-dashboard-view]").forEach(function(btn){ btn.onclick=function(){ var target=btn.getAttribute("data-dashboard-view"); currentView=target; document.querySelectorAll(".nav-item").forEach(function(n){ n.classList.toggle("active",n.getAttribute("data-view")===target); }); renderCurrentView(); }; });
     var btn = document.getElementById("btnEditFarmInfo");
     if(btn) btn.onclick = function(){
       openFormModal("Sửa thông tin trang trại", [
@@ -1796,46 +1811,10 @@ function renderOverview(){
         FirebaseService.updateAt("Farm/Info", {name:v.name, address:v.address, phone:v.phone}).then(function(){ closeModal(); renderOverview(); });
       }, "Lưu");
     };
-    var qrBtn = document.getElementById("btnQRFarm");
-    if(qrBtn) qrBtn.onclick = function(){ openQRModal("QR Trang trại", qrFarmUrl()); };
+  }).catch(function(err){
+    console.warn("Không thể tải dashboard trang trại:", err && err.message);
+    el.innerHTML = '<div class="card">Không thể tải dữ liệu tổng quan. Vui lòng kiểm tra kết nối Firebase.</div>';
   });
-Promise.all([computeStats(), FirebaseService.read("Farm/Info"), collectTasks(), FirebaseService.read("Farm/AlertLog"), loadSalesData().catch(function(){return null;})]).then(function(res){
-    var s = res[0], info = res[1] || {}, tasks = res[2] || {}, log = res[3] || {}, salesData = res[4];
-    var media = mediaListFromInfo(info);
-    var cover = media.images[0] || "";
-    var galleryTiles = [0,1,2,3].map(function(i){ return media.images[i] ? '<div class="hero-tile"><img src="'+esc(media.images[i])+'" alt="Ảnh trang trại"></div>' : '<div class="hero-tile hero-empty"><span class="material-symbols-outlined">image</span>&nbsp;Chưa có ảnh</div>'; }).join("");
-    var heroStyle = cover ? ' style="--hero-bg:url('+esc(cover)+')"' : "";
-    var videoBtn = media.videos[0] ? '<button class="btn btn-secondary" id="btnHeroVideo"><span class="material-symbols-outlined">play_circle</span>Xem video trang trại</button>' : "";
-    var topVideoBtn = media.videos[0] ? '<button class="btn btn-secondary" id="topHeroVideo"><span class="material-symbols-outlined">play_circle</span>Xem video trang trại</button>' : "";
-    var topActions = document.getElementById("topbarActions");
-    var editBtn = isOwner() ? '<button class="btn btn-secondary" id="topEditFarmInfo"><span class="material-symbols-outlined">edit</span>Sửa thông tin</button>' : "";
-    topActions.innerHTML = topVideoBtn + '<button class="btn btn-secondary" id="topQRFarm"><span class="material-symbols-outlined">qr_code_2</span>QR trang trại</button>' + editBtn;
-    var babyHtml = Object.keys(s.babyBySegment).map(function(k){ return stat(s.babyBySegment[k],"Baby "+k,"child_care"); }).join("");
-    var alertItems = Object.values(log).sort(function(a,b){return (b.reportedAt||0)-(a.reportedAt||0);}).slice(0,3);
-    var alertRows = alertItems.map(function(i){ return '<div class="mini-row"><span class="material-symbols-outlined" style="color:#f97316;">warning</span><div class="grow"><b>'+esc(i.cellCode||"Trại")+'</b><div style="color:var(--gray);">'+(i.kind==="treat"?"Cần theo dõi sức khoẻ":"Đến hạn công việc")+'</div></div><span>'+esc(i.dueDate?fmtDate(i.dueDate):"—")+'</span></div>'; }).join("") || '<div class="empty-state">Chưa có cảnh báo nào.</div>';
-    var taskRows = tasks.slice(0,3).map(function(t){ return '<div class="mini-row"><span class="material-symbols-outlined" style="color:#16a34a;">check_circle</span><div class="grow"><b>'+esc(t.type)+'</b><div style="color:var(--gray);">Ô '+esc(t.code)+'</div></div><span>'+fmtDate(t.dueDate)+'</span></div>'; }).join("") || '<div class="empty-state">Không có việc nào đến hạn hôm nay.</div>';
-    var salesHtml = '<div class="empty-state">Chưa có dữ liệu doanh thu để hiển thị.</div>';
-    if(salesData){ var sm = computeSalesSummary(salesData, "month"); salesHtml = '<div style="font-size:28px;font-weight:800;color:var(--green);margin-top:8px;">'+fmtVND(sm.totalRevenue)+'</div><div style="font-size:12px;color:var(--gray);margin-top:4px;">Doanh thu tháng này từ sổ Bán dúi</div><div style="height:70px;margin-top:18px;border-radius:14px;background:linear-gradient(180deg,rgba(22,163,74,.20),rgba(22,163,74,.03));"></div>'; }
-    el.innerHTML = '<div class="dashboard-shell">'+
-      '<section class="farm-hero"><div class="hero-panel"'+heroStyle+'><h2>'+esc(info.name||"Trang trại Dúi")+' <span class="material-symbols-outlined" style="font-size:22px;">verified</span></h2><p>'+esc(info.description||info.address||"Tổng quan vận hành trang trại theo dữ liệu hiện tại.")+'</p><div class="hero-meta"><span class="hero-pill">'+esc(info.phone||"Chưa có SĐT")+'</span><span class="hero-pill">Vệ sinh: '+(info.lastCleaningDate?fmtDate(info.lastCleaningDate):"Chưa ghi nhận")+'</span><span class="hero-pill">Khử trùng: '+(info.lastDisinfectDate?fmtDate(info.lastDisinfectDate):"Chưa ghi nhận")+'</span></div><div style="margin-top:18px;">'+videoBtn+'</div></div><div class="hero-media-grid">'+galleryTiles+'</div></section>'+
-      '<section class="grid-stats">'+stat(s.totalPop,"Tổng số dúi","pets")+stat(s.vacantCells,"Ô trống","grid_view")+stat(s.nursingMothers,"Đàn sinh sản","hub")+stat(s.males,"Đực giống","male")+stat(s.females,"Cái giống","female")+stat(s.totalPups,"Dúi con đang nuôi","child_care")+babyHtml+stat(s.totalCommercial,"Tổng thương phẩm","inventory_2")+stat(s.reproductionRate===null?"—":s.reproductionRate+"%","Tỉ lệ đạt năng suất sinh sản","monitoring")+'</section>'+
-      '<section class="dashboard-grid"><div class="dash-card"><h3><span class="material-symbols-outlined">photo_camera</span>Hình ảnh trang trại</h3>'+(cover?'<div class="hero-tile" style="height:150px;border-radius:14px;"><img src="'+esc(cover)+'" alt="Ảnh trang trại"></div>':'<div class="empty-state">Chưa có dữ liệu hình ảnh trong thông tin trang trại.</div>')+'</div><div class="dash-card"><h3><span class="material-symbols-outlined">smart_display</span>Video nổi bật</h3>'+(media.videos[0]?'<button class="play-fab" id="btnCardVideo"><span class="material-symbols-outlined">play_arrow</span></button><div style="margin-top:12px;font-weight:700;">'+esc(media.videos[0].title||"Video trang trại")+'</div>':'<div class="empty-state">Chưa có video được lưu cho trang trại.</div>')+'</div><div class="dash-card"><h3><span class="material-symbols-outlined">bar_chart</span>Doanh thu tháng này</h3>'+salesHtml+'</div></section>'+
-      '<section class="dashboard-grid"><div class="dash-card"><h3><span class="material-symbols-outlined">warning</span>Cảnh báo</h3>'+alertRows+'</div><div class="dash-card"><h3><span class="material-symbols-outlined">event_available</span>Công việc hôm nay</h3>'+taskRows+'</div><div class="dash-card"><h3><span class="material-symbols-outlined">bolt</span>Thao tác nhanh</h3><div class="quick-actions"><button class="btn btn-secondary" data-quick="zones"><span class="material-symbols-outlined">add_home</span>Quản lý ô chuồng</button><button class="btn btn-secondary" data-quick="tasks"><span class="material-symbols-outlined">checklist</span>Việc cần làm</button><button class="btn btn-secondary" data-quick="sales"><span class="material-symbols-outlined">payments</span>Bán dúi</button></div></div></section></div>';
-    function openInfoEdit(){ openFormModal("Sửa thông tin trang trại", [{id:"name", label:"Tên trại", value:info.name},{id:"address", label:"Địa chỉ", value:info.address},{id:"phone", label:"Điện thoại", value:info.phone}], function(v){ FirebaseService.updateAt("Farm/Info", {name:v.name, address:v.address, phone:v.phone}).then(function(){ closeModal(); renderOverview(); }); }, "Lưu"); }
-    ["topEditFarmInfo"].forEach(function(id){ var b=document.getElementById(id); if(b) b.onclick=openInfoEdit; });
-    var qr=document.getElementById("topQRFarm"); if(qr) qr.onclick=function(){ openQRModal("QR Trang trại", qrFarmUrl()); };
-    function playVideo(){ if(media.videos[0]) openVideoModal(media.videos[0].url); }
-    ["topHeroVideo","btnHeroVideo","btnCardVideo"].forEach(function(id){ var b=document.getElementById(id); if(b) b.onclick=playVideo; });
-    el.querySelectorAll("[data-quick]").forEach(function(b){ b.onclick=function(){ currentView=b.getAttribute("data-quick"); document.querySelectorAll(".nav-item").forEach(function(n){ n.classList.toggle("active", n.getAttribute("data-view")===currentView); }); renderCurrentView(); }; });
-  });
-}
-function openVideoModal(url){
-  var overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
-  overlay.innerHTML = '<div style="max-width:820px;width:100%;background:#000;border-radius:18px;overflow:hidden;position:relative;"><video src="'+esc(url)+'" controls autoplay style="width:100%;display:block;"></video><button class="btn btn-secondary" style="position:absolute;top:12px;right:12px;">Đóng</button></div>';
-  overlay.querySelector("button").onclick=function(){ overlay.remove(); };
-  overlay.onclick=function(e){ if(e.target===overlay) overlay.remove(); };
-  document.body.appendChild(overlay);
 }
 function renderZones(){
   var el = document.getElementById("viewContent");
