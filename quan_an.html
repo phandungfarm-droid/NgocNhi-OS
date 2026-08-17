@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quán ăn Ngọc Nhi — Hệ thống Dịch vụ Ngọc Nhi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="fcm-config.js"></script>
+<style>
+  :root{
+    --orange:#F16B03; --orange-dark:#D65E02; --orange-tint:#FFF8F2; --orange-tint2:#FFEFE1;
+    --ink:#16172B; --ink-soft:#3A3D52; --gray:#6B7280; --gray-light:#9CA3AF;
+    --border:#E7E9F0; --page-bg:#FAFBFD; --card-bg:#FFFFFF;
+    --red:#EF4444; --red-tint:#FDECEC; --green:#16A34A; --green-tint:#DCF5E7;
+    --blue:#0A65F1; --blue-tint:#EAF1FF;
+    --radius-lg:16px; --radius-md:12px; --radius-sm:8px;
+    --shadow-card:0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Be Vietnam Pro',sans-serif;background:var(--page-bg);color:var(--ink);-webkit-font-smoothing:antialiased;}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-size:20px;line-height:1;vertical-align:middle;}
+  a{text-decoration:none;color:inherit;} button{font-family:inherit;cursor:pointer;border:none;background:none;}
+  input,select,textarea{font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--ink);width:100%;}
+  label{font-size:11.5px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:4px;}
+  .field{margin-bottom:12px;}
+  .app{display:flex;min-height:100vh;max-width:1536px;margin:0 auto;}
+
+  .sidebar{width:230px;flex-shrink:0;background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 14px;}
+  .sidebar-logo{display:flex;align-items:center;gap:10px;padding:6px 8px 16px 8px;}
+  .sidebar-logo .icon{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--orange-tint2);border-radius:10px;color:var(--orange);}
+  .sidebar-logo .txt{line-height:1.2;} .sidebar-logo .t1{font-weight:800;font-size:14px;} .sidebar-logo .t2{font-weight:500;font-size:10px;color:var(--gray-light);}
+  .back-link{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--gray);padding:8px;margin-bottom:8px;}
+  .nav-list{display:flex;flex-direction:column;gap:4px;}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;font-size:13.5px;font-weight:600;color:var(--ink-soft);position:relative;}
+  .nav-item .material-symbols-outlined{font-size:19px;color:var(--gray);}
+  .nav-item.active{background:var(--orange);color:#fff;} .nav-item.active .material-symbols-outlined{color:#fff;}
+  .nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:20px;padding:2px 7px;}
+  .sidebar-spacer{flex:1;}
+  .auth-box{border:1px solid var(--border);border-radius:12px;padding:12px;font-size:12px;}
+  .auth-box .role-badge{display:inline-block;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;margin-bottom:6px;}
+  .role-owner{background:var(--orange-tint2);color:var(--orange-dark);}
+  .role-staff{background:var(--blue-tint);color:var(--blue);}
+  .auth-box button{width:100%;margin-top:8px;padding:8px;border-radius:8px;background:#F3F4F7;font-weight:700;font-size:12px;}
+
+  .main{flex:1;min-width:0;padding:20px 24px 32px;display:flex;flex-direction:column;gap:16px;}
+  .topbar{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+  .topbar h1{font-size:19px;font-weight:800;} .topbar .sub{font-size:12px;color:var(--gray);margin-top:2px;}
+  .topbar-actions{display:flex;gap:8px;align-items:center;}
+  .btn{padding:9px 14px;border-radius:9px;font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;gap:6px;}
+  .btn-primary{background:var(--orange);color:#fff;} .btn-secondary{background:#F3F4F7;color:var(--ink-soft);}
+  .btn-danger{background:var(--red-tint);color:#B91C1C;} .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:20px;}
+  .b-empty{background:#F1F2F4;color:#4B5563;} .b-occupied{background:var(--orange-tint2);color:var(--orange-dark);}
+  .b-serving{background:var(--blue-tint);color:var(--blue);} .b-completed{background:var(--green-tint);color:#128A4A;}
+  .b-cancelled{background:var(--red-tint);color:#B91C1C;} .b-available{background:var(--green-tint);color:#128A4A;}
+  .b-unavailable{background:#F1F2F4;color:#6B7280;} .b-new{background:var(--red-tint);color:#B91C1C;}
+  .b-confirmed{background:var(--blue-tint);color:var(--blue);} .b-done{background:var(--green-tint);color:#128A4A;}
+
+  .card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:18px;}
+  .grid-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}
+  .stat-box{border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;}
+  .stat-box .v{font-size:20px;font-weight:800;} .stat-box .l{font-size:10.5px;color:var(--gray);font-weight:600;margin-top:2px;}
+
+  .cat-tabs{display:flex;gap:8px;flex-wrap:wrap;}
+  .cat-tab{padding:8px 14px;border-radius:9px;font-size:12.5px;font-weight:700;background:#F3F4F7;color:var(--ink-soft);}
+  .cat-tab.active{background:var(--orange);color:#fff;}
+  .item-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
+  .item-card{border:1px solid var(--border);border-radius:10px;padding:12px;}
+  .item-card .name{font-weight:800;font-size:13px;} .item-card .price{font-size:12px;color:var(--gray);margin-top:4px;}
+  .item-card .row-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+  .item-card .row-actions button{font-size:11px;padding:6px 8px;border-radius:7px;background:#F3F4F7;color:var(--ink-soft);font-weight:700;}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th{text-align:left;font-size:10.5px;color:var(--gray);text-transform:uppercase;padding:8px;border-bottom:1px solid var(--border);}
+  td{padding:8px;border-bottom:1px solid var(--border);}
+  tr:hover td{background:#FAFBFD;}
+
+  .table-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+  .table-card{border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;}
+  .table-card:hover{border-color:var(--orange);}
+  .table-card .name{font-weight:800;font-size:13px;} .table-card .meta{font-size:10.5px;color:var(--gray);margin-top:4px;}
+
+  .order-row{border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;}
+  .order-row .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .order-row .items{font-size:12px;color:var(--ink-soft);} .order-row .items div{padding:2px 0;}
+  .order-row .actions{display:flex;gap:8px;margin-top:10px;}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(15,20,35,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;}
+  .modal{background:#fff;border-radius:16px;padding:22px;max-width:560px;width:100%;max-height:88vh;overflow:auto;}
+  .modal h3{font-size:16px;font-weight:800;margin-bottom:14px;}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+  .hidden{display:none !important;}
+
+  .toast-wrap{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:80;max-width:340px;}
+  .toast{background:#16172B;color:#fff;padding:12px 14px;border-radius:10px;font-size:12.5px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.2);}
+  .toast.telegram{background:#1F8FE0;} .toast.zalo{background:#0068FF;}
+
+  .fab{position:fixed;bottom:24px;right:24px;background:var(--orange);color:#fff;border-radius:50px;padding:14px 18px;font-weight:800;font-size:13px;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(241,107,3,.4);z-index:40;}
+  .fab .fab-badge{background:#fff;color:var(--orange-dark);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;}
+
+  .qty-control{display:flex;align-items:center;gap:8px;}
+  .qty-control button{width:26px;height:26px;border-radius:8px;background:#F3F4F7;font-weight:800;}
+  .qty-control .n{min-width:20px;text-align:center;font-weight:700;}
+
+  /* Màn khách tự gọi món qua QR bàn */
+  .guest-screen{min-height:100vh;background:var(--orange-tint);padding:16px;padding-bottom:90px;}
+  .guest-header{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow-card);}
+  .guest-header h2{font-size:16px;font-weight:800;} .guest-header .sub{font-size:12px;color:var(--gray);margin-top:2px;}
+  .guest-cat{margin-bottom:16px;}
+  .guest-cat h3{font-size:13px;font-weight:800;color:var(--orange-dark);margin-bottom:8px;}
+  .guest-item{background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--shadow-card);}
+  .guest-item .name{font-weight:700;font-size:13px;} .guest-item .price{font-size:11.5px;color:var(--gray);}
+  .guest-cart-bar{position:fixed;bottom:0;left:0;right:0;background:var(--ink);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;font-weight:700;}
+  .sorry-banner{background:var(--red-tint);color:#B91C1C;padding:12px 16px;border-radius:12px;font-size:12.5px;font-weight:600;margin-bottom:14px;}
+
+  @media (max-width:900px){ .app{flex-direction:column;} .sidebar{width:100%;flex-direction:row;flex-wrap:wrap;} .sidebar-spacer{display:none;} }
+</style>
+</head>
+<body>
+
+<!-- ============ MÀN KHÁCH TỰ GỌI MÓN QUA QR BÀN (mục 4) ============ -->
+<div id="guestScreen" class="guest-screen hidden">
+  <div class="guest-header">
+    <h2 id="guestTableName">Bàn —</h2>
+    <div class="sub">Chọn món bạn muốn gọi</div>
+  </div>
+  <div id="guestSorryBanner" class="sorry-banner hidden">Xin lỗi quý khách, hiện món dúi tạm hết hàng.</div>
+  <div id="guestMenu"></div>
+  <div class="guest-cart-bar">
+    <span id="guestCartCount">0 món</span>
+    <button class="btn btn-primary" id="guestSubmitBtn" style="background:#fff;color:var(--ink);">Gửi order</button>
+  </div>
+</div>
+<div id="guestConfirmOverlay" class="modal-overlay hidden">
+  <div class="modal" style="text-align:center;">
+    <span class="material-symbols-outlined" style="font-size:48px;color:var(--green);">check_circle</span>
+    <h3>Đã gửi order!</h3>
+    <p style="color:var(--gray);font-size:13px;">Nhà bếp đã nhận được yêu cầu của bạn.</p>
+    <div class="modal-actions" style="justify-content:center;"><button class="btn btn-primary" id="guestConfirmCloseBtn">Đóng</button></div>
+  </div>
+</div>
+
+<!-- ============ ỨNG DỤNG CHÍNH (chủ quán / nhân viên / khách tham quan) ============ -->
+<div id="mainApp" class="app hidden">
+  <aside class="sidebar">
+    <a class="back-link" href="index.html"><span class="material-symbols-outlined">arrow_back</span>Về Trang chủ</a>
+    <div class="sidebar-logo">
+      <div class="icon"><span class="material-symbols-outlined">skillet</span></div>
+      <div class="txt"><div class="t1">QUÁN ĂN</div><div class="t2">NGỌC NHI</div></div>
+    </div>
+    <div style="padding:0 8px 14px 8px;">
+      <button id="btnModuleVideo" class="hidden" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;">
+        <span class="material-symbols-outlined" style="font-size:16px;">smart_display</span>Video giới thiệu
+      </button>
+      <button id="btnOrderAlerts" style="width:100%;margin-top:8px;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;position:relative;">
+        🔔 Cảnh báo đơn hàng<span class="nav-badge hidden" id="orderAlertBadge" style="position:absolute;right:6px;top:6px;">0</span>
+      </button>
+    </div>
+    <nav class="nav-list" id="navList">
+      <a class="nav-item active" data-view="overview"><span class="material-symbols-outlined">dashboard</span>Tổng quan</a>
+      <a class="nav-item" data-view="menu"><span class="material-symbols-outlined">restaurant_menu</span>Thực đơn</a>
+      <a class="nav-item" data-view="tables"><span class="material-symbols-outlined">table_bar</span>Bàn &amp; Gọi món</a>
+      <a class="nav-item" data-view="tickets"><span class="material-symbols-outlined">receipt_long</span>Đặt hàng Online<span class="nav-badge hidden" id="ticketBadge">0</span></a>
+      <a class="nav-item" data-view="accounts"><span class="material-symbols-outlined">group</span>Tài khoản &amp; Nhật ký</a>
+    </nav>
+    <div class="sidebar-spacer"></div>
+    <div class="auth-box" id="authBox"></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div><h1 id="viewTitle">Tổng quan</h1><div class="sub" id="viewSub">—</div></div>
+      <div class="topbar-actions" id="topbarActions"></div>
+    </div>
+    <div id="viewContent"></div>
+  </div>
+
+  <button class="fab" id="onlineOrderFab"><span class="material-symbols-outlined">shopping_cart</span>Đặt hàng Online</button>
+</div>
+
+<!-- Widget đặt hàng online / đặt tiệc — nổi toàn hệ thống (mục 3 Đặc tả Menu) -->
+<div id="onlineOrderOverlay" class="modal-overlay hidden">
+  <div class="modal">
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button class="btn btn-secondary" id="tabFoodBtn" style="flex:1;">Đặt món (mang về/giao)</button>
+      <button class="btn btn-secondary" id="tabPartyBtn" style="flex:1;">Đặt tiệc</button>
+    </div>
+    <div id="onlineOrderBody"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" id="btnCloseOnlineOrder">Đóng</button></div>
+  </div>
+</div>
+
+<div id="modalRoot"></div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+"use strict";
+/* =========================================================================
+   FIREBASE CONFIG — nạp dùng chung từ firebase-config.js (1 nguồn duy nhất
+   cho cả 4 trang, xem <script src="firebase-config.js"> trong <head>).
+   ========================================================================= */
+var FIREBASE_CONFIG = window.FIREBASE_CONFIG || {};
+
+var currentView = "overview";
+
+var db = null, auth = null, firebaseReady = false;
+try{
+  if(typeof firebase === "undefined") throw new Error("Firebase SDK chưa tải được (kiểm tra kết nối mạng / chặn CDN).");
+  if(!firebase.apps.length){ firebase.initializeApp(FIREBASE_CONFIG); }
+  db = firebase.database();
+  auth = firebase.auth();
+  firebaseReady = true;
+}catch(err){
+  console.warn("Firebase chưa sẵn sàng:", err && err.message);
+}
+
+/* =========================================================================
+   VIDEO GIỚI THIỆU (kiến trúc mới) — Quán ăn KHÔNG có chức năng upload
+   video. Chỉ tự động đọc realtime đúng video Trung tâm điều hành đã gán
+   cho module "restaurant" tại SystemSettings/ModuleVideos/RestaurantVideo
+   rồi hiển thị trong hộp thoại nhỏ khi bấm nút — không có nút tải lên nào.
+   ========================================================================= */
+(function initModuleVideoReadOnly(){
+  if(!firebaseReady || !db) return;
+  var btn = document.getElementById("btnModuleVideo");
+  if(!btn) return;
+  var currentVideoUrl = null;
+  db.ref("SystemSettings/ModuleVideos/RestaurantVideo").on("value", function(snap){
+    currentVideoUrl = snap.val() || null;
+    btn.classList.toggle("hidden", !currentVideoUrl);
+  }, function(err){ console.warn("Không đọc được video giới thiệu:", err && err.message); });
+  btn.addEventListener("click", function(){
+    if(!currentVideoUrl) return;
+    var overlay = document.createElement("div");
+    overlay.style.cssText = "position:fixed;inset:0;background:rgba(15,20,35,.7);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;";
+    overlay.innerHTML = '<div style="max-width:720px;width:100%;background:#000;border-radius:12px;overflow:hidden;position:relative;">'+
+      '<video src="'+currentVideoUrl+'" controls autoplay style="width:100%;display:block;"></video>'+
+      '<button style="position:absolute;top:8px;right:8px;background:#fff;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-weight:800;">✕</button></div>';
+    overlay.querySelector("button").onclick = function(){ overlay.remove(); };
+    overlay.onclick = function(e){ if(e.target===overlay) overlay.remove(); };
+    document.body.appendChild(overlay);
+  });
+})();
+
+/* =========================================================================
+   LỚP FirebaseService — điểm truy cập DUY NHẤT tới Firebase Database & Auth.
+   (Giống hệt kiến trúc đã dùng ở trang_trai.html để đồng nhất toàn hệ thống)
+   ========================================================================= */
+var FirebaseService = (function(){
+  function ref(path){ return db.ref(path); }
+  return {
+    read: function(path){ return ref(path).once("value").then(function(s){ return s.val(); }); },
+    readSnapshot: function(path){ return ref(path).once("value"); },
+    listen: function(path, onData, onError){
+      var cb = function(s){ onData(s.val()); };
+      ref(path).on("value", cb, onError);
+      return function unsubscribe(){ ref(path).off("value", cb); };
+    },
+    queryEqualTo: function(path, field, value){
+      return ref(path).orderByChild(field).equalTo(value).once("value").then(function(s){ return s.val() || {}; });
+    },
+    write: function(path, value){ return ref(path).set(value === undefined ? null : value); },
+    updateAt: function(path, partial){ return ref(path).update(partial); },
+    updateMultiPath: function(absUpdates){ return db.ref().update(absUpdates); },
+    generateKey: function(path){ return ref(path).push().key; },
+    push: function(path, value){
+      var newRef = ref(path).push();
+      return newRef.set(value).then(function(){ return newRef.key; });
+    },
+    remove: function(path){ return ref(path).remove(); },
+    transaction: function(path, fn){ return ref(path).transaction(fn); },
+
+    signIn: function(email, pass){ return auth.signInWithEmailAndPassword(email, pass); },
+    signOut: function(){ return auth.signOut(); },
+    onAuthStateChanged: function(cb){ return auth.onAuthStateChanged(cb); },
+    getCurrentUser: function(){ return auth.currentUser; },
+    createStaffAccount: function(email, password){
+      var secondaryApp = firebase.initializeApp(FIREBASE_CONFIG, "StaffCreation_" + Date.now());
+      return secondaryApp.auth().createUserWithEmailAndPassword(email, password).then(function(cred){
+        var user = { uid: cred.user.uid, email: cred.user.email };
+        return secondaryApp.auth().signOut().then(function(){ return secondaryApp.delete(); }).then(function(){ return user; });
+      }).catch(function(err){ return secondaryApp.delete().then(function(){ throw err; }); });
+    },
+    requestNotificationPermission: function(){
+      if(!("Notification" in window)) return Promise.resolve("unsupported");
+      return Notification.requestPermission();
+    },
+    showBrowserNotification: function(title, options){
+      if(!("Notification" in window) || Notification.permission !== "granted") return;
+      new Notification(title, options);
+    }
+  };
+})();
+
+/* =========================================================================
+   SƠ ĐỒ DỮ LIỆU (tóm tắt — chi tiết trong quan_an_DATABASE_SCHEMA.md)
+   Restaurant/_meta/schemaVersion
+   Restaurant/MenuItems/{itemId}      { name, category, price, priceNote, available }
+   Restaurant/Tables/{tableId}        { name, capacity, status }
+   Restaurant/Orders/{orderId}        { tableId, status, source, items:{menuItemId:qty}, note, createdAt, completedAt, totalAmount }
+   Restaurant/Tickets/{ticketId}      { type, status, customerName, phone, ...chi tiết theo loại, createdAt }
+   Restaurant/Accounts/{uid}          { name, email, role: owner|staff }
+   Restaurant/AccessLog/{date}/{role} number
+   Restaurant/OrderAlerts/{alertId}   { kind:"table"|"online", message, orderId|ticketId, tableId, tableName,
+                                         customerName, status:"unread"|"read", createdAt }
+   Restaurant/NotificationTokens/{fcmToken}  { phone, registeredAt, userAgent }
+
+   HỢP ĐỒNG ĐỌC LIÊN MODULE (không ghi — chỉ đọc, theo đúng tài liệu
+   trang_trai_DATABASE_SCHEMA.md):
+   Farm/CommercialStock/total  — tồn kho dúi khả dụng, dùng để tự ẩn/hiện món "dúi"
+   Farm/IncomingEvents/{key}   — PUSH sự kiện đơn mới để kích hoạt cảnh báo Chủ trại
+   (Restaurant/OrderAlerts là kênh cảnh báo RIÊNG của Quán ăn — bảng chuông
+   🔔 + FCM cho điện thoại Ngọc Nhi — KHÔNG dùng chung Farm/IncomingEvents vì
+   khác định dạng dữ liệu/khác người nhận, tránh làm hỏng luồng cảnh báo Chủ
+   trại đang chạy ở trang_trai.html.)
+   ========================================================================= */
+function esc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function todayStr(d){ d = d || new Date(); return d.toISOString().slice(0,10); }
+function fmtVND(n){ if(n==null) return "—"; return Number(n).toLocaleString("vi-VN")+"đ"; }
+function showToast(text, cls){
+  var el = document.createElement("div");
+  el.className = "toast" + (cls?(" "+cls):"");
+  el.textContent = text;
+  document.getElementById("toastWrap").appendChild(el);
+  setTimeout(function(){ el.remove(); }, 6000);
+}
+
+/* =========================================================================
+   MIGRATION — seed Thực đơn khởi tạo mặc định (đúng nội dung Đặc tả Menu, mục 2)
+   ========================================================================= */
+var CURRENT_SCHEMA_VERSION = 1;
+function seedItem(list, cat, name, price, note){ list.push({category:cat, name:name, price:price, priceNote:note||"", available:true}); }
+function buildDefaultMenu(){
+  var L = [];
+  seedItem(L,"Gà","Gà tre hấp mắm nhỉ/hấp xả",300000,"/con");
+  seedItem(L,"Gà","Gà tre nấu lá giang",350000,"/con");
+  seedItem(L,"Gà","Gà nướng nguyên con",300000,"/con");
+  seedItem(L,"Gà","Sụn gà chiên mắm",69000,"69k–99k");
+  seedItem(L,"Gà","Chân gà rút xương chiên mắm",39000,"39k–79k");
+  seedItem(L,"Gà","Cánh gà chiên mắm",69000,"69k–99k");
+
+  seedItem(L,"Mực","Mực xào xả tế",150000,"150k–200k");
+  seedItem(L,"Mực","Mực chiên sốt chanh dây",150000,"150k–200k");
+  seedItem(L,"Mực","Mực hấp",150000,"150k–200k");
+
+  seedItem(L,"Rau - Bò - Mỳ - Lẩu","Rau muống xào tỏi",39000,"");
+  seedItem(L,"Rau - Bò - Mỳ - Lẩu","Bò xào cần",150000,"150k–200k");
+  seedItem(L,"Rau - Bò - Mỳ - Lẩu","Bò xào chua ngọt",150000,"150k–200k");
+  seedItem(L,"Rau - Bò - Mỳ - Lẩu","Bò lúc lắc",150000,"150k–200k");
+  seedItem(L,"Rau - Bò - Mỳ - Lẩu","Mỳ xào bò",79000,"79k–149k");
+  seedItem(L,"Rau - Bò - Mỳ - Lẩu","Mỳ xào hải sản",79000,"79k–149k");
+  seedItem(L,"Rau - Bò - Mỳ - Lẩu","Lẩu thái",200000,"200k–250k");
+  seedItem(L,"Rau - Bò - Mỳ - Lẩu","Lẩu hải sản, chanh dây",250000,"250k–300k");
+  seedItem(L,"Rau - Bò - Mỳ - Lẩu","Lẩu cá thác lác",200000,"200k–250k");
+  seedItem(L,"Rau - Bò - Mỳ - Lẩu","Sườn cay thái",150000,"150k–200k");
+
+  seedItem(L,"Ếch - Dế - Mẹt tép","Ếch núp lùm",79000,"79k–149k");
+  seedItem(L,"Ếch - Dế - Mẹt tép","Ếch rang muối",79000,"79k–149k");
+  seedItem(L,"Ếch - Dế - Mẹt tép","Ếch nấu cay",150000,"150k–200k");
+  seedItem(L,"Ếch - Dế - Mẹt tép","Ếch chiên mắm",79000,"79k–149k");
+  seedItem(L,"Ếch - Dế - Mẹt tép","Dế xào xả ớt",59000,"59k–99k");
+  seedItem(L,"Ếch - Dế - Mẹt tép","Dế chiên bột",59000,"59k–99k");
+  seedItem(L,"Ếch - Dế - Mẹt tép","Dế tẩm mỡ hành",59000,"59k–99k");
+  seedItem(L,"Ếch - Dế - Mẹt tép","Mẹt tép",169000,"");
+  seedItem(L,"Ếch - Dế - Mẹt tép","Mẹt tép thịt ba chỉ",199000,"");
+  seedItem(L,"Ếch - Dế - Mẹt tép","Combo mẹt tép thịt ba chỉ cá lóc",499000,"");
+
+  seedItem(L,"Dúi - Thỏ - Cơm - Khác","Dúi hấp nguyên con",0,"Tính theo thời giá");
+  seedItem(L,"Dúi - Thỏ - Cơm - Khác","Dúi nấu khoai",0,"Tính theo thời giá");
+  seedItem(L,"Dúi - Thỏ - Cơm - Khác","Dúi xào lăn",0,"Tính theo thời giá");
+  seedItem(L,"Dúi - Thỏ - Cơm - Khác","Thỏ xào xả ớt",0,"Tính theo thời giá");
+  seedItem(L,"Dúi - Thỏ - Cơm - Khác","Thỏ xào lăn",0,"Tính theo thời giá");
+  seedItem(L,"Dúi - Thỏ - Cơm - Khác","Thỏ nướng nguyên con",0,"Tính theo thời giá");
+  seedItem(L,"Dúi - Thỏ - Cơm - Khác","Cơm chiên hải sản",69000,"");
+  seedItem(L,"Dúi - Thỏ - Cơm - Khác","Cơm chiên trứng",49000,"");
+  seedItem(L,"Dúi - Thỏ - Cơm - Khác","Chả cá thác lác chiên",150000,"150k–200k");
+  seedItem(L,"Dúi - Thỏ - Cơm - Khác","Tai heo bóp",100000,"100k–150k");
+
+  seedItem(L,"Đồ uống","Trà vải",20000,"");
+  seedItem(L,"Đồ uống","Trà nhãn sương sáo",20000,"");
+  seedItem(L,"Đồ uống","Trà chuối",20000,"");
+  seedItem(L,"Đồ uống","Hạt é nha đam",15000,"");
+  seedItem(L,"Đồ uống","Tiger bạc nhỏ",15000,"/lon");
+  seedItem(L,"Đồ uống","Bạc lớn",19000,"");
+  seedItem(L,"Đồ uống","Tiger nâu nhỏ",14000,"");
+  seedItem(L,"Đồ uống","Nâu lớn",18000,"");
+  seedItem(L,"Đồ uống","Ken nhỏ",18000,"");
+  seedItem(L,"Đồ uống","Rượu",40000,"/bình");
+  seedItem(L,"Đồ uống","Nước ngọt các loại",12000,"");
+  return L;
+}
+var MIGRATIONS = {
+  1: function migrateV1(){
+    return FirebaseService.read("Restaurant/MenuItems").then(function(existing){
+      if(existing) return;
+      var items = buildDefaultMenu();
+      var updates = {};
+      items.forEach(function(it){
+        var id = FirebaseService.generateKey("Restaurant/MenuItems");
+        updates["Restaurant/MenuItems/"+id] = it;
+      });
+      return FirebaseService.updateMultiPath(updates);
+    });
+  }
+};
+function runMigrations(){
+  return FirebaseService.read("Restaurant/_meta/schemaVersion").then(function(version){
+    version = version || 0;
+    var chain = Promise.resolve(); var v = version+1; var ran=[];
+    while(v <= CURRENT_SCHEMA_VERSION){
+      (function(mv){ chain = chain.then(function(){ return MIGRATIONS[mv](); }); ran.push(mv); })(v);
+      v++;
+    }
+    return chain.then(function(){
+      if(ran.length===0) return;
+      return FirebaseService.write("Restaurant/_meta/schemaVersion", CURRENT_SCHEMA_VERSION);
+    });
+  });
+}
+
+/* =========================================================================
+   VAI TRÒ (mục "bỏ đăng nhập" — Quán ăn không yêu cầu đăng nhập: mọi người
+   mở thẳng giao diện quản lý (không phải qua link QR khách bàn) đều được
+   coi là nhân viên quán, thao tác đầy đủ ngay không cần qua bước xác thực)
+   ========================================================================= */
+var currentRole = "owner", currentUid = null, currentAccounts = {};
+function isOwner(){ return currentRole === "owner"; }
+function isStaffOrOwner(){ return currentRole === "owner" || currentRole === "staff"; }
+function logAccess(role){
+  FirebaseService.transaction("Restaurant/AccessLog/"+todayStr()+"/"+role, function(cur){ return (cur||0)+1; });
+}
+function renderAuthBox(){
+  var box = document.getElementById("authBox");
+  box.innerHTML = '<span class="role-badge role-owner">QUẢN LÝ QUÁN ĂN</span>'+
+    '<button id="btnEnablePush">Bật thông báo đơn hàng</button>';
+  var btn = document.getElementById("btnEnablePush");
+  if(btn) btn.onclick = enablePushNotifications;
+}
+
+/* =========================================================================
+   THỰC ĐƠN (mục 1 đặc tả Quán ăn) — bao gồm quy tắc tự động ẩn món "dúi"
+   theo tồn kho Farm/CommercialStock/total (đọc, KHÔNG ghi sang Farm)
+   ========================================================================= */
+var farmCommercialStock = null; // cache — cập nhật realtime
+if(firebaseReady){
+  FirebaseService.listen("Farm/CommercialStock/total", function(val){
+    farmCommercialStock = val || 0;
+    if(currentView === "menu" || currentView === "overview") renderCurrentView();
+    refreshGuestScreenStockBanner();
+  });
+}
+function isDuiItem(name){ return (name||"").toLowerCase().indexOf("dúi") !== -1; }
+function isItemAvailable(item){
+  if(isDuiItem(item.name)) return (farmCommercialStock||0) > 0;
+  return item.available !== false;
+}
+function addMenuItem(category, name, price, priceNote){
+  var id = FirebaseService.generateKey("Restaurant/MenuItems");
+  return FirebaseService.write("Restaurant/MenuItems/"+id, {category:category, name:name, price:price||0, priceNote:priceNote||"", available:true});
+}
+function deleteMenuItem(itemId){ return FirebaseService.remove("Restaurant/MenuItems/"+itemId); }
+function updateMenuItemPrice(itemId, price, priceNote){ return FirebaseService.updateAt("Restaurant/MenuItems/"+itemId, {price:price, priceNote:priceNote||""}); }
+function toggleMenuItemAvailability(itemId, available){ return FirebaseService.updateAt("Restaurant/MenuItems/"+itemId, {available:available}); }
+
+/* =========================================================================
+   QUẢN LÝ BÀN (mục 2)
+   ========================================================================= */
+function addTable(name, capacity){
+  var id = FirebaseService.generateKey("Restaurant/Tables");
+  return FirebaseService.write("Restaurant/Tables/"+id, {name:name, capacity:capacity||0, status:"empty"});
+}
+function deleteTable(tableId){ return FirebaseService.remove("Restaurant/Tables/"+tableId); }
+
+/* =========================================================================
+   ĐƠN TẠI QUÁN — nhân viên tạo (mục 3) & khách tự gọi qua QR (mục 4)
+   ========================================================================= */
+function createOrder(tableId, itemsMap, source){
+  return FirebaseService.write("Restaurant/Tables/"+tableId+"/status", "occupied").then(function(){
+    var orderId = FirebaseService.generateKey("Restaurant/Orders");
+    return FirebaseService.write("Restaurant/Orders/"+orderId, {
+      tableId: tableId, status:"serving", source: source, items: itemsMap, note:"", createdAt: Date.now()
+    }).then(function(){
+      return FirebaseService.read("Restaurant/Tables/"+tableId+"/name").then(function(tableName){
+        return Promise.all([
+          notifyFarmNewOrder("food", "Đơn mới tại bàn"),
+          pushOrderAlert("table", {
+            orderId: orderId, tableId: tableId, tableName: tableName || "",
+            message: "🔔 Đơn mới – Bàn " + (tableName || tableId)
+          })
+        ]);
+      }).then(function(){ return orderId; });
+    });
+  });
+}
+// Thêm 1 món vào đơn đang phục vụ (cộng dồn số lượng nếu món đã có trong đơn).
+function addItemToOrder(orderId, menuItemId, qty){
+  return FirebaseService.transaction("Restaurant/Orders/"+orderId+"/items/"+menuItemId, function(cur){ return (cur||0)+qty; });
+}
+// Sửa đúng số lượng 1 món trong đơn — số lượng 0 (hoặc nhỏ hơn) thì xoá món khỏi đơn.
+function setOrderItemQty(orderId, menuItemId, qty){
+  if(!(qty>0)) return FirebaseService.remove("Restaurant/Orders/"+orderId+"/items/"+menuItemId);
+  return FirebaseService.write("Restaurant/Orders/"+orderId+"/items/"+menuItemId, qty);
+}
+function removeOrderItem(orderId, menuItemId){ return FirebaseService.remove("Restaurant/Orders/"+orderId+"/items/"+menuItemId); }
+function updateOrderNote(orderId, note){ return FirebaseService.updateAt("Restaurant/Orders/"+orderId, {note:note}); }
+// Hoàn thành đơn = Thanh toán — đóng đơn/giải phóng bàn/cập nhật trạng thái,
+// đồng thời chốt lại đúng 1 lần "totalAmount" của hoá đơn (tính theo giá
+// Menu tại thời điểm thanh toán) để hoá đơn có tổng tiền hoàn chỉnh — đây là
+// dữ liệu CỦA RIÊNG hoá đơn đó (Restaurant/Orders), KHÔNG tự động ghi sang
+// sổ Thu Chi/doanh thu ở Trung tâm điều hành (vẫn theo đúng quyết định kiến
+// trúc đã thống nhất — ghi doanh thu vào Trung tâm vẫn là thao tác thủ công
+// riêng, không đổi).
+function completeOrder(orderId){
+  return Promise.all([FirebaseService.read("Restaurant/Orders/"+orderId), FirebaseService.read("Restaurant/MenuItems")]).then(function(res){
+    var order = res[0], menuItems = res[1] || {};
+    var total = 0;
+    Object.keys(order.items||{}).forEach(function(iid){
+      var it = menuItems[iid];
+      if(it) total += (Number(it.price)||0) * (order.items[iid]||0);
+    });
+    return FirebaseService.updateAt("Restaurant/Orders/"+orderId, {status:"completed", completedAt: Date.now(), totalAmount: total}).then(function(){
+      return FirebaseService.write("Restaurant/Tables/"+order.tableId+"/status", "empty");
+    });
+  });
+}
+function cancelOrder(orderId){
+  return FirebaseService.read("Restaurant/Orders/"+orderId).then(function(order){
+    return FirebaseService.updateAt("Restaurant/Orders/"+orderId, {status:"cancelled", completedAt: Date.now()}).then(function(){
+      return FirebaseService.write("Restaurant/Tables/"+order.tableId+"/status", "empty");
+    });
+  });
+}
+
+/* =========================================================================
+   TÍCH HỢP LIÊN MODULE VỚI TRANG TRẠI (mục 9.3 đặc tả Trang trại) — chỉ ghi,
+   theo đúng hợp đồng đã tài liệu hoá trong trang_trai_DATABASE_SCHEMA.md.
+   ========================================================================= */
+function notifyFarmNewOrder(type, detail){
+  return FirebaseService.push("Farm/IncomingEvents", {type:type, detail: detail||"", createdAt: Date.now()}).catch(function(err){
+    console.warn("Không gửi được sự kiện sang Trang trại (có thể do quyền ghi):", err && err.message);
+  });
+}
+
+/* =========================================================================
+   CẢNH BÁO ĐƠN HÀNG (Restaurant/OrderAlerts) — kênh cảnh báo RIÊNG của Quán
+   ăn: hiển thị chuông 🔔 ngay trên ứng dụng + kích hoạt Firebase Cloud
+   Function (functions/index.js, xem file đính kèm riêng) gửi push FCM thật
+   tới điện thoại đã đăng ký. Việc GỬI FCM thật sự nằm ở Cloud Function phía
+   server (bắt buộc — client không thể tự gửi push tới máy khác vì lý do
+   bảo mật của chính Firebase), client ở đây chỉ có nhiệm vụ ghi đúng 1 bản
+   ghi cảnh báo; Cloud Function tự động kích hoạt theo sự kiện ghi đó.
+   ========================================================================= */
+function pushOrderAlert(kind, payload){
+  var entry = Object.assign({ kind: kind, status: "unread", createdAt: Date.now() }, payload);
+  return FirebaseService.push("Restaurant/OrderAlerts", entry).catch(function(err){
+    console.warn("Không tạo được cảnh báo đơn hàng:", err && err.message);
+  });
+}
+function markOrderAlertRead(alertId){
+  return FirebaseService.updateAt("Restaurant/OrderAlerts/"+alertId, {status:"read"});
+}
+
+/* =========================================================================
+   ĐẶT HÀNG ONLINE & PHIẾU ĐẶT (mục 3, Đặc tả Menu) — widget nổi toàn hệ thống
+   ========================================================================= */
+function submitFoodTicket(customerName, phone, addressOrTable, note, itemsMap){
+  var id = FirebaseService.generateKey("Restaurant/Tickets");
+  return FirebaseService.write("Restaurant/Tickets/"+id, {
+    type:"food", status:"new", customerName:customerName, phone:phone, addressOrTable:addressOrTable||"",
+    note:note||"", items:itemsMap, createdAt: Date.now()
+  }).then(function(){
+    return Promise.all([
+      notifyFarmNewOrder("food", "Đơn đặt món online từ "+customerName),
+      pushOrderAlert("online", { ticketId: id, customerName: customerName, message: "🛎️ Đơn online mới – "+customerName })
+    ]);
+  });
+}
+function submitPartyTicket(customerName, phone, partyType, eventDate, eventTime, guestCount, note, itemsMap){
+  var id = FirebaseService.generateKey("Restaurant/Tickets");
+  return FirebaseService.write("Restaurant/Tickets/"+id, {
+    type:"party", status:"new", customerName:customerName, phone:phone, partyType:partyType,
+    eventDate:eventDate, eventTime:eventTime||"", guestCount:guestCount||0, note:note||"",
+    items:itemsMap||{}, createdAt: Date.now()
+  }).then(function(){
+    return pushOrderAlert("online", { ticketId: id, customerName: customerName, message: "🛎️ Đơn online mới – "+customerName });
+  });
+  // Lưu ý: đây CHỈ là yêu cầu tư vấn ban đầu, KHÔNG phải hợp đồng — không
+  // kích hoạt cảnh báo "hợp đồng tiệc cưới mới" của Trang trại (mục 9.3),
+  // vì cảnh báo đó chỉ phát khi có HỢP ĐỒNG thật được tạo ở module Tiệc cưới.
+  // Cảnh báo chuông 🔔 của Quán ăn (pushOrderAlert) vẫn tạo bình thường vì
+  // nhân viên Quán ăn vẫn cần biết ngay có yêu cầu mới, không phụ thuộc vào
+  // quy tắc "chỉ hợp đồng thật" riêng của Trang trại.
+}
+function updateTicketStatus(ticketId, status){ return FirebaseService.updateAt("Restaurant/Tickets/"+ticketId, {status:status}); }
+
+/* =========================================================================
+   CHẾ ĐỘ QUÉT QR BÀN — KHÁCH TỰ GỌI MÓN (mục 4)
+   ========================================================================= */
+var guestCart = {}; // {menuItemId: qty}
+var guestTableId = null;
+(function initGuestModeIfNeeded(){
+  var params = new URLSearchParams(window.location.search);
+  var tableId = params.get("table");
+  if(!tableId) return;
+  guestTableId = tableId;
+  document.getElementById("guestScreen").classList.remove("hidden");
+  document.getElementById("mainApp").classList.add("hidden");
+  if(!firebaseReady){
+    document.getElementById("guestTableName").textContent = "Chưa kết nối được Firebase.";
+    return;
+  }
+  renderGuestMenu();
+  FirebaseService.listen("Restaurant/MenuItems", function(){ renderGuestMenu(); });
+  FirebaseService.read("Restaurant/Tables/"+tableId).then(function(t){
+    document.getElementById("guestTableName").textContent = t ? ("Bàn "+t.name) : "Không tìm thấy bàn";
+  });
+})();
+function refreshGuestScreenStockBanner(){
+  var banner = document.getElementById("guestSorryBanner");
+  if(!banner) return;
+  if(!guestTableId) return;
+  banner.classList.toggle("hidden", (farmCommercialStock||0) > 0);
+}
+function renderGuestMenu(){
+  var container = document.getElementById("guestMenu");
+  if(!container) return;
+  FirebaseService.read("Restaurant/MenuItems").then(function(items){
+    items = items || {};
+    refreshGuestScreenStockBanner();
+    var byCat = {};
+    Object.keys(items).forEach(function(id){
+      var it = items[id];
+      if(!isItemAvailable(it)) return;
+      byCat[it.category] = byCat[it.category] || [];
+      byCat[it.category].push(Object.assign({id:id}, it));
+    });
+    var html = "";
+    Object.keys(byCat).forEach(function(cat){
+      html += '<div class="guest-cat"><h3>'+esc(cat)+'</h3>';
+      byCat[cat].forEach(function(it){
+        var qty = guestCart[it.id] || 0;
+        html += '<div class="guest-item"><div><div class="name">'+esc(it.name)+'</div><div class="price">'+(it.priceNote||fmtVND(it.price))+'</div></div>'+
+          '<div class="qty-control"><button class="gminus" data-id="'+it.id+'">−</button><span class="n">'+qty+'</span><button class="gplus" data-id="'+it.id+'">+</button></div></div>';
+      });
+      html += '</div>';
+    });
+    container.innerHTML = html || '<div style="color:var(--gray);font-size:13px;">Hiện chưa có món khả dụng.</div>';
+    container.querySelectorAll(".gplus").forEach(function(b){ b.onclick=function(){ guestCart[b.dataset.id]=(guestCart[b.dataset.id]||0)+1; renderGuestMenu(); updateGuestCartBar(); }; });
+    container.querySelectorAll(".gminus").forEach(function(b){ b.onclick=function(){ if(guestCart[b.dataset.id]>0){ guestCart[b.dataset.id]--; if(guestCart[b.dataset.id]===0) delete guestCart[b.dataset.id]; } renderGuestMenu(); updateGuestCartBar(); }; });
+  });
+}
+function updateGuestCartBar(){
+  var total = Object.values(guestCart).reduce(function(a,b){return a+b;},0);
+  document.getElementById("guestCartCount").textContent = total+" món";
+}
+document.getElementById("guestSubmitBtn").onclick = function(){
+  if(Object.keys(guestCart).length === 0){ showToast("Vui lòng chọn ít nhất 1 món."); return; }
+  createOrder(guestTableId, guestCart, "qr_guest").then(function(){
+    guestCart = {}; updateGuestCartBar(); renderGuestMenu();
+    document.getElementById("guestConfirmOverlay").classList.remove("hidden");
+  });
+};
+document.getElementById("guestConfirmCloseBtn").onclick = function(){ document.getElementById("guestConfirmOverlay").classList.add("hidden"); };
+
+/* =========================================================================
+   UI — RENDER CÁC MÀN HÌNH (chỉ chạy khi không ở chế độ khách QR)
+   ========================================================================= */
+document.getElementById("navList").addEventListener("click", function(e){
+  var item = e.target.closest(".nav-item"); if(!item) return;
+  document.querySelectorAll(".nav-item").forEach(function(n){ n.classList.remove("active"); });
+  item.classList.add("active"); currentView = item.getAttribute("data-view"); renderCurrentView();
+});
+function renderCurrentView(){
+  if(guestTableId) return;
+  if(!firebaseReady){
+    document.getElementById("viewTitle").textContent = "Đang chờ cấu hình Firebase";
+    document.getElementById("viewSub").textContent = "—";
+    document.getElementById("viewContent").innerHTML = '<div class="card">Chưa kết nối được Firebase (config còn placeholder hoặc mạng chặn SDK). Vui lòng điền Firebase config để module hoạt động đầy đủ.</div>';
+    return;
+  }
+  var titles = {
+    overview:["Tổng quan","Hoạt động Quán ăn thời gian thực"],
+    menu:["Thực đơn","Quản lý món ăn theo danh mục"],
+    tables:["Bàn & Gọi món","Quản lý bàn và đơn đang phục vụ"],
+    tickets:["Đặt hàng Online","Quản lý phiếu đặt món / đặt tiệc"],
+    accounts:["Tài khoản & Nhật ký","Quản lý tài khoản và nhật ký lượt truy cập"]
+  };
+  document.getElementById("viewTitle").textContent = titles[currentView][0];
+  document.getElementById("viewSub").textContent = titles[currentView][1];
+  if(currentView==="overview") renderOverview();
+  else if(currentView==="menu") renderMenu();
+  else if(currentView==="tables") renderTables();
+  else if(currentView==="tickets") renderTickets();
+  else if(currentView==="accounts") renderAccounts();
+}
+function stat(v,l){ return '<div class="stat-box"><div class="v">'+esc(v)+'</div><div class="l">'+esc(l)+'</div></div>'; }
+function renderOverview(){
+  var el = document.getElementById("viewContent");
+  el.innerHTML = '<div class="card">Đang tải…</div>';
+  Promise.all([
+    FirebaseService.read("Restaurant/MenuItems"),
+    FirebaseService.read("Restaurant/Tables"),
+    FirebaseService.read("Restaurant/Orders")
+  ]).then(function(res){
+    var items = res[0]||{}, tables = res[1]||{}, orders = res[2]||{};
+    var availableCount = Object.keys(items).filter(function(id){ return isItemAvailable(items[id]); }).length;
+    var occupiedTables = Object.keys(tables).filter(function(id){ return tables[id].status==="occupied"; }).length;
+    var today = todayStr();
+    var ordersToday = Object.keys(orders).filter(function(id){ return todayStr(new Date(orders[id].createdAt)) === today; }).length;
+    var servingNow = Object.keys(orders).filter(function(id){ return orders[id].status==="serving"; }).length;
+    el.innerHTML = '<div class="card"><div class="grid-stats">'+
+      stat(availableCount,"Món đang phục vụ")+stat(occupiedTables,"Bàn đang dùng")+
+      stat(ordersToday,"Đơn hôm nay")+stat(servingNow,"Đơn đang phục vụ")+
+      '</div></div>'+
+      '<div class="card" style="margin-top:14px;"><div style="font-weight:700;margin-bottom:8px;">Đồng bộ tồn kho Trang trại</div>'+
+      '<div style="font-size:13px;color:var(--ink-soft);">Tồn kho dúi thương phẩm khả dụng: <b>'+(farmCommercialStock==null?"đang tải…":farmCommercialStock+" con")+'</b>'+
+      (farmCommercialStock===0 ? ' — <span style="color:#B91C1C;font-weight:700;">món "dúi" đang tự động ẩn khỏi thực đơn khách gọi.</span>' : '')+
+      '</div></div>';
+  });
+}
+function renderMenu(){
+  var el = document.getElementById("viewContent");
+  el.innerHTML = '<div class="card">Đang tải…</div>';
+  FirebaseService.read("Restaurant/MenuItems").then(function(items){
+    items = items || {};
+    var cats = [];
+    Object.keys(items).forEach(function(id){ if(cats.indexOf(items[id].category)===-1) cats.push(items[id].category); });
+    if(!window.__activeCat || cats.indexOf(window.__activeCat)===-1) window.__activeCat = cats[0];
+    var tabsHtml = cats.map(function(c){ return '<div class="cat-tab'+(c===window.__activeCat?" active":"")+'" data-cat="'+esc(c)+'">'+esc(c)+'</div>'; }).join("");
+    var list = Object.keys(items).filter(function(id){ return items[id].category === window.__activeCat; }).map(function(id){ return Object.assign({id:id}, items[id]); });
+    var addBtn = isStaffOrOwner() ? '<button class="btn btn-primary" id="btnAddItem"><span class="material-symbols-outlined">add</span>Thêm món</button>' : "";
+    var itemsHtml = list.map(function(it){
+      var avail = isItemAvailable(it);
+      var isDui = isDuiItem(it.name);
+      return '<div class="item-card"><div class="name">'+esc(it.name)+'</div><div class="price">'+(it.priceNote||fmtVND(it.price))+'</div>'+
+        '<div style="margin-top:6px;"><span class="badge '+(avail?"b-available":"b-unavailable")+'">'+(avail?"Còn hàng":"Hết hàng")+'</span>'+
+        (isDui ? ' <span style="font-size:10px;color:var(--gray);">(tự động theo kho Trang trại)</span>' : '')+'</div>'+
+        (isStaffOrOwner() ? '<div class="row-actions">'+
+          '<button class="editPriceBtn" data-id="'+it.id+'">Sửa giá</button>'+
+          (!isDui ? '<button class="toggleAvailBtn" data-id="'+it.id+'" data-avail="'+avail+'">'+(avail?"Đánh dấu hết hàng":"Đánh dấu còn hàng")+'</button>' : '')+
+          (isOwner() ? '<button class="deleteItemBtn" data-id="'+it.id+'">Xoá</button>' : '')+
+          '</div>' : '')+
+        '</div>';
+    }).join("") || '<div style="color:var(--gray);font-size:13px;">Chưa có món trong danh mục này.</div>';
+    el.innerHTML = '<div class="card" style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;"><div class="cat-tabs">'+tabsHtml+'</div>'+addBtn+'</div></div>'+
+      '<div class="card"><div class="item-grid">'+itemsHtml+'</div></div>';
+    el.querySelectorAll(".cat-tab").forEach(function(t){ t.onclick=function(){ window.__activeCat = t.getAttribute("data-cat"); renderMenu(); }; });
+    if(document.getElementById("btnAddItem")) document.getElementById("btnAddItem").onclick = function(){
+      var name = prompt("Tên món:"); if(!name) return;
+      var price = parseInt(prompt("Giá (VNĐ, để 0 nếu tính theo thời giá):","0"),10)||0;
+      var note = prompt("Ghi chú giá (VD: khoảng giá, /con, Tính theo thời giá...):","")||"";
+      addMenuItem(window.__activeCat, name, price, note).then(renderMenu);
+    };
+    el.querySelectorAll(".editPriceBtn").forEach(function(b){ b.onclick=function(){
+      var price = parseInt(prompt("Giá mới (VNĐ):"),10); if(isNaN(price)) return;
+      var note = prompt("Ghi chú giá:","")||"";
+      updateMenuItemPrice(b.dataset.id, price, note).then(renderMenu);
+    };});
+    el.querySelectorAll(".toggleAvailBtn").forEach(function(b){ b.onclick=function(){
+      toggleMenuItemAvailability(b.dataset.id, b.dataset.avail !== "true").then(renderMenu);
+    };});
+    el.querySelectorAll(".deleteItemBtn").forEach(function(b){ b.onclick=function(){
+      if(confirm("Xoá món này?")) deleteMenuItem(b.dataset.id).then(renderMenu);
+    };});
+  });
+}
+function renderTables(){
+  var el = document.getElementById("viewContent");
+  el.innerHTML = '<div class="card">Đang tải…</div>';
+  Promise.all([FirebaseService.read("Restaurant/Tables"), FirebaseService.read("Restaurant/Orders"), FirebaseService.read("Restaurant/MenuItems")]).then(function(res){
+    var tables = res[0]||{}, orders = res[1]||{}, items = res[2]||{};
+    var addBtn = isStaffOrOwner() ? '<button class="btn btn-primary" id="btnAddTable"><span class="material-symbols-outlined">add</span>Thêm bàn</button>' : "";
+    var tableIds = Object.keys(tables);
+    // Bàn nào đang có đơn "serving" thì tra ra đúng orderId của bàn đó, để
+    // bấm vào bàn Đang phục vụ mở thẳng đúng hoá đơn hiện tại (không phải
+    // tạo mới) — mục "Bàn đang phục vụ → mở đúng hóa đơn hiện tại".
+    var servingOrderByTable = {};
+    Object.keys(orders).forEach(function(oid){ if(orders[oid].status==="serving") servingOrderByTable[orders[oid].tableId] = oid; });
+    var tablesHtml = tableIds.map(function(id){
+      var t = tables[id];
+      var qr = window.location.origin + window.location.pathname + "?table=" + id;
+      var clickable = isStaffOrOwner() ? ' style="cursor:pointer;" data-clickable="1"' : "";
+      return '<div class="table-card" data-tid="'+id+'"'+clickable+'><div class="name">'+esc(t.name)+'</div>'+
+        '<div class="meta">Sức chứa '+(t.capacity||0)+' · <span class="badge '+(t.status==="occupied"?"b-occupied":"b-empty")+'">'+(t.status==="occupied"?"Đang phục vụ":"Trống")+'</span></div>'+
+        (isStaffOrOwner() ? '<div style="font-size:11px;font-weight:700;color:var(--pink,#E4295F);margin-top:6px;">'+(t.status==="occupied"?"Bấm để gọi thêm / thanh toán →":"Bấm để tạo hoá đơn →")+'</div>' : "")+
+        '<div style="font-size:9.5px;color:var(--gray-light);margin-top:6px;word-break:break-all;">QR: '+esc(qr)+'</div></div>';
+    }).join("") || '<div style="color:var(--gray);font-size:13px;">Chưa có bàn nào. Cần thêm ít nhất 1 bàn trước khi tạo đơn.</div>';
+
+    var servingOrders = Object.keys(orders).filter(function(id){ return orders[id].status==="serving"; });
+    var ordersHtml = servingOrders.map(function(id){
+      var o = orders[id]; var t = tables[o.tableId];
+      var lineTotal = 0;
+      var itemLines = Object.keys(o.items||{}).map(function(iid){
+        var it = items[iid]; var qty = o.items[iid];
+        if(it) lineTotal += (Number(it.price)||0)*qty;
+        return '<div>'+(it?esc(it.name):"(món đã xoá)")+' × '+qty+'</div>';
+      }).join("");
+      return '<div class="order-row"><div class="head"><div style="font-weight:800;">Bàn '+(t?esc(t.name):"?")+'</div>'+
+        '<span class="badge b-serving">Đang phục vụ</span></div><div class="items">'+itemLines+'</div>'+
+        '<div style="font-weight:700;font-size:12.5px;margin-top:6px;">Tạm tính: '+fmtVNDQA(lineTotal)+'</div>'+
+        (isStaffOrOwner() ? '<div class="actions"><button class="btn btn-secondary editOrderBtn" data-oid="'+id+'" data-tid="'+o.tableId+'">Gọi thêm / Sửa</button><button class="btn btn-primary completeBtn" data-oid="'+id+'">Thanh toán</button><button class="btn btn-danger cancelBtn" data-oid="'+id+'">Huỷ đơn</button></div>' : '')+
+        '</div>';
+    }).join("") || '<div style="color:var(--gray);font-size:13px;">Không có đơn nào đang phục vụ.</div>';
+
+    el.innerHTML = '<div class="card" style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;"><div style="font-weight:700;">Danh sách bàn</div>'+addBtn+'</div><div class="table-grid">'+tablesHtml+'</div></div>'+
+      '<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;"><div style="font-weight:700;">Đơn đang phục vụ</div></div>'+ordersHtml+'</div>';
+
+    if(document.getElementById("btnAddTable")) document.getElementById("btnAddTable").onclick = function(){
+      var name = prompt("Tên bàn:"); if(!name) return;
+      var cap = parseInt(prompt("Sức chứa (số khách):","4"),10)||0;
+      addTable(name, cap).then(renderTables);
+    };
+    if(isStaffOrOwner()){
+      el.querySelectorAll('.table-card[data-clickable="1"]').forEach(function(card){
+        card.onclick = function(){
+          var tid = card.getAttribute("data-tid");
+          var t = tables[tid];
+          if(t.status === "occupied"){
+            var oid = servingOrderByTable[tid];
+            if(!oid){ showToast("Bàn đang phục vụ nhưng không tìm thấy đơn — vui lòng tải lại trang."); return; }
+            openOrderBuilderModal(tid, oid, tables, items);
+          } else {
+            openOrderBuilderModal(tid, null, tables, items);
+          }
+        };
+      });
+    }
+    el.querySelectorAll(".editOrderBtn").forEach(function(b){ b.onclick=function(){ openOrderBuilderModal(b.getAttribute("data-tid"), b.getAttribute("data-oid"), tables, items); }; });
+    el.querySelectorAll(".completeBtn").forEach(function(b){ b.onclick=function(){ if(confirm("Xác nhận thanh toán và đóng đơn này?")) completeOrder(b.dataset.oid).then(renderTables); }; });
+    el.querySelectorAll(".cancelBtn").forEach(function(b){ b.onclick=function(){ if(confirm("Huỷ đơn này?")) cancelOrder(b.dataset.oid).then(renderTables); }; });
+  });
+}
+function fmtVNDQA(n){ n = Number(n)||0; return n.toLocaleString("vi-VN")+"đ"; }
+function closeModal(){ document.getElementById("modalRoot").innerHTML = ""; }
+/* =========================================================================
+   HOÁ ĐƠN BÀN — Bàn Trống bấm vào để tạo hoá đơn mới (giỏ tạm trong bộ nhớ,
+   chỉ ghi Firebase khi bấm "Tạo hoá đơn"); Bàn Đang phục vụ bấm vào để mở
+   đúng hoá đơn hiện tại, mọi thao tác thêm/sửa/xoá món ghi thẳng vào đúng
+   Restaurant/Orders/{orderId}/items realtime. Thanh toán gọi completeOrder()
+   (đã có, nay tự chốt totalAmount) rồi đóng modal, chuyển bàn về Trống.
+   ========================================================================= */
+function openOrderBuilderModal(tableId, orderId, tables, menuItems){
+  var table = tables[tableId];
+  var draftCart = {}; // chỉ dùng khi orderId===null (đơn chưa tạo)
+  var draftNote = "";
+
+  function currentItemsSource(order){ return orderId ? (order.items||{}) : draftCart; }
+
+  function render(order){
+    var itemsMap = currentItemsSource(order);
+    var noteVal = orderId ? (order.note||"") : draftNote;
+    var availItems = Object.keys(menuItems).filter(function(id){ return isItemAvailable(menuItems[id]); });
+    var itemOptions = availItems.map(function(id){
+      var it = menuItems[id];
+      return '<option value="'+id+'">'+esc(it.name)+' — '+fmtVNDQA(it.price)+(it.priceNote?(" ("+esc(it.priceNote)+")"):"")+'</option>';
+    }).join("");
+    var total = 0;
+    var cartIds = Object.keys(itemsMap);
+    var cartRowsHtml = cartIds.map(function(iid){
+      var it = menuItems[iid]; var qty = itemsMap[iid];
+      var lineTotal = it ? (Number(it.price)||0)*qty : 0;
+      total += lineTotal;
+      return '<tr><td>'+(it?esc(it.name):"(món đã xoá)")+'</td>'+
+        '<td><input type="number" min="0" value="'+qty+'" class="cartQtyInput" data-iid="'+iid+'" style="width:64px;"></td>'+
+        '<td>'+fmtVNDQA(lineTotal)+'</td>'+
+        '<td><button class="btn btn-danger cartRemoveBtn" data-iid="'+iid+'">Xoá</button></td></tr>';
+    }).join("") || '<tr><td colspan="4" style="color:var(--gray);">Chưa gọi món nào.</td></tr>';
+
+    var root = document.getElementById("modalRoot");
+    root.innerHTML =
+      '<div class="modal-overlay" id="orderBuilderOverlay"><div class="modal" style="max-width:560px;">'+
+        '<h3>Hoá đơn — Bàn '+esc(table.name)+(orderId?"":" (mới)")+'</h3>'+
+        '<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;">'+
+          '<div class="field" style="flex:1;min-width:180px;"><label>Chọn món</label><select id="obItemSelect">'+(itemOptions||'<option value="">Không có món khả dụng</option>')+'</select></div>'+
+          '<div class="field" style="width:80px;"><label>SL</label><input type="number" id="obQtyInput" value="1" min="1"></div>'+
+          '<button class="btn btn-primary" id="obAddBtn">Thêm vào hoá đơn</button>'+
+        '</div>'+
+        '<div style="overflow:auto;margin-bottom:12px;"><table style="width:100%;"><thead><tr><th>Món</th><th>SL</th><th>Thành tiền</th><th></th></tr></thead><tbody>'+cartRowsHtml+'</tbody></table></div>'+
+        '<div class="field"><label>Ghi chú đơn</label><textarea id="obNoteInput" rows="2">'+esc(noteVal)+'</textarea></div>'+
+        '<div style="text-align:right;font-weight:800;font-size:15px;margin:10px 0;">Tổng hoá đơn: '+fmtVNDQA(total)+'</div>'+
+        '<div class="modal-actions" style="flex-wrap:wrap;">'+
+          (orderId
+            ? '<button class="btn btn-secondary" id="obSaveNoteBtn">Lưu ghi chú</button><button class="btn btn-danger" id="obCancelOrderBtn">Huỷ đơn</button><button class="btn btn-primary" id="obPayBtn">Thanh toán</button>'
+            : '<button class="btn btn-primary" id="obCreateBtn">Tạo hoá đơn</button>')+
+          '<button class="btn btn-secondary" id="obCloseBtn">Đóng</button>'+
+        '</div>'+
+      '</div></div>';
+
+    document.getElementById("obCloseBtn").onclick = closeModal;
+    document.getElementById("obAddBtn").onclick = function(){
+      var iid = document.getElementById("obItemSelect").value;
+      var qty = parseInt(document.getElementById("obQtyInput").value,10)||0;
+      if(!iid || qty<=0) return;
+      if(orderId){
+        addItemToOrder(orderId, iid, qty).then(refresh);
+      } else {
+        draftCart[iid] = (draftCart[iid]||0)+qty;
+        render({});
+      }
+    };
+    root.querySelectorAll(".cartQtyInput").forEach(function(inp){
+      inp.onchange = function(){
+        var iid = inp.getAttribute("data-iid");
+        var qty = parseInt(inp.value,10)||0;
+        if(orderId){ setOrderItemQty(orderId, iid, qty).then(refresh); }
+        else { if(qty<=0) delete draftCart[iid]; else draftCart[iid]=qty; render({}); }
+      };
+    });
+    root.querySelectorAll(".cartRemoveBtn").forEach(function(btn){
+      btn.onclick = function(){
+        var iid = btn.getAttribute("data-iid");
+        if(orderId){ removeOrderItem(orderId, iid).then(refresh); }
+        else { delete draftCart[iid]; render({}); }
+      };
+    });
+    if(!orderId){
+      document.getElementById("obCreateBtn").onclick = function(){
+        if(Object.keys(draftCart).length===0){ showToast("Chưa gọi món nào."); return; }
+        createOrder(tableId, draftCart, "staff").then(function(){ closeModal(); renderTables(); });
+      };
+      var noteEl = document.getElementById("obNoteInput");
+      noteEl.oninput = function(){ draftNote = noteEl.value; };
+    } else {
+      document.getElementById("obSaveNoteBtn").onclick = function(){
+        updateOrderNote(orderId, document.getElementById("obNoteInput").value).then(function(){ showToast("Đã lưu ghi chú."); });
+      };
+      document.getElementById("obPayBtn").onclick = function(){
+        if(cartIds.length===0){ showToast("Đơn chưa có món nào."); return; }
+        if(!confirm("Xác nhận thanh toán và đóng đơn này?")) return;
+        completeOrder(orderId).then(function(){ closeModal(); renderTables(); });
+      };
+      document.getElementById("obCancelOrderBtn").onclick = function(){
+        if(!confirm("Huỷ đơn này?")) return;
+        cancelOrder(orderId).then(function(){ closeModal(); renderTables(); });
+      };
+    }
+  }
+  function refresh(){
+    if(!orderId) { render({}); return; }
+    FirebaseService.read("Restaurant/Orders/"+orderId).then(function(order){
+      if(!order){ closeModal(); showToast("Đơn không còn tồn tại."); renderTables(); return; }
+      render(order);
+    });
+  }
+  refresh();
+}
+function renderTickets(){
+  var el = document.getElementById("viewContent");
+  if(!isStaffOrOwner()){ el.innerHTML = '<div class="card">Chỉ tài khoản đã đăng nhập mới quản lý được phiếu đặt.</div>'; return; }
+  el.innerHTML = '<div class="card">Đang tải…</div>';
+  FirebaseService.read("Restaurant/Tickets").then(function(tickets){
+    tickets = tickets || {};
+    var newCount = Object.keys(tickets).filter(function(id){ return tickets[id].status==="new"; }).length;
+    var badge = document.getElementById("ticketBadge");
+    badge.textContent = newCount; badge.classList.toggle("hidden", newCount===0);
+    var list = Object.keys(tickets).sort(function(a,b){ return tickets[b].createdAt - tickets[a].createdAt; });
+    var rows = list.map(function(id){
+      var t = tickets[id];
+      var detail = t.type==="food" ? "Giao/mang về — "+esc(t.addressOrTable||"") : ("Tiệc "+esc(t.partyType||"")+" — "+esc(t.eventDate||"")+" — "+(t.guestCount||0)+" khách");
+      var itemLines = Object.keys(t.items||{}).length ? Object.keys(t.items).map(function(k){return k+" × "+t.items[k];}).join(", ") : "(không chọn món)";
+      var actions = "";
+      if(t.status==="new") actions = '<button class="btn btn-primary tActBtn" data-id="'+id+'" data-s="confirmed">Xác nhận</button>';
+      if(t.status==="confirmed") actions = '<button class="btn btn-primary tActBtn" data-id="'+id+'" data-s="done">Hoàn tất</button>';
+      if(t.status==="new"||t.status==="confirmed") actions += ' <button class="btn btn-danger tActBtn" data-id="'+id+'" data-s="cancelled">Huỷ</button>';
+      return '<tr><td>'+esc(t.customerName)+'<br><span style="color:var(--gray);font-size:11px;">'+esc(t.phone)+'</span></td>'+
+        '<td>'+(t.type==="food"?"Đặt món":"Đặt tiệc")+'<br><span style="color:var(--gray);font-size:11px;">'+detail+'</span></td>'+
+        '<td style="max-width:200px;">'+itemLines+'</td>'+
+        '<td><span class="badge b-'+t.status+'">'+({new:"Mới",confirmed:"Đã xác nhận",done:"Hoàn tất",cancelled:"Đã huỷ"}[t.status])+'</span></td>'+
+        '<td>'+actions+'</td></tr>';
+    }).join("");
+    el.innerHTML = '<div class="card"><table><thead><tr><th>Khách hàng</th><th>Loại</th><th>Chi tiết món</th><th>Trạng thái</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="5" style="color:var(--gray);">Chưa có phiếu đặt nào.</td></tr>')+'</tbody></table></div>';
+    el.querySelectorAll(".tActBtn").forEach(function(b){ b.onclick=function(){ updateTicketStatus(b.dataset.id, b.dataset.s).then(renderTickets); }; });
+  });
+}
+function renderAccounts(){
+  var el = document.getElementById("viewContent");
+  if(!isOwner()){ el.innerHTML = '<div class="card">Chỉ Chủ quán mới quản lý được tài khoản.</div>'; return; }
+  el.innerHTML = '<div class="card">Đang tải…</div>';
+  Promise.all([FirebaseService.read("Restaurant/Accounts"), FirebaseService.read("Restaurant/AccessLog")]).then(function(res){
+    var accounts = res[0]||{}, accessLog = res[1]||{};
+    var staffRows = Object.keys(accounts).filter(function(uid){return accounts[uid].role==="staff";}).map(function(uid){
+      var a = accounts[uid];
+      return '<tr><td>'+esc(a.name)+'</td><td>'+esc(a.email)+'</td><td><button class="btn btn-danger delStaffBtn" data-uid="'+uid+'">Xoá</button></td></tr>';
+    }).join("");
+    var days = Object.keys(accessLog).sort().slice(-14).reverse();
+    var logRows = days.map(function(d){ var r=accessLog[d]; return '<tr><td>'+d+'</td><td>'+(r.owner||0)+'</td><td>'+(r.staff||0)+'</td><td>'+(r.visitor||0)+'</td></tr>'; }).join("");
+    el.innerHTML = '<div class="card" style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;margin-bottom:10px;"><div style="font-weight:700;">Tài khoản Nhân viên</div><button class="btn btn-primary" id="btnAddStaff">Thêm nhân viên</button></div>'+
+      '<table><thead><tr><th>Họ tên</th><th>Email</th><th></th></tr></thead><tbody>'+(staffRows||'<tr><td colspan="3" style="color:var(--gray);">Chưa có nhân viên.</td></tr>')+'</tbody></table></div>'+
+      '<div class="card"><div style="font-weight:700;margin-bottom:10px;">Nhật ký lượt truy cập (14 ngày gần nhất)</div>'+
+      '<table><thead><tr><th>Ngày</th><th>Chủ quán</th><th>Nhân viên</th><th>Khách</th></tr></thead><tbody>'+(logRows||'<tr><td colspan="4" style="color:var(--gray);">Chưa có dữ liệu.</td></tr>')+'</tbody></table></div>';
+    document.getElementById("btnAddStaff").onclick = openAddStaffModal;
+    el.querySelectorAll(".delStaffBtn").forEach(function(b){ b.onclick=function(){ if(confirm("Xoá nhân viên này?")) FirebaseService.remove("Restaurant/Accounts/"+b.dataset.uid).then(renderAccounts); }; });
+  });
+}
+function openAddStaffModal(){
+  document.getElementById("modalRoot").innerHTML =
+    '<div class="modal-overlay"><div class="modal"><h3>Thêm tài khoản Nhân viên</h3>'+
+    '<div class="field"><label>Họ tên</label><input id="staffName"></div>'+
+    '<div class="field"><label>Email đăng nhập</label><input id="staffEmail" type="email"></div>'+
+    '<div class="field"><label>Mật khẩu tạm</label><input id="staffPass" value="ngocnhi123"></div>'+
+    '<div id="staffErr" style="color:#B91C1C;font-size:12px;"></div>'+
+    '<div class="modal-actions"><button class="btn btn-secondary" id="btnCancelStaff">Huỷ</button><button class="btn btn-primary" id="btnSaveStaff">Tạo tài khoản</button></div>'+
+    '</div></div>';
+  document.getElementById("btnCancelStaff").onclick = function(){ document.getElementById("modalRoot").innerHTML=""; };
+  document.getElementById("btnSaveStaff").onclick = function(){
+    var name = document.getElementById("staffName").value.trim();
+    var email = document.getElementById("staffEmail").value.trim();
+    var pass = document.getElementById("staffPass").value;
+    var errEl = document.getElementById("staffErr");
+    if(!name||!email||!pass){ errEl.textContent="Vui lòng nhập đủ thông tin."; return; }
+    FirebaseService.createStaffAccount(email, pass).then(function(user){
+      return FirebaseService.write("Restaurant/Accounts/"+user.uid, {name:name, email:email, role:"staff"});
+    }).then(function(){ document.getElementById("modalRoot").innerHTML=""; renderAccounts(); })
+      .catch(function(err){ errEl.textContent = err.message; });
+  };
+}
+
+/* ---- Widget Đặt hàng Online (nổi toàn hệ thống) ---- */
+var onlineOrderTab = "food";
+document.getElementById("onlineOrderFab").onclick = function(){
+  document.getElementById("onlineOrderOverlay").classList.remove("hidden");
+  renderOnlineOrderBody();
+};
+document.getElementById("btnCloseOnlineOrder").onclick = function(){ document.getElementById("onlineOrderOverlay").classList.add("hidden"); };
+document.getElementById("tabFoodBtn").onclick = function(){ onlineOrderTab="food"; renderOnlineOrderBody(); };
+document.getElementById("tabPartyBtn").onclick = function(){ onlineOrderTab="party"; renderOnlineOrderBody(); };
+var onlineCart = {};
+function renderOnlineOrderBody(){
+  var body = document.getElementById("onlineOrderBody");
+  document.getElementById("tabFoodBtn").className = "btn " + (onlineOrderTab==="food"?"btn-primary":"btn-secondary");
+  document.getElementById("tabPartyBtn").className = "btn " + (onlineOrderTab==="party"?"btn-primary":"btn-secondary");
+  FirebaseService.read("Restaurant/MenuItems").then(function(items){
+    items = items || {};
+    var pool = Object.keys(items).filter(function(id){ return isItemAvailable(items[id]); });
+    if(onlineOrderTab === "party"){
+      var partyPool = pool.filter(function(id){ return (items[id].category||"").toLowerCase().indexOf("tiệc")!==-1; });
+      if(partyPool.length>0) pool = partyPool; // nếu có danh mục khớp từ khoá "tiệc"; nếu không, giữ nguyên toàn bộ thực đơn
+    }
+    var itemsHtml = pool.map(function(id){
+      var it = items[id]; var qty = onlineCart[id]||0;
+      return '<div class="guest-item"><div><div class="name">'+esc(it.name)+'</div><div class="price">'+(it.priceNote||fmtVND(it.price))+'</div></div>'+
+        '<div class="qty-control"><button class="ominus" data-id="'+id+'">−</button><span class="n">'+qty+'</span><button class="oplus" data-id="'+id+'">+</button></div></div>';
+    }).join("");
+
+    if(onlineOrderTab === "food"){
+      body.innerHTML = '<div class="field"><label>Họ tên *</label><input id="ofName"></div>'+
+        '<div class="field"><label>Số điện thoại *</label><input id="ofPhone"></div>'+
+        '<div class="field"><label>Số bàn / Địa chỉ giao (tuỳ chọn)</label><input id="ofAddr"></div>'+
+        '<div class="field"><label>Ghi chú (tuỳ chọn)</label><input id="ofNote"></div>'+
+        '<div style="max-height:220px;overflow:auto;margin:10px 0;">'+itemsHtml+'</div>'+
+        '<button class="btn btn-primary" id="ofSubmit" style="width:100%;">Gửi đơn đặt món</button>';
+      document.getElementById("ofSubmit").onclick = function(){
+        var name=document.getElementById("ofName").value.trim(), phone=document.getElementById("ofPhone").value.trim();
+        if(!name||!phone){ showToast("Vui lòng nhập họ tên và số điện thoại."); return; }
+        if(Object.keys(onlineCart).length===0){ showToast("Giỏ hàng đang trống."); return; }
+        submitFoodTicket(name, phone, document.getElementById("ofAddr").value.trim(), document.getElementById("ofNote").value.trim(), onlineCart).then(function(){
+          onlineCart = {}; document.getElementById("onlineOrderOverlay").classList.add("hidden"); showToast("Đã gửi đơn đặt món! Chúng tôi sẽ liên hệ sớm.");
+        });
+      };
+    } else {
+      body.innerHTML = '<div class="field"><label>Họ tên *</label><input id="opName"></div>'+
+        '<div class="field"><label>Số điện thoại *</label><input id="opPhone"></div>'+
+        '<div class="field"><label>Loại tiệc</label><select id="opType"><option>Tiệc cưới</option><option>Sinh nhật</option><option>Tân gia</option><option>Họp mặt công ty</option><option>Khác</option></select></div>'+
+        '<div class="field"><label>Ngày dự kiến *</label><input id="opDate" type="date"></div>'+
+        '<div class="field"><label>Giờ dự kiến</label><input id="opTime" type="time"></div>'+
+        '<div class="field"><label>Số lượng khách dự kiến</label><input id="opGuests" type="number"></div>'+
+        '<div class="field"><label>Ghi chú thêm</label><input id="opNote"></div>'+
+        '<div style="max-height:180px;overflow:auto;margin:10px 0;">'+itemsHtml+'</div>'+
+        '<button class="btn btn-primary" id="opSubmit" style="width:100%;">Gửi yêu cầu đặt tiệc</button>';
+      document.getElementById("opSubmit").onclick = function(){
+        var name=document.getElementById("opName").value.trim(), phone=document.getElementById("opPhone").value.trim(), date=document.getElementById("opDate").value;
+        if(!name||!phone||!date){ showToast("Vui lòng nhập họ tên, số điện thoại và ngày dự kiến."); return; }
+        submitPartyTicket(name, phone, document.getElementById("opType").value, date, document.getElementById("opTime").value, parseInt(document.getElementById("opGuests").value,10)||0, document.getElementById("opNote").value.trim(), onlineCart).then(function(){
+          onlineCart = {}; document.getElementById("onlineOrderOverlay").classList.add("hidden"); showToast("Đã gửi yêu cầu đặt tiệc! Đây là yêu cầu tư vấn ban đầu, chúng tôi sẽ liên hệ để chốt hợp đồng.");
+        });
+      };
+    }
+    body.querySelectorAll(".oplus").forEach(function(b){ b.onclick=function(){ onlineCart[b.dataset.id]=(onlineCart[b.dataset.id]||0)+1; renderOnlineOrderBody(); }; });
+    body.querySelectorAll(".ominus").forEach(function(b){ b.onclick=function(){ if(onlineCart[b.dataset.id]>0){ onlineCart[b.dataset.id]--; if(onlineCart[b.dataset.id]===0) delete onlineCart[b.dataset.id]; } renderOnlineOrderBody(); }; });
+  });
+}
+/* Cập nhật badge số phiếu Mới trên sidebar liên tục (mục 3.3, 3.4 Đặc tả Menu) */
+if(firebaseReady){
+  FirebaseService.listen("Restaurant/Tickets", function(tickets){
+    tickets = tickets || {};
+    var newCount = Object.values(tickets).filter(function(t){ return t.status==="new"; }).length;
+    var badge = document.getElementById("ticketBadge");
+    if(badge){ badge.textContent = newCount; badge.classList.toggle("hidden", newCount===0); }
+  });
+}
+
+/* =========================================================================
+   CẢNH BÁO ĐƠN HÀNG — chuông 🔔 realtime + đăng ký nhận thông báo đẩy (FCM)
+   thật cho điện thoại Ngọc Nhi. KHÔNG dùng new Notification() để giả lập —
+   Notification.requestPermission() ở đây chỉ để xin quyền hiển thị thông
+   báo của trình duyệt (bắt buộc phải có trước khi FCM hoạt động), việc GỬI
+   thông báo thật là do Firebase Cloud Messaging + Cloud Function thực hiện,
+   không phải new Notification() tự tạo tại chỗ.
+   ========================================================================= */
+var latestOrderAlerts = {};
+var NOTIFICATION_PHONE = "0967823801"; // số nhận cảnh báo tạm thời — lưu kèm token để nhận diện thiết bị
+if(firebaseReady && !guestTableId){
+  FirebaseService.listen("Restaurant/OrderAlerts", function(alerts){
+    latestOrderAlerts = alerts || {};
+    var unreadCount = Object.keys(latestOrderAlerts).filter(function(id){ return latestOrderAlerts[id].status==="unread"; }).length;
+    var badge = document.getElementById("orderAlertBadge");
+    if(badge){ badge.textContent = unreadCount; badge.classList.toggle("hidden", unreadCount===0); }
+    if(!document.getElementById("orderAlertsModalOverlay")) return; // modal đang mở thì vẽ lại realtime
+    renderOrderAlertsModalBody();
+  });
+}
+document.getElementById("btnOrderAlerts").onclick = function(){ openOrderAlertsModal(); };
+function openOrderAlertsModal(){
+  document.getElementById("modalRoot").innerHTML =
+    '<div class="modal-overlay" id="orderAlertsModalOverlay"><div class="modal">'+
+      '<h3>🔔 Cảnh báo đơn hàng</h3>'+
+      '<div id="orderAlertsModalBody"></div>'+
+      '<div class="modal-actions"><button class="btn btn-secondary" id="btnCloseOrderAlerts">Đóng</button></div>'+
+    '</div></div>';
+  document.getElementById("btnCloseOrderAlerts").onclick = function(){ document.getElementById("modalRoot").innerHTML=""; };
+  renderOrderAlertsModalBody();
+}
+function renderOrderAlertsModalBody(){
+  var body = document.getElementById("orderAlertsModalBody");
+  if(!body) return;
+  var ids = Object.keys(latestOrderAlerts).sort(function(a,b){ return (latestOrderAlerts[b].createdAt||0)-(latestOrderAlerts[a].createdAt||0); });
+  body.innerHTML = ids.length ? ids.map(function(id){
+    var a = latestOrderAlerts[id];
+    var unread = a.status === "unread";
+    return '<div class="alert-row" data-aid="'+id+'" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;'+(unread?"font-weight:800;":"opacity:.65;")+'">'+
+      '<div>'+esc(a.message||"")+'<div style="font-size:10.5px;color:var(--gray);font-weight:500;margin-top:2px;">'+new Date(a.createdAt||0).toLocaleString("vi-VN")+'</div></div>'+
+      (unread ? '<span class="badge b-new">Mới</span>' : '<span class="badge b-done">Đã xem</span>')+
+    '</div>';
+  }).join("") : '<div style="color:var(--gray);font-size:13px;padding:10px 0;">Chưa có cảnh báo nào.</div>';
+  body.querySelectorAll(".alert-row").forEach(function(row){
+    row.onclick = function(){
+      var id = row.getAttribute("data-aid");
+      var a = latestOrderAlerts[id];
+      if(a && a.status==="unread") markOrderAlertRead(id);
+      openOrderFromAlert(a);
+    };
+  });
+}
+// Bấm cảnh báo → mở đúng đơn: đơn tại bàn mở thẳng hoá đơn (đúng modal Bàn &
+// Gọi món đang dùng); đơn online chuyển sang tab Đặt hàng Online (chưa có
+// modal chi tiết riêng cho từng phiếu trong hệ thống hiện tại).
+function openOrderFromAlert(a){
+  if(!a) return;
+  document.getElementById("modalRoot").innerHTML = "";
+  if(a.kind === "table" && a.tableId){
+    Promise.all([FirebaseService.read("Restaurant/Tables"), FirebaseService.read("Restaurant/MenuItems")]).then(function(res){
+      var tables = res[0]||{}, items = res[1]||{};
+      if(!tables[a.tableId]){ showToast("Bàn này không còn tồn tại."); return; }
+      currentView = "tables";
+      document.querySelectorAll(".nav-item").forEach(function(n){ n.classList.remove("active"); });
+      var tv = document.querySelector('.nav-item[data-view="tables"]'); if(tv) tv.classList.add("active");
+      renderCurrentView();
+      openOrderBuilderModal(a.tableId, a.orderId, tables, items);
+    });
+  } else {
+    currentView = "tickets";
+    document.querySelectorAll(".nav-item").forEach(function(n){ n.classList.remove("active"); });
+    var tv2 = document.querySelector('.nav-item[data-view="tickets"]'); if(tv2) tv2.classList.add("active");
+    renderCurrentView();
+  }
+}
+
+// Đăng ký thiết bị nhận thông báo đẩy (FCM) — chỉ cần bấm 1 lần trên đúng
+// điện thoại/trình duyệt của Ngọc Nhi. Lưu token vào
+// Restaurant/NotificationTokens để Cloud Function gửi push khi có cảnh báo
+// mới (xem functions/index.js đính kèm riêng).
+function enablePushNotifications(){
+  if(!("Notification" in window) || !("serviceWorker" in navigator)){
+    showToast("Trình duyệt này không hỗ trợ thông báo đẩy."); return;
+  }
+  if(!window.FCM_CONFIG || !window.FCM_CONFIG.vapidKey || window.FCM_CONFIG.vapidKey.indexOf("REPLACE_WITH_")===0){
+    showToast("Chưa cấu hình FCM VAPID key — điền vào fcm-config.js."); return;
+  }
+  Notification.requestPermission().then(function(permission){
+    if(permission !== "granted"){ showToast("Bạn đã từ chối quyền thông báo."); return; }
+    return navigator.serviceWorker.register("firebase-messaging-sw.js").then(function(registration){
+      var messaging = firebase.messaging();
+      return messaging.getToken({ vapidKey: window.FCM_CONFIG.vapidKey, serviceWorkerRegistration: registration });
+    }).then(function(token){
+      if(!token){ showToast("Không lấy được mã thiết bị (token)."); return; }
+      return FirebaseService.write("Restaurant/NotificationTokens/"+token, {
+        phone: NOTIFICATION_PHONE, registeredAt: Date.now(), userAgent: navigator.userAgent
+      }).then(function(){ showToast("Đã bật thông báo đơn hàng cho thiết bị này."); });
+    });
+  }).catch(function(err){
+    console.error("Lỗi đăng ký thông báo đẩy:", err);
+    showToast("Lỗi bật thông báo: "+(err&&err.message));
+  });
+}
+
+/* ---- Khởi động ứng dụng ---- */
+if(!guestTableId){
+  renderAuthBox();
+  if(firebaseReady){
+    logAccess("owner");
+    runMigrations().catch(function(err){
+      console.warn("Bỏ qua migration lúc khởi động (chưa đủ quyền ghi):", err && err.message);
+    }).then(function(){
+      document.getElementById("mainApp").classList.remove("hidden");
+      renderCurrentView();
+    });
+  } else {
+    document.getElementById("mainApp").classList.remove("hidden");
+    renderCurrentView();
+  }
+}
+</script>
+</body>
+</html>
