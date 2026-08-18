@@ -14,6 +14,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="fcm-config.js"></script>
+<script src="imgbb-config.js"></script>
 <style>
   :root{
     --orange:#F16B03; --orange-dark:#D65E02; --orange-tint:#FFF8F2; --orange-tint2:#FFEFE1;
@@ -74,9 +75,17 @@
   .cat-tab.active{background:var(--orange);color:#fff;}
   .item-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
   .item-card{border:1px solid var(--border);border-radius:10px;padding:12px;}
+  .item-card .item-thumb{width:100%;height:110px;border-radius:8px;overflow:hidden;background:#F3F4F7;margin-bottom:8px;display:flex;align-items:center;justify-content:center;}
+  .item-card .item-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .item-card .item-thumb .no-img{color:var(--gray-light);font-size:26px;}
   .item-card .name{font-weight:800;font-size:13px;} .item-card .price{font-size:12px;color:var(--gray);margin-top:4px;}
   .item-card .row-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
   .item-card .row-actions button{font-size:11px;padding:6px 8px;border-radius:7px;background:#F3F4F7;color:var(--ink-soft);font-weight:700;}
+  .img-upload-preview{width:100%;height:160px;border-radius:10px;overflow:hidden;background:#F3F4F7;display:flex;align-items:center;justify-content:center;margin-bottom:10px;border:1px dashed var(--border);}
+  .img-upload-preview img{width:100%;height:100%;object-fit:cover;display:block;}
+  .img-upload-preview .no-img{color:var(--gray-light);font-size:32px;}
+  .img-upload-status{font-size:12px;margin-top:8px;min-height:16px;}
+  .img-upload-status.err{color:var(--red);} .img-upload-status.ok{color:var(--green);}
 
   table{width:100%;border-collapse:collapse;font-size:12.5px;}
   th{text-align:left;font-size:10.5px;color:var(--gray);text-transform:uppercase;padding:8px;border-bottom:1px solid var(--border);}
@@ -116,7 +125,10 @@
   .guest-header h2{font-size:16px;font-weight:800;} .guest-header .sub{font-size:12px;color:var(--gray);margin-top:2px;}
   .guest-cat{margin-bottom:16px;}
   .guest-cat h3{font-size:13px;font-weight:800;color:var(--orange-dark);margin-bottom:8px;}
-  .guest-item{background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--shadow-card);}
+  .guest-item{background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:var(--shadow-card);}
+  .guest-item .info{display:flex;align-items:center;gap:10px;min-width:0;}
+  .guest-item .thumb{width:48px;height:48px;border-radius:8px;overflow:hidden;background:#F3F4F7;flex:0 0 auto;}
+  .guest-item .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
   .guest-item .name{font-weight:700;font-size:13px;} .guest-item .price{font-size:11.5px;color:var(--gray);}
   .guest-cart-bar{position:fixed;bottom:0;left:0;right:0;background:var(--ink);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;font-weight:700;}
   .sorry-banner{background:var(--red-tint);color:#B91C1C;padding:12px 16px;border-radius:12px;font-size:12.5px;font-weight:600;margin-bottom:14px;}
@@ -303,7 +315,9 @@ var FirebaseService = (function(){
 /* =========================================================================
    SƠ ĐỒ DỮ LIỆU (tóm tắt — chi tiết trong quan_an_DATABASE_SCHEMA.md)
    Restaurant/_meta/schemaVersion
-   Restaurant/MenuItems/{itemId}      { name, category, price, priceNote, available }
+   Restaurant/MenuItems/{itemId}      { name, category, price, priceNote, available, imageUrl }
+   — imageUrl: URL ảnh món ăn lưu trên ImgBB (không dùng Firebase Storage),
+     tuỳ chọn (có thể rỗng/không tồn tại nếu món chưa gán ảnh).
    Restaurant/Tables/{tableId}        { name, capacity, status }
    Restaurant/Orders/{orderId}        { tableId, status, source, items:{menuItemId:qty}, note, createdAt, completedAt, totalAmount }
    Restaurant/Tickets/{ticketId}      { type, status, customerName, phone, ...chi tiết theo loại, createdAt }
@@ -478,6 +492,115 @@ function addMenuItem(category, name, price, priceNote){
 function deleteMenuItem(itemId){ return FirebaseService.remove("Restaurant/MenuItems/"+itemId); }
 function updateMenuItemPrice(itemId, price, priceNote){ return FirebaseService.updateAt("Restaurant/MenuItems/"+itemId, {price:price, priceNote:priceNote||""}); }
 function toggleMenuItemAvailability(itemId, available){ return FirebaseService.updateAt("Restaurant/MenuItems/"+itemId, {available:available}); }
+function updateMenuItemImage(itemId, imageUrl){ return FirebaseService.updateAt("Restaurant/MenuItems/"+itemId, {imageUrl:imageUrl}); }
+function removeMenuItemImage(itemId){ return FirebaseService.updateAt("Restaurant/MenuItems/"+itemId, {imageUrl:null}); }
+
+/* =========================================================================
+   ẢNH MÓN ĂN QUA IMGBB (thay Firebase Storage — đúng kiến trúc dùng chung
+   toàn hệ thống, xem imgbb-config.js). Logic uploadToImgBB() ở đây lặp lại
+   ĐÚNG cách gọi API/endpoint/quy tắc lỗi đã dùng ở index.html (mục "Cài đặt
+   hệ thống") để đồng nhất hành vi, vì mỗi trang trong hệ thống này là 1
+   file HTML độc lập (không có module JS dùng chung giữa các trang ngoài
+   firebase-config.js/imgbb-config.js) — không tạo endpoint/API Key/cấu hình
+   riêng thứ hai: apiKey vẫn đọc DUY NHẤT từ window.IMGBB_CONFIG.apiKey.
+   ========================================================================= */
+var IMGBB_UPLOAD_ENDPOINT = "https://api.imgbb.com/1/upload";
+var MENU_IMAGE_ACCEPTED_MIME = ["image/jpeg","image/png","image/webp"];
+function uploadToImgBB(file){
+  return new Promise(function(resolve, reject){
+    try{
+      var apiKey = window.IMGBB_CONFIG && window.IMGBB_CONFIG.apiKey;
+      if(!apiKey || apiKey.indexOf("REPLACE_WITH_") === 0){
+        reject(new Error("Chưa cấu hình ImgBB API Key — điền vào imgbb-config.js."));
+        return;
+      }
+      var formData = new FormData();
+      formData.append("image", file);
+      fetch(IMGBB_UPLOAD_ENDPOINT + "?key=" + encodeURIComponent(apiKey), {
+        method: "POST",
+        body: formData
+      }).then(function(response){
+        return response.json().then(function(json){ return { ok: response.ok, status: response.status, json: json }; });
+      }).then(function(result){
+        if(!result.ok || !result.json || result.json.success !== true){
+          var errMsg = (result.json && result.json.error && result.json.error.message)
+            || ("ImgBB trả về lỗi (HTTP " + result.status + ")");
+          reject(new Error(errMsg));
+          return;
+        }
+        var url = result.json.data && (result.json.data.display_url || result.json.data.url);
+        if(!url){ reject(new Error("ImgBB không trả về URL ảnh hợp lệ.")); return; }
+        resolve(url);
+      }).catch(function(networkErr){
+        reject(new Error("Không kết nối được tới ImgBB: " + (networkErr && networkErr.message)));
+      });
+    }catch(err){
+      reject(err);
+    }
+  });
+}
+// Modal chọn ảnh món ăn → upload ImgBB → lưu URL vào Restaurant/MenuItems/{id}/imageUrl
+// → renderMenu() tự cập nhật hiển thị. Có xem trước ảnh hiện tại, đổi ảnh, xoá ảnh.
+function openMenuItemImageModal(item){
+  var root = document.getElementById("modalRoot");
+  root.innerHTML =
+    '<div class="modal-overlay" id="menuImgOverlay"><div class="modal" style="max-width:420px;">'+
+      '<h3 style="margin-bottom:10px;">Ảnh món: '+esc(item.name)+'</h3>'+
+      '<div class="img-upload-preview" id="menuImgPreview">'+
+        (item.imageUrl ? '<img src="'+esc(item.imageUrl)+'">' : '<span class="no-img material-symbols-outlined">image</span>')+
+      '</div>'+
+      '<input type="file" accept="image/jpeg,image/png,image/webp" id="menuImgFileInput" style="font-size:12px;width:100%;">'+
+      '<div class="img-upload-status" id="menuImgStatus"></div>'+
+      '<div class="modal-actions" style="margin-top:14px;">'+
+        (item.imageUrl ? '<button class="btn btn-secondary" id="btnRemoveMenuImg">Xoá ảnh</button>' : '')+
+        '<button class="btn btn-secondary" id="btnCloseMenuImg">Đóng</button>'+
+        '<button class="btn btn-primary" id="btnUploadMenuImg" disabled>Tải lên & Lưu</button>'+
+      '</div>'+
+    '</div></div>';
+  var fileInput = document.getElementById("menuImgFileInput");
+  var uploadBtn = document.getElementById("btnUploadMenuImg");
+  var statusEl = document.getElementById("menuImgStatus");
+  var previewEl = document.getElementById("menuImgPreview");
+  var selectedFile = null;
+  fileInput.onchange = function(){
+    statusEl.textContent = ""; statusEl.className = "img-upload-status";
+    var file = fileInput.files && fileInput.files[0];
+    if(!file){ selectedFile = null; uploadBtn.disabled = true; return; }
+    if(MENU_IMAGE_ACCEPTED_MIME.indexOf(file.type) === -1){
+      statusEl.textContent = "Định dạng ảnh không hỗ trợ. Chỉ chấp nhận JPG, PNG, WEBP.";
+      statusEl.className = "img-upload-status err";
+      selectedFile = null; uploadBtn.disabled = true;
+      return;
+    }
+    selectedFile = file;
+    uploadBtn.disabled = false;
+    var reader = new FileReader();
+    reader.onload = function(e){ previewEl.innerHTML = '<img src="'+e.target.result+'">'; };
+    reader.readAsDataURL(file);
+  };
+  uploadBtn.onclick = function(){
+    if(!selectedFile) return;
+    uploadBtn.disabled = true; fileInput.disabled = true;
+    statusEl.textContent = "Đang tải ảnh lên ImgBB…"; statusEl.className = "img-upload-status";
+    uploadToImgBB(selectedFile).then(function(imageUrl){
+      return updateMenuItemImage(item.id, imageUrl);
+    }).then(function(){
+      statusEl.textContent = "Đã lưu ảnh món ăn."; statusEl.className = "img-upload-status ok";
+      renderMenu();
+      setTimeout(function(){ closeModal(); }, 600);
+    }).catch(function(err){
+      statusEl.textContent = "Lỗi: " + (err && err.message ? err.message : "Không tải được ảnh lên.");
+      statusEl.className = "img-upload-status err";
+      uploadBtn.disabled = false; fileInput.disabled = false;
+    });
+  };
+  var removeBtn = document.getElementById("btnRemoveMenuImg");
+  if(removeBtn) removeBtn.onclick = function(){
+    if(!confirm("Xoá ảnh món này?")) return;
+    removeMenuItemImage(item.id).then(function(){ renderMenu(); closeModal(); });
+  };
+  document.getElementById("btnCloseMenuImg").onclick = closeModal;
+}
 
 /* =========================================================================
    QUẢN LÝ BÀN (mục 2)
@@ -674,7 +797,9 @@ function renderGuestMenu(){
       html += '<div class="guest-cat"><h3>'+esc(cat)+'</h3>';
       byCat[cat].forEach(function(it){
         var qty = guestCart[it.id] || 0;
-        html += '<div class="guest-item"><div><div class="name">'+esc(it.name)+'</div><div class="price">'+(it.priceNote||fmtVND(it.price))+'</div></div>'+
+        html += '<div class="guest-item"><div class="info">'+
+          (it.imageUrl ? '<div class="thumb"><img src="'+esc(it.imageUrl)+'"></div>' : '')+
+          '<div><div class="name">'+esc(it.name)+'</div><div class="price">'+(it.priceNote||fmtVND(it.price))+'</div></div></div>'+
           '<div class="qty-control"><button class="gminus" data-id="'+it.id+'">−</button><span class="n">'+qty+'</span><button class="gplus" data-id="'+it.id+'">+</button></div></div>';
       });
       html += '</div>';
@@ -767,11 +892,14 @@ function renderMenu(){
     var itemsHtml = list.map(function(it){
       var avail = isItemAvailable(it);
       var isDui = isDuiItem(it.name);
-      return '<div class="item-card"><div class="name">'+esc(it.name)+'</div><div class="price">'+(it.priceNote||fmtVND(it.price))+'</div>'+
+      return '<div class="item-card">'+
+        '<div class="item-thumb">'+(it.imageUrl ? '<img src="'+esc(it.imageUrl)+'">' : '<span class="no-img material-symbols-outlined">image</span>')+'</div>'+
+        '<div class="name">'+esc(it.name)+'</div><div class="price">'+(it.priceNote||fmtVND(it.price))+'</div>'+
         '<div style="margin-top:6px;"><span class="badge '+(avail?"b-available":"b-unavailable")+'">'+(avail?"Còn hàng":"Hết hàng")+'</span>'+
         (isDui ? ' <span style="font-size:10px;color:var(--gray);">(tự động theo kho Trang trại)</span>' : '')+'</div>'+
         (isStaffOrOwner() ? '<div class="row-actions">'+
           '<button class="editPriceBtn" data-id="'+it.id+'">Sửa giá</button>'+
+          '<button class="editImageBtn" data-id="'+it.id+'">'+(it.imageUrl?"Đổi ảnh":"Thêm ảnh")+'</button>'+
           (!isDui ? '<button class="toggleAvailBtn" data-id="'+it.id+'" data-avail="'+avail+'">'+(avail?"Đánh dấu hết hàng":"Đánh dấu còn hàng")+'</button>' : '')+
           (isOwner() ? '<button class="deleteItemBtn" data-id="'+it.id+'">Xoá</button>' : '')+
           '</div>' : '')+
@@ -796,6 +924,10 @@ function renderMenu(){
     };});
     el.querySelectorAll(".deleteItemBtn").forEach(function(b){ b.onclick=function(){
       if(confirm("Xoá món này?")) deleteMenuItem(b.dataset.id).then(renderMenu);
+    };});
+    el.querySelectorAll(".editImageBtn").forEach(function(b){ b.onclick=function(){
+      var it = list.filter(function(x){ return x.id === b.dataset.id; })[0];
+      if(it) openMenuItemImageModal(it);
     };});
   });
 }
