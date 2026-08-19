@@ -138,8 +138,9 @@
 
   /* Dashboard tổng quan — chỉ trình bày dữ liệu hiện có, không tạo dữ liệu mẫu. */
   .farm-dashboard{display:flex;flex-direction:column;gap:16px;padding:4px 0 22px;}
-  .farm-hero{display:grid;grid-template-columns:minmax(0,1.22fr) minmax(300px,.78fr);min-height:258px;border-radius:20px;overflow:hidden;background:#123525;box-shadow:0 16px 38px rgba(15,45,30,.14);}
-  .farm-hero-copy{position:relative;padding:32px;display:flex;flex-direction:column;justify-content:center;background:linear-gradient(90deg,rgba(8,38,23,.88),rgba(8,38,23,.58));color:#fff;z-index:1;}
+  .farm-hero{position:relative;display:flex;min-height:300px;border-radius:20px;overflow:hidden;background:#123525;box-shadow:0 16px 38px rgba(15,45,30,.14);}
+  .farm-hero-media{position:absolute;inset:0;display:flex;background:#123525;}
+  .farm-hero-copy{position:relative;z-index:1;width:100%;min-height:300px;padding:38px;display:flex;flex-direction:column;justify-content:center;background:linear-gradient(90deg,rgba(8,38,23,.9) 0%,rgba(8,38,23,.68) 48%,rgba(8,38,23,.2) 100%);color:#fff;}
   .farm-hero-copy:before{content:"";position:absolute;inset:0;z-index:-1;background:var(--farm-hero-image,linear-gradient(135deg,#174c31,#74a96f));background-size:cover;background-position:center;opacity:.75;}
   .farm-status{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#ddf9e6;margin-bottom:13px;}.farm-status:before{content:"";width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 0 4px rgba(74,222,128,.17);}
   .farm-hero-copy h2{font-size:28px;line-height:1.15;letter-spacing:-.03em;margin:0 0 10px;}.farm-hero-copy p{max-width:520px;color:#ebf8ef;font-size:14px;line-height:1.65;margin:0;}
@@ -268,7 +269,7 @@ try{
 
 /* =========================================================================
    VIDEO GIỚI THIỆU (kiến trúc mới) — Trang trại KHÔNG có chức năng upload
-   video. Chỉ tự động đ���c realtime đúng video Trung tâm điều hành đã gán
+   video. Chỉ tự động đọc realtime đúng video Trung tâm điều hành đã gán
    cho module "farm" tại SystemSettings/ModuleVideos/FarmVideo (đường dẫn
    TOÀN CỤC, không thuộc "Farm/..." nên KHÔNG đi qua điều hướng đa cơ sở)
    rồi hiển thị trong hộp thoại nhỏ khi bấm nút — không có nút tải lên nào.
@@ -1757,7 +1758,7 @@ function renderCurrentView(){
   var titles = {
     overview:["Tổng quan trang trại","Thống kê thời gian thực toàn bộ đàn"],
     zones:["Khu & Ô chuồng","Quản lý cấu trúc khu, ô và vòng đời từng cá thể"],
-    tasks:["Việc c��n làm hôm nay","Tổng hợp việc đến hạn / quá hạn"],
+    tasks:["Việc cần làm hôm nay","Tổng hợp việc đến hạn / quá hạn"],
     alerts:["Cảnh báo & Báo cáo","Nhật ký cảnh báo tự động gửi cho Chủ trại"],
     sales:["Bán dúi","Doanh thu, chi phí, khách hàng, lợi nhuận"],
     facilities:["Đa cơ sở","Chuyển thương phẩm các cơ sở về Cơ sở 1"],
@@ -2375,7 +2376,7 @@ function breedingModalBody(c, allCells){
     } else {
       actions.push('<button class="btn btn-secondary act" data-act="directSeparatedMale">Nhập: Mới tách đực…</button>');
       actions.push('<button class="btn btn-secondary act" data-act="directNursing">Nhập: Đang nuôi con…</button>');
-      actions.push('<button class="btn btn-secondary act" data-act="directRecovering">Nhập: Mới tách con…</button>');
+      actions.push('<button class="btn btn-secondary act" data-act="directRecovering">Nhập: Mới tách con</button>');
     }
   }
   if(c.state === "ready") actions.push('<button class="btn btn-primary act" data-act="pair">Ghép đôi…</button>');
@@ -2702,7 +2703,7 @@ function handleJuvenileAction(act, sex, c){
   }
   if(act === "occupy"){ juvenileSetOccupied(c.id, sex, todayStr()).then(afterAction); }
   else if(act === "readymove"){
-    openFormModal("Đạt thể trạng ("+(sex==="male"?"đực":"cái")+") ��� Ô "+c.code, [{id:"date", label:"Ngày dự kiến chuyển", type:"date", value:todayStr(), required:true}],
+    openFormModal("Đạt thể trạng ("+(sex==="male"?"đực":"cái")+") — Ô "+c.code, [{id:"date", label:"Ngày dự kiến chuyển", type:"date", value:todayStr(), required:true}],
       function(v){ juvenileReadyMove(c.id, sex, v.date).then(afterAction); }, "Xác nhận");
   }
   else if(act === "movebreeding"){
