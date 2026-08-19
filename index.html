@@ -513,6 +513,21 @@
   .legend-card .row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-soft);font-weight:600;}
   .legend-card .row .material-symbols-outlined{font-size:14px;color:var(--gray);}
 
+  /* ---- Trung tâm điều hành — màn hình tổng (5 nhóm) ---- */
+  .finance-cards-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;}
+  @media (max-width:1200px){ .finance-cards-grid{grid-template-columns:repeat(3,1fr);} }
+  @media (max-width:860px){ .finance-cards-grid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:520px){ .finance-cards-grid{grid-template-columns:1fr;} }
+  .ttdh-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0;}
+  .ttdh-card .icon-box{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .ttdh-card .icon-box .material-symbols-outlined{font-size:22px;}
+  .ttdh-card h3{font-size:15px;font-weight:800;color:var(--ink);}
+  .ttdh-card > p{font-size:12px;color:var(--gray);line-height:1.5;}
+  .ttdh-card ul{list-style:none;display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--ink-soft);font-weight:600;flex:1;}
+  .ttdh-card ul li{display:flex;align-items:center;gap:6px;}
+  .ttdh-card ul li .material-symbols-outlined{font-size:14px;color:var(--gray-light);}
+  .ttdh-card .detail-link{font-size:12.5px;font-weight:700;color:var(--blue);display:flex;align-items:center;gap:4px;cursor:pointer;}
+
   /* ---- Footer ---- */
   .footer{
     display:flex;align-items:center;justify-content:space-between;
@@ -606,24 +621,16 @@
         <span class="left"><span class="material-symbols-outlined">inventory_2</span>Kho &amp; nguyên liệu</span>
         <span class="material-symbols-outlined chevron">chevron_right</span>
       </a>
-      <a class="nav-item admin-item" id="admCustomers" data-target="customers-panel">
-        <span class="left"><span class="material-symbols-outlined">group</span>Khách hàng</span>
-        <span class="material-symbols-outlined chevron">chevron_right</span>
-      </a>
-      <a class="nav-item admin-item" id="admReports" data-target="reports-panel">
-        <span class="left"><span class="material-symbols-outlined">summarize</span>Báo cáo tổng hợp</span>
+      <a class="nav-item admin-item" id="admContracts" data-target="contracts-panel">
+        <span class="left"><span class="material-symbols-outlined">description</span>Hợp đồng</span>
         <span class="material-symbols-outlined chevron">chevron_right</span>
       </a>
       <a class="nav-item admin-item" id="admSuppliers" data-target="suppliers-panel">
         <span class="left"><span class="material-symbols-outlined">local_shipping</span>Nhà cung cấp</span>
         <span class="material-symbols-outlined chevron">chevron_right</span>
       </a>
-      <a class="nav-item admin-item" id="admAlerts" data-target="alerts-panel">
-        <span class="left"><span class="material-symbols-outlined">notifications_active</span>Cảnh báo hệ thống</span>
-        <span class="nav-badge" id="navAlertBadge">0</span>
-      </a>
-      <a class="nav-item admin-item" id="admSettings" data-target="settings-panel">
-        <span class="left"><span class="material-symbols-outlined">settings</span>Cài đặt hệ thống</span>
+      <a class="nav-item admin-item" id="admLibrary" data-target="library-panel">
+        <span class="left"><span class="material-symbols-outlined">perm_media</span>Thư viện</span>
         <span class="material-symbols-outlined chevron">chevron_right</span>
       </a>
     </nav>
@@ -906,14 +913,98 @@
 
     <!-- Trung tâm điều hành — Dashboard quản lý trung tâm toàn hệ thống -->
     <div id="financeView" class="hidden-view">
+
+      <!-- ============================================================
+           MÀN HÌNH TỔNG — 5 nhóm (Tài chính / Kho & nguyên liệu / Hợp
+           đồng / Nhà cung cấp / Thư viện). Đây CHỈ là lớp điều hướng
+           (ẩn/hiện) — mọi nghiệp vụ, dữ liệu, Firebase bên dưới giữ
+           nguyên 100%, không thêm/xoá nguồn dữ liệu nào ở đây.
+           ============================================================ -->
+      <div id="financeOverviewSection">
+        <section class="module-cards" style="grid-template-columns:1fr;margin-bottom:16px;">
+          <div class="panel" style="padding:18px;">
+            <div class="panel-head">
+              <h2><span class="material-symbols-outlined" style="vertical-align:middle;color:#0EA5E9;">account_balance</span> Trung tâm điều hành</h2>
+              <button class="link-btn" id="btnBackDashboardOverview">← Về Trang chủ</button>
+            </div>
+            <p style="font-size:12.5px;color:#6B7280;">Khu vực quản trị dữ liệu dùng chung của toàn hệ thống. Chọn một nhóm bên dưới để xem đầy đủ nghiệp vụ.</p>
+          </div>
+        </section>
+        <section class="finance-cards-grid">
+          <div class="ttdh-card">
+            <div class="icon-box" style="background:var(--green-tint2);color:var(--green-dark);"><span class="material-symbols-outlined">account_balance_wallet</span></div>
+            <h3>Tài chính</h3>
+            <p>Quản lý thu – chi – doanh thu – chi phí</p>
+            <ul>
+              <li><span class="material-symbols-outlined">receipt_long</span>Sổ thu / Sổ chi</li>
+              <li><span class="material-symbols-outlined">trending_up</span>Doanh thu / Chi phí</li>
+              <li><span class="material-symbols-outlined">savings</span>Lợi nhuận</li>
+            </ul>
+            <div class="detail-link" data-finance-detail="finance-panel">Xem chi tiết <span class="material-symbols-outlined" style="font-size:15px;">arrow_forward</span></div>
+          </div>
+          <div class="ttdh-card">
+            <div class="icon-box" style="background:var(--orange-tint2);color:var(--orange-dark);"><span class="material-symbols-outlined">inventory_2</span></div>
+            <h3>Kho &amp; nguyên liệu</h3>
+            <p>Tồn kho dúi thương phẩm — đa cơ sở</p>
+            <ul>
+              <li><span class="material-symbols-outlined">warehouse</span>Tồn kho theo cơ sở</li>
+              <li><span class="material-symbols-outlined">local_shipping</span>Phiếu chuyển thương phẩm</li>
+            </ul>
+            <div class="detail-link" data-finance-detail="kho-panel">Xem chi tiết <span class="material-symbols-outlined" style="font-size:15px;">arrow_forward</span></div>
+          </div>
+          <div class="ttdh-card">
+            <div class="icon-box" style="background:var(--blue-tint2);color:var(--blue-dark);"><span class="material-symbols-outlined">description</span></div>
+            <h3>Hợp đồng</h3>
+            <p>Tổng hợp hợp đồng — chỉ đọc</p>
+            <ul>
+              <li><span class="material-symbols-outlined">favorite</span>Hợp đồng Tiệc cưới</li>
+              <li><span class="material-symbols-outlined">event_note</span>Trạng thái &amp; giá trị</li>
+            </ul>
+            <div class="detail-link" data-finance-detail="contracts-panel">Xem chi tiết <span class="material-symbols-outlined" style="font-size:15px;">arrow_forward</span></div>
+          </div>
+          <div class="ttdh-card">
+            <div class="icon-box" style="background:#F1E9FB;color:#8B3DD1;"><span class="material-symbols-outlined">local_shipping</span></div>
+            <h3>Nhà cung cấp</h3>
+            <p>Nhà cung cấp — nhập hàng — công nợ</p>
+            <ul>
+              <li><span class="material-symbols-outlined">group</span>Danh sách NCC</li>
+              <li><span class="material-symbols-outlined">receipt</span>Phiếu nhập hàng</li>
+              <li><span class="material-symbols-outlined">payments</span>Công nợ / Thanh toán</li>
+            </ul>
+            <div class="detail-link" data-finance-detail="suppliers-panel">Xem chi tiết <span class="material-symbols-outlined" style="font-size:15px;">arrow_forward</span></div>
+          </div>
+          <div class="ttdh-card">
+            <div class="icon-box" style="background:#E0F7FA;color:#0E7490;"><span class="material-symbols-outlined">perm_media</span></div>
+            <h3>Thư viện</h3>
+            <p>Tài nguyên dùng chung của hệ thống</p>
+            <ul>
+              <li><span class="material-symbols-outlined">qr_code_2</span>QR Hệ thống</li>
+              <li><span class="material-symbols-outlined">photo_library</span>Thư viện ảnh</li>
+              <li><span class="material-symbols-outlined">smart_display</span>Video giới thiệu</li>
+            </ul>
+            <div class="detail-link" data-finance-detail="library-panel">Xem chi tiết <span class="material-symbols-outlined" style="font-size:15px;">arrow_forward</span></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ============================================================
+           CHI TIẾT TỪNG NHÓM — panel nghiệp vụ đầy đủ, giữ nguyên toàn
+           bộ code/dữ liệu/Firebase hiện có, chỉ ẩn/hiện theo lựa chọn.
+           ============================================================ -->
+      <div id="financeDetailSection" class="hidden-view">
+        <section class="module-cards" style="grid-template-columns:1fr;margin-bottom:16px;">
+          <div class="panel" style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <button class="link-btn" id="btnBackToOverview">← Trung tâm điều hành</button>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="live-dot" title="Dữ liệu tự động cập nhật realtime qua Firebase"><span class="dot-ping"></span>Realtime</span>
+              <button class="link-btn" id="btnBackDashboard">Về Trang chủ</button>
+            </div>
+          </div>
+        </section>
       <section class="module-cards" style="grid-template-columns:1fr;">
         <div class="panel" id="finance-panel" style="padding:18px;">
           <div class="panel-head">
-            <h2><span class="material-symbols-outlined" style="vertical-align:middle;color:#0EA5E9;">account_balance</span> Trung tâm điều hành — Tài chính &amp; Báo cáo</h2>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span class="live-dot" id="liveDot" title="Dữ liệu tự động cập nhật realtime qua Firebase"><span class="dot-ping"></span>Realtime</span>
-              <button class="link-btn" id="btnBackDashboard">← Về Trang chủ</button>
-            </div>
+            <h2><span class="material-symbols-outlined" style="vertical-align:middle;color:#0EA5E9;">account_balance</span> Tài chính</h2>
           </div>
           <p style="font-size:12.5px;color:#6B7280;margin-bottom:16px;">
             Toàn bộ số liệu bên dưới lắng nghe trực tiếp Firebase (<code>on('value')</code>) từ Trang trại, Quán ăn
@@ -958,18 +1049,6 @@
           </div>
         </div>
 
-        <div class="panel" id="alerts-panel" style="padding:18px;">
-          <div class="panel-head">
-            <h2><span class="material-symbols-outlined" style="vertical-align:middle;color:#EF4444;">notifications_active</span> Cảnh báo hệ thống</h2>
-            <span class="nav-badge" id="alertCountBig">0</span>
-          </div>
-          <p style="font-size:12.5px;color:#6B7280;margin-bottom:14px;">
-            Tổng hợp realtime cảnh báo từ Trang trại (chuồng cần xử lý), Quán ăn (phiếu đặt online mới) và Tiệc cưới
-            (hợp đồng xung đột kho dúi).
-          </p>
-          <div id="alertsFeed"><div class="row" style="color:var(--gray);">Đang tải…</div></div>
-        </div>
-
         <div class="panel" id="kho-panel" style="padding:18px;">
           <div class="panel-head">
             <h2><span class="material-symbols-outlined" style="vertical-align:middle;color:#0E9245;">inventory_2</span> Kho &amp; nguyên liệu</h2>
@@ -979,6 +1058,12 @@
             các cơ sở tại <code>Facilities/*/Farm/CommercialStock/total</code>). Quán ăn tự ẩn/hiện món "dúi" theo
             đúng số này.
           </p>
+          <div class="admin-gate" style="padding:24px;text-align:center;color:var(--gray);background:var(--page-bg);border-radius:12px;">
+            <span class="material-symbols-outlined" style="font-size:32px;">lock</span>
+            <div style="margin-top:8px;font-weight:600;">Số liệu tồn kho được ẩn để bảo mật.</div>
+            <div style="font-size:12.5px;margin-top:4px;">Đăng nhập với tài khoản Chủ trại/quản trị (qua Trang trại Dúi) để xem.</div>
+          </div>
+          <div class="admin-gate-body hidden-view">
           <div class="stat-row" style="margin-bottom:14px;">
             <div class="stat-box"><div class="stat-label">Tồn Cơ sở 1 (khả dụng cho Quán ăn/Tiệc cưới)</div><div class="stat-value" id="khoBase">—</div></div>
             <div class="stat-box"><div class="stat-label">Tồn tại các cơ sở khác (chưa chuyển về)</div><div class="stat-value" id="khoOther">—</div></div>
@@ -991,65 +1076,39 @@
             Nguyên liệu chế biến (thực phẩm, gia vị…) của Quán ăn hiện <b>chưa có module nào theo dõi tồn kho</b> —
             chưa có đặc tả cho phần này nên Trung tâm chưa thể tổng hợp số liệu nguyên liệu.
           </div>
-        </div>
-
-        <div class="panel" id="customers-panel" style="padding:18px;">
-          <div class="panel-head">
-            <h2><span class="material-symbols-outlined" style="vertical-align:middle;color:#0A65F1;">group</span> Khách hàng</h2>
-          </div>
-          <p style="font-size:12.5px;color:#6B7280;margin-bottom:14px;">
-            Tổng hợp thật từ danh sách khách hàng đã có ở 2 module: Trang trại (<code>Farm/Sales/Customers</code>) và
-            Tiệc cưới (<code>Wedding/Customers</code>). Quán ăn hiện không lưu định danh khách hàng (đặt món tại bàn
-            qua QR, không thu thập tên/SĐT) nên không có dữ liệu khách hàng từ Quán ăn để tổng hợp.
-          </p>
-          <div style="font-weight:700;margin-bottom:8px;">Khách hàng Trang trại (mua dúi giống/thương phẩm)</div>
-          <div style="overflow:auto;margin-bottom:18px;">
-          <table class="txn-table">
-            <thead><tr><th>Tên</th><th>Điện thoại</th><th>Địa chỉ</th><th>Tổng đã mua</th></tr></thead>
-            <tbody id="custFarmBody"><tr><td colspan="4">Đang tải…</td></tr></tbody>
-          </table>
-          </div>
-          <div style="font-weight:700;margin-bottom:8px;">Khách hàng Tiệc cưới</div>
-          <div style="overflow:auto;">
-          <table class="txn-table">
-            <thead><tr><th>Tên</th><th>Điện thoại</th><th>Ngày cưới dự kiến</th><th>Số hợp đồng</th></tr></thead>
-            <tbody id="custWeddingBody"><tr><td colspan="4">Đang tải…</td></tr></tbody>
-          </table>
           </div>
         </div>
 
-        <div class="panel" id="reports-panel" style="padding:18px;">
+        <div class="panel" id="contracts-panel" style="padding:18px;">
           <div class="panel-head">
-            <h2><span class="material-symbols-outlined" style="vertical-align:middle;color:#7C3AED;">summarize</span> Báo cáo tổng hợp</h2>
+            <h2><span class="material-symbols-outlined" style="vertical-align:middle;color:#0A65F1;">description</span> Hợp đồng</h2>
           </div>
           <p style="font-size:12.5px;color:#6B7280;margin-bottom:14px;">
-            Ảnh chụp nhanh (realtime) toàn bộ số liệu đã có ở các phần khác của Trung tâm điều hành — Vận hành, Tài
-            chính, Cảnh báo — gộp vào một trang duy nhất để xem/báo cáo nhanh.
+            Tổng hợp CHỈ ĐỌC — dữ liệu thật, realtime từ <code>Wedding/Contracts</code>. Tạo mới, duyệt, ghi nhận
+            thanh toán, hoàn tất hoặc xoá hợp đồng vẫn thực hiện tại module Dịch vụ Tiệc cưới; Trung tâm điều hành
+            không tạo thêm nghiệp vụ ghi hay collection dữ liệu nào ở đây.
           </p>
           <div class="admin-gate" style="padding:24px;text-align:center;color:var(--gray);background:var(--page-bg);border-radius:12px;">
             <span class="material-symbols-outlined" style="font-size:32px;">lock</span>
-            <div style="margin-top:8px;font-weight:600;">Báo cáo tổng hợp bao gồm số liệu tài chính, được ẩn để bảo mật.</div>
+            <div style="margin-top:8px;font-weight:600;">Số liệu hợp đồng gồm giá trị tiền, được ẩn để bảo mật.</div>
             <div style="font-size:12.5px;margin-top:4px;">Đăng nhập với tài khoản Chủ trại/quản trị (qua Trang trại Dúi) để xem.</div>
           </div>
           <div class="admin-gate-body hidden-view">
-            <div style="font-weight:700;margin:0 0 8px;">Vận hành</div>
-            <div class="stat-row" style="margin-bottom:16px;">
-              <div class="stat-box"><div class="stat-label">Tổng ô chuồng Trang trại</div><div class="stat-value" id="rpTotalCells">—</div></div>
-              <div class="stat-box"><div class="stat-label">Món đang phục vụ Quán ăn</div><div class="stat-value" id="rpTotalItems">—</div></div>
-              <div class="stat-box"><div class="stat-label">Tổng hợp đồng Tiệc cưới</div><div class="stat-value" id="rpTotalContracts">—</div></div>
-              <div class="stat-box"><div class="stat-label">Cảnh báo đang mở</div><div class="stat-value" id="rpOpenAlerts">—</div></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+              <h3 style="font-size:14px;font-weight:800;">Hợp đồng Tiệc cưới</h3>
+              <a href="tiec_cuoi.html" class="link-btn tint-pink">Quản lý đầy đủ tại Dịch vụ Tiệc cưới →</a>
             </div>
-            <div style="font-weight:700;margin:0 0 8px;">Tài chính</div>
-            <div class="stat-row" style="margin-bottom:16px;">
-              <div class="stat-box"><div class="stat-label">Doanh thu Trang trại</div><div class="stat-value" id="rpFarmRev">—</div></div>
-              <div class="stat-box"><div class="stat-label">Lợi nhuận Trang trại</div><div class="stat-value" id="rpFarmProfit">—</div></div>
-              <div class="stat-box"><div class="stat-label">Doanh thu Quán ăn (Sổ chung)</div><div class="stat-value" id="rpRestRev">—</div></div>
-              <div class="stat-box"><div class="stat-label">Doanh thu Tiệc cưới</div><div class="stat-value" id="rpWedRev">—</div></div>
+            <div style="overflow:auto;margin-bottom:22px;">
+            <table class="txn-table">
+              <thead><tr><th>Khách hàng</th><th>Gói dịch vụ</th><th>Ngày tổ chức</th><th>Giá trị</th><th>Đã thu</th><th>Trạng thái</th></tr></thead>
+              <tbody id="contractsWeddingBody"><tr><td colspan="6">Đang tải…</td></tr></tbody>
+            </table>
             </div>
-            <div style="font-weight:700;margin:0 0 8px;">Đa cơ sở</div>
-            <div class="stat-row">
-              <div class="stat-box"><div class="stat-label">Tổng phiếu chuyển thương phẩm</div><div class="stat-value" id="rpTransferCount">—</div></div>
-              <div class="stat-box"><div class="stat-label">Tổng số con đã chuyển về Cơ sở 1</div><div class="stat-value" id="rpTransferQty">—</div></div>
+
+            <h3 style="font-size:14px;font-weight:800;margin:0 0 10px;padding-top:16px;border-top:1px solid var(--border);">Hợp đồng khác</h3>
+            <div style="padding:20px;text-align:center;color:var(--gray);background:var(--page-bg);border-radius:12px;font-size:12.5px;">
+              Chưa có module nghiệp vụ nào lưu dữ liệu "Hợp đồng khác" (nhà cung cấp, dịch vụ...) — mục này để trống,
+              không tự tạo dữ liệu hay nghiệp vụ mới.
             </div>
           </div>
         </div>
@@ -1091,23 +1150,25 @@
           </div>
         </div>
 
-        <div class="panel" id="settings-panel" style="padding:18px;">
+        <div class="panel" id="library-panel" style="padding:18px;">
           <div class="panel-head">
-            <h2><span class="material-symbols-outlined" style="vertical-align:middle;color:#6B7280;">settings</span> Cài đặt hệ thống</h2>
+            <h2><span class="material-symbols-outlined" style="vertical-align:middle;color:#0E7490;">perm_media</span> Thư viện</h2>
           </div>
           <p style="font-size:12.5px;color:#6B7280;margin-bottom:14px;">
-            Quản lý ảnh đại diện của 4 module hiển thị trên Trang chủ (ảnh lưu qua ImgBB, URL lưu qua Realtime Database —
-            cập nhật tức thì cho mọi thiết bị đang mở trang, không cần sửa code).
+            Tài nguyên dùng chung của toàn hệ thống: QR Hệ thống, thư viện ảnh và ảnh đại diện 4 module hiển thị trên
+            Trang chủ (ảnh lưu qua ImgBB, URL lưu qua Realtime Database — cập nhật tức thì cho mọi thiết bị đang mở
+            trang), cùng video giới thiệu từng module.
           </p>
           <div class="admin-gate" style="padding:24px;text-align:center;color:var(--gray);background:var(--page-bg);border-radius:12px;">
             <span class="material-symbols-outlined" style="font-size:32px;">lock</span>
-            <div style="margin-top:8px;font-weight:600;">Chỉ tài khoản quản trị mới chỉnh được Cài đặt hệ thống.</div>
+            <div style="margin-top:8px;font-weight:600;">Chỉ tài khoản quản trị mới chỉnh được Thư viện.</div>
             <div style="font-size:12.5px;margin-top:4px;">Đăng nhập với tài khoản Chủ trại/quản trị (qua Trang trại Dúi) để chỉnh sửa.</div>
           </div>
           <div class="admin-gate-body hidden-view" id="settingsModuleImages"></div>
         </div>
       </section>
-    </div>
+      </div><!-- /#financeDetailSection -->
+    </div><!-- /#financeView -->
 
     <!-- Footer -->
     <footer class="footer">
@@ -1531,29 +1592,68 @@
     if(home) home.classList.add("active");
     if(fin) fin.classList.remove("active");
   }
-  function showFinance(scrollTargetId){
+  var FINANCE_PANEL_IDS = ["finance-panel","kho-panel","contracts-panel","suppliers-panel","library-panel"];
+  // Màn tổng — hiển thị 5 thẻ nhóm, ẩn toàn bộ panel chi tiết.
+  // CHẶN TRUY CẬP TẠI ĐÂY: Trung tâm điều hành chỉ Admin mới được mở — dù
+  // gọi từ sidebar, thẻ "Xem chi tiết", hay gọi thẳng hàm này/showFinanceDetail.
+  // Không admin -> không mở financeView, quay lại Trang chủ.
+  function showFinanceOverview(){
+    if(!isAdminUser()){
+      alert("Trung tâm điều hành chỉ dành cho tài khoản quản trị. Vui lòng đăng nhập với tài khoản Chủ trại/quản trị (qua Trang trại Dúi) để truy cập.");
+      showDashboard();
+      return;
+    }
     document.getElementById("dashboardView").classList.add("hidden-view");
     document.getElementById("financeView").classList.remove("hidden-view");
+    var ov = document.getElementById("financeOverviewSection"), dt = document.getElementById("financeDetailSection");
+    if(ov) ov.classList.remove("hidden-view");
+    if(dt) dt.classList.add("hidden-view");
     var home = document.getElementById("navHome"), fin = document.getElementById("navFinance");
     if(home) home.classList.remove("active");
     if(fin) fin.classList.add("active");
-    if(scrollTargetId){
-      var t = document.getElementById(scrollTargetId);
-      if(t) setTimeout(function(){ t.scrollIntoView({behavior:"smooth", block:"start"}); }, 50);
+  }
+  // Mở đúng 1 panel nghiệp vụ đầy đủ (ẩn các panel khác + ẩn màn tổng).
+  // Cùng chốt quyền như showFinanceOverview() — không admin thì không mở
+  // được bất kỳ panel chi tiết nào (Tài chính/Kho/Hợp đồng/NCC/Thư viện).
+  function showFinanceDetail(panelId){
+    if(!isAdminUser()){
+      alert("Trung tâm điều hành chỉ dành cho tài khoản quản trị. Vui lòng đăng nhập với tài khoản Chủ trại/quản trị (qua Trang trại Dúi) để truy cập.");
+      showDashboard();
+      return;
     }
+    document.getElementById("dashboardView").classList.add("hidden-view");
+    document.getElementById("financeView").classList.remove("hidden-view");
+    var ov = document.getElementById("financeOverviewSection"), dt = document.getElementById("financeDetailSection");
+    if(ov) ov.classList.add("hidden-view");
+    if(dt) dt.classList.remove("hidden-view");
+    FINANCE_PANEL_IDS.forEach(function(id){
+      var p = document.getElementById(id);
+      if(p) p.classList.toggle("hidden-view", id !== panelId);
+    });
+    var home = document.getElementById("navHome"), fin = document.getElementById("navFinance");
+    if(home) home.classList.remove("active");
+    if(fin) fin.classList.add("active");
+    window.scrollTo({top:0, behavior:"smooth"});
   }
   ["navFinance","btnGoFinance","btnGoFinance2"].forEach(function(id){
     var el = document.getElementById(id);
-    if(el) el.addEventListener("click", function(e){ e.preventDefault(); showFinance(); });
+    if(el) el.addEventListener("click", function(e){ e.preventDefault(); showFinanceOverview(); });
   });
-  ["admFinance","admKho","admCustomers","admReports","admSuppliers","admAlerts","admSettings"].forEach(function(id){
+  ["admFinance","admKho","admContracts","admSuppliers","admLibrary"].forEach(function(id){
     var el = document.getElementById(id);
-    if(el) el.addEventListener("click", function(e){ e.preventDefault(); showFinance(el.getAttribute("data-target")); });
+    if(el) el.addEventListener("click", function(e){ e.preventDefault(); showFinanceDetail(el.getAttribute("data-target")); });
+  });
+  document.querySelectorAll('[data-finance-detail]').forEach(function(b){
+    b.addEventListener("click", function(){ showFinanceDetail(b.getAttribute("data-finance-detail")); });
   });
   var navHome = document.getElementById("navHome");
   if(navHome) navHome.addEventListener("click", function(e){ e.preventDefault(); showDashboard(); });
   var btnBack = document.getElementById("btnBackDashboard");
   if(btnBack) btnBack.addEventListener("click", function(e){ e.preventDefault(); showDashboard(); });
+  var btnBackOv = document.getElementById("btnBackDashboardOverview");
+  if(btnBackOv) btnBackOv.addEventListener("click", function(e){ e.preventDefault(); showDashboard(); });
+  var btnBackToOv = document.getElementById("btnBackToOverview");
+  if(btnBackToOv) btnBackToOv.addEventListener("click", function(e){ e.preventDefault(); showFinanceOverview(); });
 
   if(!dashReady){
     ["qiFarmCells","qiRestaurantItems","qiWeddingUpcoming","qiWeddingCustomers","qiTicketsNew"].forEach(function(id){ setEl(id,"—"); });
@@ -1579,10 +1679,11 @@
   function renderFinanceGate(){
     var admin = isAdminUser();
     var financePanel = document.getElementById("finance-panel");
-    var reportsPanel = document.getElementById("reports-panel");
-    var settingsPanel = document.getElementById("settings-panel");
+    var khoPanel = document.getElementById("kho-panel");
+    var contractsPanel = document.getElementById("contracts-panel");
+    var libraryPanel = document.getElementById("library-panel");
     var suppliersPanel = document.getElementById("suppliers-panel");
-    [financePanel, reportsPanel, settingsPanel, suppliersPanel].forEach(function(panel){
+    [financePanel, khoPanel, contractsPanel, libraryPanel, suppliersPanel].forEach(function(panel){
       if(!panel) return;
       var gate = panel.querySelector(".admin-gate");
       var body = panel.querySelector(".admin-gate-body");
@@ -1590,7 +1691,11 @@
       if(body) body.classList.toggle("hidden-view", !admin);
     });
   }
-  if(auth) auth.onAuthStateChanged(function(){ renderFinanceGate(); });
+  if(auth) auth.onAuthStateChanged(function(){
+    renderFinanceGate();
+    var fv = document.getElementById("financeView");
+    if(fv && !fv.classList.contains("hidden-view") && !isAdminUser()) showDashboard();
+  });
   renderFinanceGate();
 
   /* =========================================================================
@@ -1606,7 +1711,6 @@
     txns: {},                  // AdminCenter/Transactions (Sổ Thu Chi — Quán ăn & Khác)
     farmSalesTx: {},           // Farm/Sales/Transactions (doanh thu Trang trại — dữ liệu thật)
     farmSalesExp: {},          // Farm/Sales/Expenses (chi phí Trang trại — dữ liệu thật)
-    farmCustomers: {},         // Farm/Sales/Customers
     weddingCustomersFull: {},  // Wedding/Customers (đầy đủ, dùng cho trang Khách hàng)
     facilityTransfers: [],
     suppliers: {},             // Suppliers/{id}
@@ -1635,10 +1739,9 @@
     });
     setEl("qiRestaurantItems", count+" món");
     renderRestaurantPanel();
-    renderReportsPanel();
   }
 
-  listen("Farm/Cells", function(cells){ setEl("qiFarmCells", Object.keys(cells||{}).length+" ô"); renderFarmPanel(cells); renderReportsPanel(); });
+  listen("Farm/Cells", function(cells){ setEl("qiFarmCells", Object.keys(cells||{}).length+" ô"); renderFarmPanel(cells); });
 
   listen("Restaurant/Tickets", function(tickets){
     tickets = tickets || {};
@@ -1653,7 +1756,7 @@
     latestCustomers = c || {};
     setEl("qiWeddingCustomers", Object.keys(latestCustomers).length+" khách");
     renderWeddingPanel();
-    renderCustomersPanel();
+    renderContractsPanel();
   });
 
   /* ---------------- Panel Trang trại (realtime) ---------------- */
@@ -1752,7 +1855,6 @@
       }).join("") || '<div class="row" style="color:var(--gray);">Chưa có phiếu chuyển nào.</div>';
     }
     state.facilityTransfers = items;
-    renderReportsPanel();
     renderKhoPanel();
   });
 
@@ -1797,9 +1899,29 @@
 
   /* ---------------- Panel Tiệc cưới (realtime) ---------------- */
   var latestCustomers={}, latestPackages={}, latestContracts={}, latestExternal={};
-  listen("Wedding/Packages", function(p){ latestPackages = p || {}; renderWeddingPanel(); });
+  listen("Wedding/Packages", function(p){ latestPackages = p || {}; renderWeddingPanel(); renderContractsPanel(); });
   listen("Wedding/ExternalRevenue", function(e){ latestExternal = e || {}; renderWeddingPanel(); });
-  listen("Wedding/Contracts", function(c){ latestContracts = c || {}; renderWeddingPanel(); renderCustomersPanel(); renderReportsPanel(); renderAlerts(); });
+  listen("Wedding/Contracts", function(c){ latestContracts = c || {}; renderWeddingPanel(); renderAlerts(); renderContractsPanel(); });
+  // Panel "Hợp đồng" của Trung tâm điều hành (chỉ đọc — mục 1: Wedding/Contracts).
+  // Tái dùng đúng latestContracts/latestCustomers/latestPackages đã có ở trên,
+  // KHÔNG thêm listener/collection Firebase mới nào.
+  function renderContractsPanel(){
+    var body = document.getElementById("contractsWeddingBody");
+    if(!body) return;
+    var contracts = latestContracts, customers = latestCustomers, packages = latestPackages;
+    var STATUS_LABEL = {processing:"Đang xử lý", pending_approval:"Chờ sếp duyệt", conflict:"Xung đột kho", completed:"Đã hoàn tất"};
+    var ids = Object.keys(contracts).sort(function(a,b){ return (contracts[b].createdAt||0)-(contracts[a].createdAt||0); });
+    body.innerHTML = ids.map(function(id){
+      var c = contracts[id];
+      var cust = customers[c.customerId];
+      var pkg = packages[c.packageId];
+      var paid = 0;
+      Object.keys(c.payments||{}).forEach(function(pid){ paid += (c.payments[pid].amount||0); });
+      return '<tr><td>'+(cust?esc(cust.name):"(đã xoá)")+'</td><td>'+(pkg?esc(pkg.name):"—")+'</td>'+
+        '<td>'+fmtDateFull(c.eventDate)+'</td><td>'+fmtVND(c.totalValue)+'</td><td>'+fmtVND(paid)+'</td>'+
+        '<td>'+esc(STATUS_LABEL[c.status]||c.status||"—")+'</td></tr>';
+    }).join("") || '<tr><td colspan="6" style="color:var(--gray);">Chưa có hợp đồng tiệc cưới nào.</td></tr>';
+  }
   function renderWeddingPanel(){
     var customers = latestCustomers, packages = latestPackages, contracts = latestContracts, external = latestExternal;
     var total = Object.keys(contracts).length;
@@ -1862,11 +1984,9 @@
     setEl("fnTotal", fmtVND((state.weddingRevenue||0) + farmRevenue + thu - chi));
     setEl("fnRestaurant", fmtVND(byModule.restaurant||0));
     setEl("fnOther", fmtVND(byModule.khac||0));
-    renderReportsPanel();
   }
-  listen("Farm/Sales/Transactions", function(tx){ state.farmSalesTx = tx || {}; renderFinanceStats(); renderCustomersPanel(); });
+  listen("Farm/Sales/Transactions", function(tx){ state.farmSalesTx = tx || {}; renderFinanceStats(); });
   listen("Farm/Sales/Expenses", function(exp){ state.farmSalesExp = exp || {}; renderFinanceStats(); });
-  listen("Farm/Sales/Customers", function(cust){ state.farmCustomers = cust || {}; renderCustomersPanel(); });
   listen("AdminCenter/Transactions", function(txns){
     state.txns = txns || {};
     renderFinanceStats();
@@ -1977,7 +2097,6 @@
         });
       });
     }
-    renderReportsPanel();
   }
   listen("Suppliers", function(s){ state.suppliers = s || {}; renderSuppliersPanel(); });
   listen("SupplierReceipts", function(r){ state.supplierReceipts = r || {}; renderSuppliersPanel(); renderAlerts(); });
@@ -2172,7 +2291,6 @@
           '<span class="name">'+esc(r.text)+'</span><span class="alert-src alert-src-'+r.src+'">'+esc(r.srcLabel)+'</span></div>';
       }).join("") || '<div class="row" style="color:var(--gray);">Không có cảnh báo nào — mọi thứ đang ổn định.</div>') + '</div>';
     }
-    renderReportsPanel();
   }
 
   /* ---------------- Kho & nguyên liệu (mục 4) — chỉ có dữ liệu THẬT về tồn
@@ -2192,57 +2310,6 @@
           '<span class="name">'+esc(t.facilityName)+' → '+esc(t.toLabel)+' — '+t.qty+' con ('+fmtDateFull(t.date)+')</span></div>';
       }).join("") || '<div class="row" style="color:var(--gray);">Chưa có phiếu chuyển nào.</div>';
     }
-  }
-
-  /* ---------------- Khách hàng (mục 5) — tổng hợp THẬT từ Farm/Sales/Customers
-     + Wedding/Customers (2 nơi duy nhất có dữ liệu khách hàng thật). Quán ăn
-     không lưu định danh khách hàng nên không có phần tương ứng. ---- */
-  function renderCustomersPanel(){
-    var farmTotalByCustomer = {};
-    Object.keys(state.farmSalesTx).forEach(function(id){
-      var t = state.farmSalesTx[id]; if(!t.customerId) return;
-      farmTotalByCustomer[t.customerId] = (farmTotalByCustomer[t.customerId]||0) + (Number(t.amount)||0);
-    });
-    var farmBody = document.getElementById("custFarmBody");
-    if(farmBody){
-      var farmIds = Object.keys(state.farmCustomers);
-      farmBody.innerHTML = farmIds.map(function(id){
-        var c = state.farmCustomers[id];
-        return '<tr><td>'+esc(c.name)+'</td><td>'+esc(c.phone||"—")+'</td><td>'+esc(c.address||"—")+'</td><td>'+fmtVND(farmTotalByCustomer[id]||0)+'</td></tr>';
-      }).join("") || '<tr><td colspan="4" style="color:var(--gray);">Chưa có khách hàng nào.</td></tr>';
-    }
-    var contractCountByCustomer = {};
-    Object.keys(latestContracts).forEach(function(id){
-      var c = latestContracts[id]; if(!c.customerId) return;
-      contractCountByCustomer[c.customerId] = (contractCountByCustomer[c.customerId]||0)+1;
-    });
-    var wedBody = document.getElementById("custWeddingBody");
-    if(wedBody){
-      var wedIds = Object.keys(latestCustomers);
-      wedBody.innerHTML = wedIds.map(function(id){
-        var c = latestCustomers[id];
-        return '<tr><td>'+esc(c.name)+'</td><td>'+esc(c.phone||"—")+'</td><td>'+fmtDateFull(c.weddingDate)+'</td><td>'+(contractCountByCustomer[id]||0)+'</td></tr>';
-      }).join("") || '<tr><td colspan="4" style="color:var(--gray);">Chưa có khách hàng nào.</td></tr>';
-    }
-  }
-
-  /* ---------------- Báo cáo tổng hợp (mục 7) — ảnh chụp nhanh số liệu THẬT
-     đã tính ở các panel khác, gộp vào một trang, không tính toán gì mới. ---- */
-  function renderReportsPanel(){
-    setEl("rpTotalCells", Object.keys(latestCells).length+" ô");
-    setEl("rpTotalItems", Object.keys(latestMenuItems).length+" món");
-    setEl("rpTotalContracts", Object.keys(latestContracts).length+" hợp đồng");
-    setEl("rpOpenAlerts", (state.alertCount||0)+" cảnh báo");
-    var farmRevenue = 0, farmExpense = 0;
-    Object.keys(state.farmSalesTx).forEach(function(id){ farmRevenue += Number(state.farmSalesTx[id].amount)||0; });
-    Object.keys(state.farmSalesExp).forEach(function(id){ farmExpense += Number(state.farmSalesExp[id].amount)||0; });
-    setEl("rpFarmRev", fmtVND(farmRevenue)); setEl("rpFarmProfit", fmtVND(farmRevenue-farmExpense));
-    var restRevenue = 0;
-    Object.keys(state.txns).forEach(function(id){ var t=state.txns[id]; if(t.module==="restaurant") restRevenue += (t.type==="thu"?1:-1)*(t.amount||0); });
-    setEl("rpRestRev", fmtVND(restRevenue));
-    setEl("rpWedRev", fmtVND(state.weddingRevenue||0));
-    setEl("rpTransferCount", state.facilityTransfers.length+"");
-    setEl("rpTransferQty", state.facilityTransfers.reduce(function(s,t){return s+(t.qty||0);},0)+" con");
   }
 
   /* ---------------- Cài đặt hệ thống (mục 9) — dùng lại ĐÚNG API
@@ -2455,7 +2522,6 @@
 
   renderAlerts();
   renderKhoPanel();
-  renderCustomersPanel();
   renderSettingsPanel();
 })();
 </script>
