@@ -92,6 +92,31 @@
   .dot-overdue{background:var(--red);} .dot-today{background:var(--orange);}
   .task-row .txt{flex:1;font-size:12.5px;font-weight:600;} .task-row .due{font-size:11px;color:var(--gray);}
 
+  /* ---- Tổng quan Khu (màn hình mở ra trước khi vào Chi tiết ô) ---- */
+  .zone-overview-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+  .zone-purpose{font-size:12.5px;color:var(--gray);margin-top:4px;max-width:640px;line-height:1.55;}
+  .zone-total-badge{font-size:12px;font-weight:800;color:var(--ink-soft);background:#F3F4F7;padding:7px 14px;border-radius:20px;white-space:nowrap;}
+  .stat-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;}
+  .stat-card{border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;background:#fff;text-align:left;transition:transform .1s,box-shadow .15s;}
+  .stat-card:hover{box-shadow:0 4px 14px rgba(0,0,0,.08);transform:translateY(-1px);}
+  .stat-card.sc-disabled{cursor:default;opacity:.55;}
+  .stat-card.sc-disabled:hover{box-shadow:none;transform:none;}
+  .stat-card .v{font-size:22px;font-weight:800;line-height:1.1;}
+  .stat-card .l{font-size:11.5px;color:var(--gray);font-weight:700;margin-top:5px;line-height:1.35;}
+  .stat-card.active-filter{outline:2px solid var(--ink);outline-offset:1px;}
+  .stat-card.sc-vacant{background:#F1F2F4;} .stat-card.sc-vacant .v{color:#4B5563;}
+  .stat-card.sc-ready{background:var(--green-tint2);} .stat-card.sc-ready .v{color:var(--green-dark);}
+  .stat-card.sc-pairing{background:var(--blue-tint);} .stat-card.sc-pairing .v{color:var(--blue);}
+  .stat-card.sc-nursing{background:#FDE7F2;} .stat-card.sc-nursing .v{color:#C0206A;}
+  .stat-card.sc-recovering{background:#EFEAFB;} .stat-card.sc-recovering .v{color:#7C3AED;}
+  .stat-card.sc-treat{background:var(--orange-tint);} .stat-card.sc-treat .v{color:#B45309;}
+  .stat-card.sc-separated{background:#E0F2FE;} .stat-card.sc-separated .v{color:#0369A1;}
+  .stat-card.sc-attention{background:var(--red-tint);} .stat-card.sc-attention .v{color:#B91C1C;}
+  .stat-card.sc-neutral{background:#fff;} .stat-card.sc-neutral .v{color:var(--ink);}
+  .zone-tasks-badge{background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:20px;padding:2px 9px;margin-left:6px;}
+  .filter-chip{display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:#fff;font-size:12.5px;font-weight:700;padding:7px 12px;border-radius:20px;margin-bottom:12px;}
+  .filter-chip button{background:none;border:none;color:inherit;font-weight:800;cursor:pointer;font-size:14px;line-height:1;}
+
   .modal-overlay{position:fixed;inset:0;background:rgba(15,20,35,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;}
   .modal{background:#fff;border-radius:16px;padding:22px;max-width:520px;width:100%;max-height:88vh;overflow:auto;}
   .modal h3{font-size:16px;font-weight:800;margin-bottom:14px;}
@@ -1697,6 +1722,7 @@ document.getElementById("navList").addEventListener("click", function(e){
   document.querySelectorAll(".nav-item").forEach(function(n){ n.classList.remove("active"); });
   item.classList.add("active");
   currentView = item.getAttribute("data-view");
+  if(currentView === "zones"){ window.__zoneViewMode = "overview"; window.__zoneDetailFilter = null; }
   renderCurrentView();
 });
 // Bộ chuyển cơ sở — đổi currentFacilityId rồi vẽ lại TOÀN BỘ ứng dụng đúng
@@ -1816,6 +1842,233 @@ function renderOverview(){
     el.innerHTML = '<div class="card">Không thể tải dữ liệu tổng quan. Vui lòng kiểm tra kết nối Firebase.</div>';
   });
 }
+// Mục đích của từng LOẠI khu — mô tả chức năng chung của loại khu (không phải
+// dữ liệu riêng của 1 khu cụ thể nào), dùng để hiển thị ở Tổng quan Khu.
+var ZONE_TYPE_PURPOSE = {
+  breeding: "Nuôi ghép đôi đực/cái, theo dõi mang thai, sinh sản và nuôi con.",
+  juvenile: "Nuôi hậu bị (đực/cái) cho tới khi đủ thể trạng để chuyển lên khu sinh sản.",
+  baby: "Nuôi dúi con theo từng phân khúc cân nặng sau khi tách mẹ.",
+  commercial: "Nuôi dúi thương phẩm chờ xuất bán.",
+  treatment: "Cách ly và điều trị các cá thể có vấn đề sức khoẻ."
+};
+function uniqCells(list){
+  var seen = {}; var out = [];
+  list.forEach(function(c){ if(!seen[c.id]){ seen[c.id]=true; out.push(c); } });
+  return out;
+}
+// Tính số liệu Tổng quan Khu HOÀN TOÀN từ Farm/Cells thật của đúng khu đang
+// xem (zoneCells truyền vào) — không hard-code theo tên/mã khu cụ thể nào,
+// áp dụng đồng nhất cho mọi zone.type hiện có và cả loại khu tạo thêm sau
+// này (rơi vào nhánh mặc định ở cuối). Mỗi bucket giữ nguyên mảng cell gốc
+// để Chi tiết ô lọc lại đúng từ dữ liệu sống (không snapshot cứng).
+function computeZoneStats(zone, zoneCells){
+  var out = { total: zoneCells.length, sexSplit: null, totalQuantity: null, buckets: [] };
+  if(!zone) return out;
+  if(zone.type === "breeding"){
+    var male = zoneCells.filter(function(c){ return c.sex==="male"; });
+    var female = zoneCells.filter(function(c){ return c.sex==="female"; });
+    out.sexSplit = [{label:"Ô đực", count: male.length}, {label:"Ô cái", count: female.length}];
+    function byState(states){ return zoneCells.filter(function(c){ return states.indexOf(c.state)!==-1; }); }
+    out.buckets = [
+      {key:"attention", label:"Cần theo dõi / xử lý", sub:"Không đậu thai · Bỏ con · Hồi phục", cells: byState(["not_pregnant","abandoned","recovering"]), color:"attention"},
+      {key:"treatment", label:"Đang điều trị", cells: byState(["in_treatment"]), color:"treat"},
+      {key:"pregnant", label:"Đang mang thai / chờ kết quả", cells: byState(["just_separated_male"]), color:"separated"},
+      {key:"pairing", label:"Đang ghép", cells: byState(["pairing"]), color:"pairing"},
+      {key:"nursing", label:"Đang nuôi con", cells: byState(["nursing"]), color:"nursing"},
+      {key:"ready", label:"Sẵn sàng ghép", cells: byState(["ready"]), color:"ready"},
+      {key:"vacant", label:"Trống", cells: byState(["vacant"]), color:"vacant"}
+    ];
+  } else if(zone.type === "juvenile"){
+    var maleOcc=0, femaleOcc=0, growing=[], readyMove=[], inTreat=[], vacantCells=[];
+    zoneCells.forEach(function(c){
+      var m = c.compartments && c.compartments.male, f = c.compartments && c.compartments.female;
+      if(m && m.occupied) maleOcc++;
+      if(f && f.occupied) femaleOcc++;
+      if(!(m&&m.occupied) && !(f&&f.occupied)) vacantCells.push(c);
+      [m,f].forEach(function(comp){
+        if(!comp || !comp.occupied) return;
+        if(comp.state==="in_treatment") inTreat.push(c);
+        else if(comp.state==="ready_move") readyMove.push(c);
+        else growing.push(c);
+      });
+    });
+    out.sexSplit = [{label:"Ngăn đực đang nuôi", count:maleOcc}, {label:"Ngăn cái đang nuôi", count:femaleOcc}];
+    out.buckets = [
+      {key:"treatment", label:"Đang điều trị", cells: uniqCells(inTreat), color:"treat"},
+      {key:"readymove", label:"Chờ chuyển khu", cells: uniqCells(readyMove), color:"pairing"},
+      {key:"growing", label:"Đang nuôi lớn", cells: uniqCells(growing), color:"ready"},
+      {key:"vacant", label:"Trống (chưa nhập hậu bị)", cells: vacantCells, color:"vacant"}
+    ];
+  } else if(zone.type === "baby"){
+    var totalQty = 0;
+    zoneCells.forEach(function(c){ totalQty += (c.quantity||0); });
+    out.totalQuantity = totalQty;
+    out.buckets = BABY_SEGMENTS.map(function(seg){
+      var segCells = zoneCells.filter(function(c){ return c.weightSegment===seg; });
+      var qty = segCells.reduce(function(s,c){ return s+(c.quantity||0); },0);
+      return {key:"seg_"+seg, label:seg, sub:qty+" con", cells: segCells, color: qty>0 ? "ready" : "vacant"};
+    });
+  } else if(zone.type === "commercial"){
+    var totalQty2 = 0;
+    zoneCells.forEach(function(c){ totalQty2 += (c.quantity||0); });
+    out.totalQuantity = totalQty2;
+    out.buckets = [
+      {key:"stocked", label:"Ô có tồn kho", cells: zoneCells.filter(function(c){ return (c.quantity||0)>0; }), color:"ready"},
+      {key:"empty", label:"Ô trống", cells: zoneCells.filter(function(c){ return !(c.quantity>0); }), color:"vacant"}
+    ];
+  } else if(zone.type === "treatment"){
+    out.buckets = [
+      {key:"receiving", label:"Đang tiếp nhận", cells: zoneCells.filter(function(c){ return c.status==="receiving"; }), color:"attention"},
+      {key:"empty", label:"Trống", cells: zoneCells.filter(function(c){ return c.status!=="receiving"; }), color:"vacant"}
+    ];
+  } else {
+    // Loại khu mới phát sinh sau này, chưa có quy tắc riêng — chỉ hiển thị
+    // tổng số ô, không suy diễn/bịa thêm trạng thái không có thật.
+    out.buckets = [{key:"all", label:"Tất cả ô trong khu", cells: zoneCells, color:"neutral"}];
+  }
+  return out;
+}
+// ===== TỔNG QUAN KHU — màn hình mặc định khi bấm vào 1 khu ==============
+function renderZoneOverviewBody(container, zone, zoneCells){
+  container.innerHTML = '<div class="card">Đang tải…</div>';
+  collectTasks().then(function(allTasks){
+    var zoneCellIds = {};
+    zoneCells.forEach(function(c){ zoneCellIds[c.id] = true; });
+    // Việc cần làm CỦA RIÊNG khu này — lọc lại đúng từ danh sách việc cần
+    // làm toàn trại (collectTasks() có sẵn), không tính lại logic riêng.
+    var zoneTasks = allTasks.filter(function(t){ return t.cellId && zoneCellIds[t.cellId]; });
+    var s = computeZoneStats(zone, zoneCells);
+
+    var topStatsHtml = "";
+    if(s.sexSplit) topStatsHtml += s.sexSplit.map(function(x){ return stat(x.count, x.label); }).join("");
+    if(typeof s.totalQuantity === "number") topStatsHtml += stat(s.totalQuantity+" con", "Tổng số con hiện có");
+
+    var bucketsHtml = s.buckets.map(function(b){
+      var disabled = b.cells.length === 0 ? " sc-disabled" : "";
+      return '<div class="stat-card sc-'+b.color+disabled+'" data-bucket="'+b.key+'">'+
+        '<div class="v">'+b.cells.length+'</div><div class="l">'+esc(b.label)+(b.sub?('<br>'+esc(b.sub)):"")+'</div></div>';
+    }).join("");
+
+    var tasksHtml = zoneTasks.length ? zoneTasks.map(function(t){
+      return '<div class="task-row"><span class="dot '+(t.overdue?"dot-overdue":"dot-today")+'"></span>'+
+        '<div class="txt">Ô '+esc(t.code)+' — '+esc(t.type)+'</div><div class="due">'+fmtDate(t.dueDate)+(t.overdue?" (quá hạn)":" (hôm nay)")+'</div></div>';
+    }).join("") : '<div style="color:var(--gray);font-size:13px;">Không có việc nào đến hạn hôm nay trong khu này.</div>';
+
+    container.innerHTML =
+      '<div class="card" style="margin-bottom:14px;">'+
+        '<div class="zone-overview-head">'+
+          '<div><div style="font-weight:800;font-size:16px;">'+esc(zone.name)+' <span style="font-weight:500;color:var(--gray);font-size:12px;">('+esc(ZONE_TYPE_LABEL[zone.type]||zone.type)+')</span></div>'+
+          '<div class="zone-purpose">'+esc(ZONE_TYPE_PURPOSE[zone.type]||"")+'</div></div>'+
+          '<div class="zone-total-badge">Tổng số ô: '+zoneCells.length+'</div>'+
+        '</div>'+
+        (topStatsHtml ? '<div class="grid-stats" style="margin-top:14px;">'+topStatsHtml+'</div>' : "")+
+      '</div>'+
+      '<div class="card" style="margin-bottom:14px;">'+
+        '<div style="font-weight:700;margin-bottom:10px;display:flex;align-items:center;">Việc cần làm của khu này'+
+          (zoneTasks.length ? '<span class="zone-tasks-badge">'+zoneTasks.length+'</span>' : '')+
+        '</div>'+tasksHtml+
+      '</div>'+
+      '<div class="card" style="margin-bottom:14px;">'+
+        '<div style="font-weight:700;margin-bottom:10px;">Tình trạng các ô <span style="font-weight:500;color:var(--gray);font-size:11.5px;">(bấm vào thẻ để xem đúng các ô liên quan)</span></div>'+
+        '<div class="stat-cards">'+bucketsHtml+'</div>'+
+      '</div>'+
+      '<div class="card" style="text-align:center;">'+
+        '<button class="btn btn-primary" id="btnViewCellDetail" style="padding:12px 22px;"><span class="material-symbols-outlined">grid_view</span>Xem chi tiết các ô</button>'+
+      '</div>';
+
+    container.querySelectorAll(".stat-card").forEach(function(card){
+      var key = card.getAttribute("data-bucket");
+      var bucket = s.buckets.filter(function(b){ return b.key===key; })[0];
+      if(!bucket || bucket.cells.length===0) return;
+      card.onclick = function(){
+        window.__zoneDetailFilter = { key: bucket.key, label: bucket.label };
+        window.__zoneViewMode = "detail";
+        renderZones();
+      };
+    });
+    var btnDetail = document.getElementById("btnViewCellDetail");
+    if(btnDetail) btnDetail.onclick = function(){
+      window.__zoneDetailFilter = null;
+      window.__zoneViewMode = "detail";
+      renderZones();
+    };
+  });
+}
+// ===== CHI TIẾT Ô — giữ nguyên 100% giao diện/chức năng ô đực-cái hiện có,
+// chỉ thêm thanh quay lại Tổng quan + chip lọc (nếu đến từ 1 thẻ trạng thái).
+// Bộ lọc luôn tính lại TỪ zoneCells sống (qua computeZoneStats), không dùng
+// danh sách cứng, đảm bảo luôn khớp đúng số liệu Tổng quan vừa hiển thị. ==
+function renderZoneDetailBody(container, zone, zoneCells){
+  var filter = window.__zoneDetailFilter;
+  var cellsForDisplay = zoneCells;
+  if(filter && filter.key){
+    var s = computeZoneStats(zone, zoneCells);
+    var bucket = s.buckets.filter(function(b){ return b.key===filter.key; })[0];
+    cellsForDisplay = bucket ? bucket.cells : zoneCells;
+  }
+
+  var addCellBtn = "";
+  if(isStaffOrOwner()){
+    if(zone.type === "breeding"){
+      addCellBtn = '<button class="btn btn-primary" id="btnAddCellMale"><span class="material-symbols-outlined">add</span>Thêm ô đực</button>'+
+                   '<button class="btn btn-primary" id="btnAddCellFemale"><span class="material-symbols-outlined">add</span>Thêm ô cái</button>';
+    } else if(zone.type === "baby"){
+      addCellBtn = '<button class="btn btn-primary" id="btnAddCell"><span class="material-symbols-outlined">add</span>Thêm ô Baby</button>';
+    } else {
+      addCellBtn = '<button class="btn btn-primary" id="btnAddCell"><span class="material-symbols-outlined">add</span>Thêm ô</button>';
+    }
+  }
+  var delZoneBtn = isOwner() ? '<button class="btn btn-danger" id="btnDelZone"><span class="material-symbols-outlined">delete</span>Xoá khu này</button>' : "";
+
+  // mục "BỐ CỤC Ô": khu nào có ô phân theo giới tính (mọi khu type="breeding"
+  // hiện tại và tạo sau này — không hard-code riêng khu nào) hiển thị 2 cột
+  // song song Đực/Cái; các khu khác (Hậu bị/Baby/Thương phẩm/Điều trị) giữ
+  // nguyên lưới 1 khối như cũ vì ô của các khu đó không phân theo giới tính.
+  var cellsHtml;
+  if(zone.type === "breeding"){
+    var maleCells = cellsForDisplay.filter(function(c){ return c.sex === "male"; });
+    var femaleCells = cellsForDisplay.filter(function(c){ return c.sex === "female"; });
+    var maleHtml = maleCells.map(function(c){ return renderCellCard(c, zone); }).join("") || '<div style="color:var(--gray);font-size:13px;">Không có ô đực nào khớp.</div>';
+    var femaleHtml = femaleCells.map(function(c){ return renderCellCard(c, zone); }).join("") || '<div style="color:var(--gray);font-size:13px;">Không có ô cái nào khớp.</div>';
+    cellsHtml = '<div class="cell-columns">'+
+      '<div><div class="col-head"><span class="material-symbols-outlined" style="font-size:16px;">male</span>Ô đực ('+maleCells.length+')</div><div class="cell-grid">'+maleHtml+'</div></div>'+
+      '<div><div class="col-head"><span class="material-symbols-outlined" style="font-size:16px;">female</span>Ô cái ('+femaleCells.length+')</div><div class="cell-grid">'+femaleHtml+'</div></div>'+
+    '</div>';
+  } else {
+    cellsHtml = '<div class="cell-grid">'+(cellsForDisplay.map(function(c){ return renderCellCard(c, zone); }).join("") || '<div style="color:var(--gray);font-size:13px;">Không có ô nào khớp.</div>')+'</div>';
+  }
+
+  container.innerHTML =
+    '<div class="card" style="margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">'+
+      '<button class="btn btn-secondary" id="btnBackZoneOverview"><span class="material-symbols-outlined">arrow_back</span>Quay lại Tổng quan Khu</button>'+
+      (filter ? '<div class="filter-chip">Đang lọc: '+esc(filter.label)+' ('+cellsForDisplay.length+' ô)<button id="btnClearZoneFilter" title="Bỏ lọc">✕</button></div>' : '')+
+    '</div>'+
+    '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">'+
+      '<div style="font-weight:800;">'+esc(zone.name)+' <span style="font-weight:500;color:var(--gray);font-size:12px;">('+esc(ZONE_TYPE_LABEL[zone.type]||zone.type)+')</span></div>'+
+      '<div style="display:flex;gap:8px;">'+addCellBtn+delZoneBtn+'</div>'+
+    '</div>'+cellsHtml+'</div>';
+
+  container.querySelectorAll(".cell-card").forEach(function(c){ c.onclick = function(){ openCellModal(c.getAttribute("data-cid"), zone); }; });
+  document.getElementById("btnBackZoneOverview").onclick = function(){
+    window.__zoneViewMode = "overview";
+    window.__zoneDetailFilter = null;
+    renderZones();
+  };
+  var btnClear = document.getElementById("btnClearZoneFilter");
+  if(btnClear) btnClear.onclick = function(){ window.__zoneDetailFilter = null; renderZones(); };
+  if(document.getElementById("btnDelZone")) document.getElementById("btnDelZone").onclick = function(){
+    if(confirm("Xoá khu này sẽ xoá toàn bộ ô bên trong. Tiếp tục?")) deleteZone(window.__activeZone).then(function(){
+      window.__zoneViewMode = "overview"; window.__zoneDetailFilter = null; renderZones();
+    });
+  };
+  if(document.getElementById("btnAddCell")) document.getElementById("btnAddCell").onclick = function(){ handleAddCell(zone); };
+  if(document.getElementById("btnAddCellMale")) document.getElementById("btnAddCellMale").onclick = function(){ addCell(window.__activeZone,{sex:"male"}).then(renderZones); };
+  if(document.getElementById("btnAddCellFemale")) document.getElementById("btnAddCellFemale").onclick = function(){ addCell(window.__activeZone,{sex:"female"}).then(renderZones); };
+}
+// ===== ĐIỀU HƯỚNG KHU & Ô CHUỒNG =========================================
+// Nguyên tắc: bấm vào 1 khu (đổi tab) luôn quay về Tổng quan Khu trước;
+// người dùng chủ động bấm "Xem chi tiết các ô" hoặc 1 thẻ trạng thái mới
+// sang màn Chi tiết ô. Áp dụng đồng nhất cho MỌI khu (không riêng Khu 1).
 function renderZones(){
   var el = document.getElementById("viewContent");
   el.innerHTML = '<div class="card">Đang tải…</div>';
@@ -1823,6 +2076,7 @@ function renderZones(){
     var zones = res[0] || {}; var cells = res[1] || {};
     var zoneIds = Object.keys(zones);
     if(!window.__activeZone || !zones[window.__activeZone]) window.__activeZone = zoneIds[0];
+    if(!window.__zoneViewMode) window.__zoneViewMode = "overview";
     var tabsHtml = zoneIds.map(function(zid){
       return '<div class="zone-tab'+(zid===window.__activeZone?" active":"")+'" data-zid="'+zid+'">'+esc(zones[zid].name)+'</div>';
     }).join("");
@@ -1831,56 +2085,30 @@ function renderZones(){
     var zone = zones[window.__activeZone];
     var zoneCells = Object.keys(cells).filter(function(id){ return cells[id].zoneId === window.__activeZone; }).map(function(id){ return Object.assign({id:id}, cells[id]); });
     zoneCells.sort(function(a,b){ return (a.code||"").localeCompare(b.code||""); });
-    var addCellBtn = "";
-    if(isStaffOrOwner() && zone){
-      if(zone.type === "breeding"){
-        addCellBtn = '<button class="btn btn-primary" id="btnAddCellMale"><span class="material-symbols-outlined">add</span>Thêm ô đực</button>'+
-                     '<button class="btn btn-primary" id="btnAddCellFemale"><span class="material-symbols-outlined">add</span>Thêm ô cái</button>';
-      } else if(zone.type === "baby"){
-        addCellBtn = '<button class="btn btn-primary" id="btnAddCell"><span class="material-symbols-outlined">add</span>Thêm ô Baby</button>';
-      } else {
-        addCellBtn = '<button class="btn btn-primary" id="btnAddCell"><span class="material-symbols-outlined">add</span>Thêm ô</button>';
-      }
-    }
-    var delZoneBtn = isOwner() ? '<button class="btn btn-danger" id="btnDelZone"><span class="material-symbols-outlined">delete</span>Xoá khu này</button>' : "";
-    // mục "BỐ CỤC Ô": khu nào có ô phân theo giới tính (mọi khu type="breeding"
-    // hiện tại và tạo sau này — không hard-code riêng khu nào) hiển thị 2 cột
-    // song song Đực/Cái; các khu khác (Hậu bị/Baby/Thương phẩm/Điều trị) giữ
-    // nguyên lưới 1 khối như cũ vì ô của các khu đó không phân theo giới tính.
-    var cellsHtml;
-    if(zone && zone.type === "breeding"){
-      var maleCells = zoneCells.filter(function(c){ return c.sex === "male"; });
-      var femaleCells = zoneCells.filter(function(c){ return c.sex === "female"; });
-      var maleHtml = maleCells.map(function(c){ return renderCellCard(c, zone); }).join("") || '<div style="color:var(--gray);font-size:13px;">Chưa có ô đực nào.</div>';
-      var femaleHtml = femaleCells.map(function(c){ return renderCellCard(c, zone); }).join("") || '<div style="color:var(--gray);font-size:13px;">Chưa có ô cái nào.</div>';
-      cellsHtml = '<div class="cell-columns">'+
-        '<div><div class="col-head"><span class="material-symbols-outlined" style="font-size:16px;">male</span>Ô đực ('+maleCells.length+')</div><div class="cell-grid">'+maleHtml+'</div></div>'+
-        '<div><div class="col-head"><span class="material-symbols-outlined" style="font-size:16px;">female</span>Ô cái ('+femaleCells.length+')</div><div class="cell-grid">'+femaleHtml+'</div></div>'+
-      '</div>';
-    } else {
-      cellsHtml = '<div class="cell-grid">'+(zoneCells.map(function(c){ return renderCellCard(c, zone); }).join("") || '<div style="color:var(--gray);font-size:13px;">Chưa có ô nào trong khu này.</div>')+'</div>';
-    }
+
     el.innerHTML =
       '<div class="card" style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">'+
         '<div class="zone-tabs">'+tabsHtml+'</div>'+
         '<div style="display:flex;gap:8px;">'+qrZoneBtn+addZoneBtn+'</div>'+
       '</div></div>'+
-      '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">'+
-        '<div style="font-weight:800;">'+esc(zone?zone.name:"")+' <span style="font-weight:500;color:var(--gray);font-size:12px;">('+ZONE_TYPE_LABEL[zone?zone.type:""]+')</span></div>'+
-        '<div style="display:flex;gap:8px;">'+addCellBtn+delZoneBtn+'</div>'+
-      '</div>'+cellsHtml+'</div>';
-    el.querySelectorAll(".zone-tab").forEach(function(t){ t.onclick = function(){ window.__activeZone = t.getAttribute("data-zid"); renderZones(); }; });
-    el.querySelectorAll(".cell-card").forEach(function(c){ c.onclick = function(){ openCellModal(c.getAttribute("data-cid"), zone); }; });
+      '<div id="zoneBody"></div>';
+    el.querySelectorAll(".zone-tab").forEach(function(t){
+      t.onclick = function(){
+        window.__activeZone = t.getAttribute("data-zid");
+        window.__zoneViewMode = "overview";
+        window.__zoneDetailFilter = null;
+        renderZones();
+      };
+    });
     if(document.getElementById("btnAddZone")) document.getElementById("btnAddZone").onclick = openAddZoneModal;
-    if(document.getElementById("btnDelZone")) document.getElementById("btnDelZone").onclick = function(){
-      if(confirm("Xoá khu này sẽ xoá toàn bộ ô bên trong. Tiếp tục?")) deleteZone(window.__activeZone).then(renderZones);
-    };
-    if(document.getElementById("btnAddCell")) document.getElementById("btnAddCell").onclick = function(){ handleAddCell(zone); };
-    if(document.getElementById("btnAddCellMale")) document.getElementById("btnAddCellMale").onclick = function(){ addCell(window.__activeZone,{sex:"male"}).then(renderZones); };
-    if(document.getElementById("btnAddCellFemale")) document.getElementById("btnAddCellFemale").onclick = function(){ addCell(window.__activeZone,{sex:"female"}).then(renderZones); };
     if(document.getElementById("btnQRZone")) document.getElementById("btnQRZone").onclick = function(){
       openQRModal("QR Khu — "+(zone?zone.name:""), qrZoneUrl(window.__activeZone));
     };
+
+    var body = document.getElementById("zoneBody");
+    if(!zone){ body.innerHTML = '<div class="card">Chưa có khu nào. Bấm "Thêm khu" để bắt đầu.</div>'; return; }
+    if(window.__zoneViewMode === "detail") renderZoneDetailBody(body, zone, zoneCells);
+    else renderZoneOverviewBody(body, zone, zoneCells);
   });
 }
 function handleAddCell(zone){
@@ -2022,6 +2250,7 @@ function handleQRDeepLinkIfAny(){
       return FirebaseService.read("Farm/Zones/"+c.zoneId).then(function(z){
         if(!z){ showToast("Không tìm thấy khu chứa ô này."); return; }
         currentView = "zones"; window.__activeZone = c.zoneId;
+        window.__zoneViewMode = "detail"; window.__zoneDetailFilter = null;
         document.querySelectorAll(".nav-item").forEach(function(n){ n.classList.remove("active"); });
         var zv = document.querySelector('.nav-item[data-view="zones"]'); if(zv) zv.classList.add("active");
         renderCurrentView();
@@ -2032,6 +2261,7 @@ function handleQRDeepLinkIfAny(){
     FirebaseService.read("Farm/Zones/"+zoneId).then(function(z){
       if(!z){ showToast("Không tìm thấy khu này — có thể đã bị xoá."); return; }
       currentView = "zones"; window.__activeZone = zoneId;
+      window.__zoneViewMode = "overview"; window.__zoneDetailFilter = null;
       document.querySelectorAll(".nav-item").forEach(function(n){ n.classList.remove("active"); });
       var zv = document.querySelector('.nav-item[data-view="zones"]'); if(zv) zv.classList.add("active");
       renderCurrentView();
