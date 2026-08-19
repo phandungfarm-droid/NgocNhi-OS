@@ -138,13 +138,14 @@
 
   /* Dashboard tổng quan — chỉ trình bày dữ liệu hiện có, không tạo dữ liệu mẫu. */
   .farm-dashboard{display:flex;flex-direction:column;gap:16px;padding:4px 0 22px;}
-  .farm-hero{display:grid;grid-template-columns:minmax(0,1.22fr) minmax(300px,.78fr);min-height:258px;border-radius:20px;overflow:hidden;background:#123525;box-shadow:0 16px 38px rgba(15,45,30,.14);}
-  .farm-hero-copy{position:relative;padding:32px;display:flex;flex-direction:column;justify-content:center;background:linear-gradient(90deg,rgba(8,38,23,.88),rgba(8,38,23,.58));color:#fff;z-index:1;}
+  .farm-hero{position:relative;display:flex;min-height:300px;border-radius:20px;overflow:hidden;background:#123525;box-shadow:0 16px 38px rgba(15,45,30,.14);}
+  .farm-hero-media{position:absolute;inset:0;display:flex;background:#123525;}
+  .farm-hero-copy{position:relative;z-index:1;width:100%;min-height:300px;padding:38px;display:flex;flex-direction:column;justify-content:center;background:linear-gradient(90deg,rgba(8,38,23,.9) 0%,rgba(8,38,23,.68) 48%,rgba(8,38,23,.2) 100%);color:#fff;}
   .farm-hero-copy:before{content:"";position:absolute;inset:0;z-index:-1;background:var(--farm-hero-image,linear-gradient(135deg,#174c31,#74a96f));background-size:cover;background-position:center;opacity:.75;}
   .farm-status{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#ddf9e6;margin-bottom:13px;}.farm-status:before{content:"";width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 0 4px rgba(74,222,128,.17);}
   .farm-hero-copy h2{font-size:28px;line-height:1.15;letter-spacing:-.03em;margin:0 0 10px;}.farm-hero-copy p{max-width:520px;color:#ebf8ef;font-size:14px;line-height:1.65;margin:0;}
   .farm-hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;}.farm-hero-actions .btn{background:#fff;color:var(--ink);border-color:#fff;}.farm-hero-actions .btn:hover{background:#f0fff4;}
-  .farm-hero-media{display:flex;min-height:258px;background:#d8eadc;padding:4px;}.farm-single-media{align-items:stretch;justify-content:stretch;}.farm-single-media img,.farm-single-media video{width:100%;height:100%;object-fit:cover;display:block;background:#132c1f;}.farm-media-empty{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#43835a;font-size:12px;font-weight:700;}.farm-media-empty .material-symbols-outlined{font-size:34px;}.farm-overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}.farm-zone-task-list{display:flex;flex-direction:column;gap:7px;margin-top:12px;}.farm-zone-task{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 10px;border-radius:9px;background:#f6fbf7;color:var(--ink);font-size:12px;}.farm-zone-task strong{min-width:28px;text-align:center;color:var(--green);}.farm-overview-next{display:flex;align-items:center;justify-content:space-between;gap:14px;}.farm-media-tile{min-height:126px;position:relative;overflow:hidden;background:linear-gradient(135deg,#d6eadb,#f5fbf6);display:flex;align-items:center;justify-content:center;color:#43835a;}.farm-media-tile img{width:100%;height:100%;object-fit:cover;display:block;}
+  .farm-single-media{align-items:stretch;justify-content:stretch;}.farm-single-media img,.farm-single-media video{width:100%;height:100%;object-fit:cover;display:block;background:#132c1f;}.farm-media-empty{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#43835a;font-size:12px;font-weight:700;}.farm-media-empty .material-symbols-outlined{font-size:34px;}.farm-overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}.farm-zone-task-list{display:flex;flex-direction:column;gap:7px;margin-top:12px;}.farm-zone-task{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 10px;border-radius:9px;background:#f6fbf7;color:var(--ink);font-size:12px;}.farm-zone-task strong{min-width:28px;text-align:center;color:var(--green);}.farm-overview-next{display:flex;align-items:center;justify-content:space-between;gap:14px;}.farm-media-tile{min-height:126px;position:relative;overflow:hidden;background:linear-gradient(135deg,#d6eadb,#f5fbf6);display:flex;align-items:center;justify-content:center;color:#43835a;}.farm-media-tile img{width:100%;height:100%;object-fit:cover;display:block;}
   .farm-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(142px,1fr));gap:10px;}.farm-kpi{display:flex;align-items:center;gap:11px;padding:14px 13px;border:1px solid var(--border);border-radius:14px;background:#fff;box-shadow:var(--shadow-card);min-width:0;}.farm-kpi-icon{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 42px;background:var(--tint,#edf8f0);color:var(--accent,var(--green));}.farm-kpi-icon .material-symbols-outlined{font-size:22px;}.farm-kpi .v{font-size:21px;font-weight:800;line-height:1.1;letter-spacing:-.02em;}.farm-kpi .l{margin-top:3px;font-size:11.5px;line-height:1.25;color:var(--gray);font-weight:600;}
   .farm-dashboard-grid{display:grid;grid-template-columns:1.05fr .82fr .93fr;gap:14px;}.farm-panel{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:var(--shadow-card);min-width:0;}.farm-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px;}.farm-panel-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;}.farm-panel-title .material-symbols-outlined{padding:6px;border-radius:8px;background:var(--green-tint2);color:var(--green);font-size:18px;}.farm-panel-link{font-size:12px;color:var(--blue);font-weight:700;cursor:pointer;}
   .farm-photo-main,.farm-video-main{height:150px;border-radius:12px;overflow:hidden;position:relative;background:linear-gradient(135deg,#e8f5eb,#fafdfa);display:flex;align-items:center;justify-content:center;color:var(--gray);}.farm-photo-main img,.farm-video-main img{width:100%;height:100%;object-fit:cover;display:block;}.farm-video-main button{position:absolute;width:58px;height:58px;border-radius:50%;background:#fff;color:var(--green);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(0,0,0,.23);}.farm-media-meta{margin-top:11px;font-size:12px;color:var(--gray);line-height:1.45;}.farm-media-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:7px;}.farm-media-strip div{height:43px;border-radius:7px;background:var(--green-tint);overflow:hidden;}.farm-media-strip img{width:100%;height:100%;object-fit:cover;}
@@ -268,7 +269,7 @@ try{
 
 /* =========================================================================
    VIDEO GIỚI THIỆU (kiến trúc mới) — Trang trại KHÔNG có chức năng upload
-   video. Chỉ tự động đ���c realtime đúng video Trung tâm điều hành đã gán
+   video. Chỉ tự động đọc realtime đúng video Trung tâm điều hành đã gán
    cho module "farm" tại SystemSettings/ModuleVideos/FarmVideo (đường dẫn
    TOÀN CỤC, không thuộc "Farm/..." nên KHÔNG đi qua điều hướng đa cơ sở)
    rồi hiển thị trong hộp thoại nhỏ khi bấm nút — không có nút tải lên nào.
@@ -1237,7 +1238,7 @@ function treatmentConclude(treatmentCellId, outcome, opts){
       } else if(patient.sourceType === "juvenile"){
         chain = FirebaseService.updateAt("Farm/Cells/"+patient.sourceCellId+"/compartments/"+patient.sex, {state:"growing", startDate: todayStr()});
       } else if(patient.sourceType === "baby" || patient.sourceType === "commercial"){
-        // mục 4: quy trình chung cho cả Baby & Thương phẩm — hoàn trả đúng số
+        // mục 4: quy trình chung cho cả Baby & Thương phẩm — hoàn trả đúng số lượng
         // lượng đã bị trừ khỏi ô nguồn khi chuyển vào điều trị (mục 5).
         chain = FirebaseService.transaction("Farm/Cells/"+patient.sourceCellId+"/quantity", function(cur){ return (cur||0)+(patient.quantity||0); }).then(function(){
           return patient.sourceType === "commercial" ? recomputeCommercialStock() : null;
@@ -1757,7 +1758,7 @@ function renderCurrentView(){
   var titles = {
     overview:["Tổng quan trang trại","Thống kê thời gian thực toàn bộ đàn"],
     zones:["Khu & Ô chuồng","Quản lý cấu trúc khu, ô và vòng đời từng cá thể"],
-    tasks:["Việc c��n làm hôm nay","Tổng hợp việc đến hạn / quá hạn"],
+    tasks:["Việc cần làm hôm nay","Tổng hợp việc đến hạn / quá hạn"],
     alerts:["Cảnh báo & Báo cáo","Nhật ký cảnh báo tự động gửi cho Chủ trại"],
     sales:["Bán dúi","Doanh thu, chi phí, khách hàng, lợi nhuận"],
     facilities:["Đa cơ sở","Chuyển thương phẩm các cơ sở về Cơ sở 1"],
@@ -2375,7 +2376,7 @@ function breedingModalBody(c, allCells){
     } else {
       actions.push('<button class="btn btn-secondary act" data-act="directSeparatedMale">Nhập: Mới tách đực…</button>');
       actions.push('<button class="btn btn-secondary act" data-act="directNursing">Nhập: Đang nuôi con…</button>');
-      actions.push('<button class="btn btn-secondary act" data-act="directRecovering">Nhập: Mới tách con…</button>');
+      actions.push('<button class="btn btn-secondary act" data-act="directRecovering">Nhập: Mới tách con</button>');
     }
   }
   if(c.state === "ready") actions.push('<button class="btn btn-primary act" data-act="pair">Ghép đôi…</button>');
@@ -2702,7 +2703,7 @@ function handleJuvenileAction(act, sex, c){
   }
   if(act === "occupy"){ juvenileSetOccupied(c.id, sex, todayStr()).then(afterAction); }
   else if(act === "readymove"){
-    openFormModal("Đạt thể trạng ("+(sex==="male"?"đực":"cái")+") ��� Ô "+c.code, [{id:"date", label:"Ngày dự kiến chuyển", type:"date", value:todayStr(), required:true}],
+    openFormModal("Đạt thể trạng ("+(sex==="male"?"đực":"cái")+") — Ô "+c.code, [{id:"date", label:"Ngày dự kiến chuyển", type:"date", value:todayStr(), required:true}],
       function(v){ juvenileReadyMove(c.id, sex, v.date).then(afterAction); }, "Xác nhận");
   }
   else if(act === "movebreeding"){
