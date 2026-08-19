@@ -90,7 +90,7 @@
   .task-row{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;}
   .task-row .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
   .dot-overdue{background:var(--red);} .dot-today{background:var(--orange);}
-  .task-row .txt{flex:1;font-size:12.5px;font-weight:600;} .task-row .due{font-size:11px;color:var(--gray);}.task-detail-btn{padding:6px 9px;font-size:11px;white-space:nowrap;}
+  .task-row .txt{flex:1;font-size:12.5px;font-weight:600;} .task-row .due{font-size:11px;color:var(--gray);}.task-detail-btn{padding:6px 9px;font-size:11px;white-space:nowrap;}.task-detail-list{margin:0 0 8px 18px;padding:8px 10px;border-left:2px solid var(--orange);background:#fffaf4;border-radius:0 8px 8px 0;}.task-detail-item{display:grid;grid-template-columns:minmax(90px,.45fr) minmax(150px,1fr) auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #f0e3d5;font-size:11.5px;}.task-detail-item:last-child{border-bottom:0;}.task-detail-item strong{color:var(--ink);}.task-detail-item span{color:var(--ink-soft);}.task-detail-item small{color:var(--gray);text-align:right;}
 
   /* ---- Tổng quan Khu (màn hình mở ra trước khi vào Chi tiết ô) ---- */
   .zone-overview-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
@@ -1203,7 +1203,7 @@ function recordLoss(cellId, zoneType, action, opts){
   }
   return Promise.reject(new Error("Không xác định được loại khu."));
 }
-// Cập nhật trạng thái thủ công — dùng khi cần sửa sai lệch trạng thái, không
+// Cập nhật trạng thái th�� công — dùng khi cần sửa sai lệch trạng thái, không
 // đi qua luồng nghiệp vụ thông thường. Ghi lịch sử đầy đủ để truy vết.
 function manualSetBreedingState(cellId, newState){
   return FirebaseService.updateAt("Farm/Cells/"+cellId, {state:newState}).then(function(){
@@ -1926,13 +1926,16 @@ function renderZoneOverviewBody(container, zone, zoneCells){
 
     var taskGroups = {};
     zoneTasks.forEach(function(t){
-      if(!taskGroups[t.type]) taskGroups[t.type] = {count:0, cellIds:{}};
+      if(!taskGroups[t.type]) taskGroups[t.type] = {count:0, items:[]};
       taskGroups[t.type].count++;
-      if(t.cellId) taskGroups[t.type].cellIds[t.cellId] = true;
+      taskGroups[t.type].items.push(t);
     });
-    var tasksHtml = zoneTasks.length ? Object.keys(taskGroups).map(function(type){
+    var tasksHtml = zoneTasks.length ? Object.keys(taskGroups).map(function(type, index){
       var group = taskGroups[type];
-      return '<div class="task-row"><span class="dot dot-today"></span><div class="txt">'+esc(type)+'</div><div class="due">'+group.count+' việc</div><button class="btn btn-secondary task-detail-btn" data-task-type="'+esc(type)+'">Xem chi tiết</button></div>';
+      var detailHtml = group.items.map(function(t){
+        return '<div class="task-detail-item"><strong>'+esc(t.code||"—")+'</strong><span>'+esc(t.type||"Công việc cần thực hiện")+'</span><small>'+esc(t.dueDate ? "Hạn: "+fmtDate(t.dueDate) : "")+(t.overdue ? " · Quá hạn" : "")+'</small></div>';
+      }).join("");
+      return '<div class="task-group"><div class="task-row"><span class="dot '+(group.items.some(function(t){return t.overdue;})?"dot-overdue":"dot-today")+'"></span><div class="txt">'+esc(type)+'</div><div class="due">'+group.count+' việc</div><button class="btn btn-secondary task-detail-btn" data-task-group="'+index+'" aria-expanded="false">Xem chi tiết</button></div><div class="task-detail-list" data-task-details="'+index+'" hidden>'+detailHtml+'</div></div>';
     }).join("") : '<div style="color:var(--gray);font-size:13px;">Không có việc nào đến hạn hôm nay trong khu này.</div>';
 
     container.innerHTML =
@@ -1959,12 +1962,13 @@ function renderZoneOverviewBody(container, zone, zoneCells){
 
     container.querySelectorAll(".task-detail-btn").forEach(function(btn){
       btn.onclick = function(){
-        var type = btn.getAttribute("data-task-type");
-        var ids = {};
-        zoneTasks.forEach(function(t){ if(t.type===type && t.cellId) ids[t.cellId] = true; });
-        window.__zoneDetailFilter = { taskType:type, taskCellIds:ids, label:type };
-        window.__zoneViewMode = "detail";
-        renderZones();
+        var key = btn.getAttribute("data-task-group");
+        var details = container.querySelector('[data-task-details="'+key+'"]');
+        if(!details) return;
+        var expanded = !details.hidden;
+        details.hidden = expanded;
+        btn.setAttribute("aria-expanded", expanded ? "false" : "true");
+        btn.textContent = expanded ? "Xem chi tiết" : "Ẩn chi tiết";
       };
     });
     container.querySelectorAll(".stat-card").forEach(function(card){
