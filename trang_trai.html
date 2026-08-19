@@ -2160,7 +2160,29 @@ function openCellModal(cellId, zone){
     else if(zone.type === "commercial") body = commercialModalBody(c);
     else if(zone.type === "treatment") body = treatmentModalBody(c);
     var history = c.history ? Object.values(c.history).sort(function(a,b){return a.date<b.date?1:-1;}).slice(0,8) : [];
-    var historyHtml = history.map(function(h){ return '<div style="font-size:11px;color:var(--gray);padding:4px 0;border-bottom:1px dashed var(--border);">'+fmtDate(h.date)+' — <b>'+esc(h.action)+'</b> '+esc(h.note||"")+'</div>'; }).join("") || '<div style="font-size:11px;color:var(--gray);">Chưa có lịch sử.</div>';
+    function historyCellLabel(cellRef){
+      var ref = String(cellRef||"").trim();
+      if(!ref) return "Không xác định";
+      if(allCells[ref] && allCells[ref].code) return allCells[ref].code;
+      var match = Object.keys(allCells).filter(function(id){ return allCells[id] && allCells[id].code === ref; })[0];
+      return match ? allCells[match].code : "Không xác định";
+    }
+    function historyNote(note){
+      var text = String(note||"");
+      Object.keys(allCells).forEach(function(id){
+        var code = allCells[id] && allCells[id].code;
+        if(!code) return;
+        text = text.split(id).join(code);
+      });
+      text = text.replace(/(ô)(?:\\s+)([A-Za-z0-9_-]{8,})/g, function(_, label, ref){ return label+" "+historyCellLabel(ref); });
+      text = text.replace(/(?:^|\\s)([A-Za-z0-9_-]{16,})(?=\\s|$)/g, function(_, ref){ return " "+historyCellLabel(ref); });
+      return text;
+    }
+    var historyHtml = history.map(function(h){
+      var action = historyNote(h.action||"Hoạt động");
+      var note = historyNote(h.note);
+      return '<div style="font-size:11px;color:var(--gray);padding:4px 0;border-bottom:1px dashed var(--border);">'+fmtDate(h.date)+' — <b>'+esc(action)+'</b> '+esc(note)+'</div>';
+    }).join("") || '<div style="font-size:11px;color:var(--gray);">Chưa có lịch sử.</div>';
     var qrLink = window.location.origin + window.location.pathname + "?worker=" + cellId + (currentFacilityId ? ("&facility="+currentFacilityId) : "");
     var delBtn = (isOwner() && cellIsSafeToDelete(c, zone)) ? '<button class="btn btn-danger" id="btnDeleteCell">Xoá ô</button>' : "";
     var qrCellBtns = '<button class="btn btn-secondary" id="btnQRCell">QR ô này</button>';
