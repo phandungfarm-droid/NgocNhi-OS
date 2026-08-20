@@ -214,7 +214,7 @@
   .overview-stat .stat-note strong{color:#219653;}
   .quick-card,.commit-card{background:#fff;border:1px solid #EEF0F4;border-radius:12px;padding:18px;box-shadow:0 2px 5px rgba(16,24,40,.035);}
   .section-title{font-size:14px;font-weight:800;margin:0 0 14px;color:#202638;}
-  .quick-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;}
+  .quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
   .quick-item{display:flex;align-items:center;gap:10px;border:1px solid #EEF0F4;border-radius:9px;padding:13px 12px;min-height:66px;cursor:pointer;text-align:left;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;}
   .quick-item:hover{transform:translateY(-1px);border-color:#BFE2CB;box-shadow:0 5px 14px rgba(35,148,77,.10);}
   .quick-item:focus-visible{outline:2px solid #23944D;outline-offset:2px;}
@@ -225,7 +225,7 @@
   .commit-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;}
   .commit-item{display:flex;align-items:flex-start;gap:9px;}.commit-item .material-symbols-outlined{color:#259654;font-size:25px;}.commit-item b{font-size:11.5px;display:block;}.commit-item span{font-size:10.5px;line-height:1.35;color:#525B69;display:block;margin-top:4px;}
   .card{box-shadow:0 2px 5px rgba(16,24,40,.035);}
-  @media (max-width:1200px){.hero-copy{padding-left:58px}.hero-featured{width:250px;margin-right:18px}.hero-copy h2{font-size:36px}.quick-grid,.commit-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+  @media (max-width:1200px){.hero-copy{padding-left:58px}.hero-featured{width:250px;margin-right:18px}.hero-copy h2{font-size:36px}.commit-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
   @media (max-width:900px){ .app{flex-direction:column;} .sidebar{width:100%;flex-direction:row;flex-wrap:wrap;} .sidebar-spacer{display:none;} .main{padding:18px 16px 28px}.topbar{align-items:flex-start}.topbar-actions{flex-wrap:wrap;justify-content:flex-end}.dashboard-hero{min-height:520px}.hero-copy{width:100%;padding:35px 28px 26px 54px;justify-content:flex-start}.hero-featured{position:absolute;left:54px;right:22px;bottom:16px;width:auto;margin:0}.overview-stats{grid-template-columns:repeat(2,minmax(0,1fr));}.commit-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
   @media (max-width:560px){.topbar{flex-direction:column;align-items:stretch}.topbar-actions{justify-content:space-between}.date-picker{flex:1}.profile-chip{min-width:0}.hero-copy h2{font-size:30px}.hero-kicker{font-size:22px}.overview-stats,.quick-grid,.commit-grid{grid-template-columns:1fr}.dashboard-hero{min-height:590px;}.hero-featured{left:20px;right:20px}.hero-copy{padding-left:48px;}}
   </style>
@@ -1070,7 +1070,7 @@ function renderOverview(){
           '<h2>Dúi ngon số 1<br>tại Ngọc Nhi</h2>'+
           '<p>Thịt dúi sạch 100% từ trang trại của chúng tôi<br>Tươi ngon — An toàn — Bổ dưỡng</p>'+
           '<div class="hero-cta"><span class="material-symbols-outlined">restaurant</span>GỌI MÓN NGAY</div>'+
-          '<div class="hero-hotline"><span class="material-symbols-outlined">phone_in_talk</span>Hotline: 0354 957 666</div>'+
+          '<div class="hero-hotline"><span class="material-symbols-outlined">phone_in_talk</span>Hotline: 0967823801</div>'+
         '</div>'+
         '<div class="hero-featured">'+
           '<h3>MÓN NỔI BẬT</h3>'+
@@ -1088,11 +1088,8 @@ function renderOverview(){
         '<div class="overview-stat"><span class="stat-icon"><span class="material-symbols-outlined">restaurant_menu</span></span><div><div class="stat-label">Đơn đang phục vụ</div><div class="stat-value">'+esc(servingNow)+' <small style="font-size:12px;font-weight:500;color:#6B7280;">đơn</small></div><div class="stat-note">Đang được xử lý</div></div></div>'+
       '</section>'+
       '<section class="quick-card"><div class="section-title">THAO TÁC NHANH</div><div class="quick-grid">'+
-        '<div class="quick-item" data-quick-action="tables"><span class="quick-icon"><span class="material-symbols-outlined">delivery_dining</span></span><div><b>Gọi món</b><small>Tạo đơn gọi món</small></div></div>'+
-        '<div class="quick-item" data-quick-action="tickets"><span class="quick-icon"><span class="material-symbols-outlined">receipt_long</span></span><div><b>Đơn hàng</b><small>Quản lý đơn hàng</small></div></div>'+
-        '<div class="quick-item" data-quick-action="tables"><span class="quick-icon"><span class="material-symbols-outlined">table_restaurant</span></span><div><b>Bàn ăn</b><small>Sơ đồ bàn ăn</small></div></div>'+
-        '<div class="quick-item" data-quick-action="party"><span class="quick-icon"><span class="material-symbols-outlined">event_available</span></span><div><b>Đặt tiệc</b><small>Lịch đặt tiệc</small></div></div>'+
-        '<div class="quick-item" data-quick-action="tickets"><span class="quick-icon"><span class="material-symbols-outlined">groups</span></span><div><b>Khách hàng</b><small>Quản lý khách hàng</small></div></div>'+
+        '<div class="quick-item" data-quick-action="menu"><span class="quick-icon"><span class="material-symbols-outlined">delivery_dining</span></span><div><b>Gọi món</b><small>Mở thực đơn</small></div></div>'+
+        '<div class="quick-item" data-quick-action="tables"><span class="quick-icon"><span class="material-symbols-outlined">table_restaurant</span></span><div><b>Đặt bàn</b><small>Mở chức năng đặt bàn</small></div></div>'+
       '</div></section>'+
       '<section class="commit-card"><div class="section-title">NGỌC NHI CAM KẾT</div><div class="commit-grid">'+
         '<div class="commit-item"><span class="material-symbols-outlined">verified</span><div><b>NGUYÊN LIỆU SẠCH</b><span>100% dúi từ trang trại của chúng tôi</span></div></div>'+
