@@ -81,6 +81,7 @@
   .cell-card{border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer;}
   .cell-card:hover{border-color:var(--green);}
   .cell-card .code{font-weight:800;font-size:12.5px;} .cell-card .meta{font-size:10.5px;color:var(--gray);margin-top:4px;}
+  .k1-map-card{margin-top:14px;border:1px solid #dfe5eb;border-radius:14px;background:#fff;overflow:auto;}.k1-map-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid #e7ebef;}.k1-map-head b{display:block;font-size:15px;color:#14204b;}.k1-map-head small{display:block;margin-top:4px;color:var(--gray);font-size:11px;}.k1-map-count{padding:7px 11px;border-radius:18px;background:#eef8ef;color:var(--green-dark);font-size:11px;font-weight:800;white-space:nowrap;}.k1-map-canvas{min-width:760px;padding:20px 18px 24px;background:linear-gradient(180deg,#fbfcfd,#f7faf8);}.k1-map-main{display:flex;flex-direction:column;gap:10px;}.k1-row-label{width:68px;padding:10px 8px;border:1px solid #95c9a2;border-radius:8px;background:#f1fff3;color:#143f22;font-weight:800;font-size:12px;text-align:center;}.k1-row-label.male{margin-top:10px;background:#eef5ff;border-color:#a9c6ed;color:#173d79;}.k1-cell-row{display:grid;grid-template-columns:repeat(8,minmax(90px,1fr));border:1px solid #bec8d2;background:#fff;}.k1-cell{min-height:68px;padding:9px 6px;border:0;border-right:1px solid #d5dce3;border-radius:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;}.k1-cell:last-child{border-right:0;}.k1-cell:hover{background:#f0fff3;box-shadow:inset 0 0 0 2px var(--green);}.k1-cell strong{font-size:11px;color:#18212d;}.k1-cell span{font-size:10px;font-weight:800;text-align:center;line-height:1.2;}.k1-vacant span{color:#343b44;}.k1-nursing span{color:#16843b;}.k1-ready span{color:#d66a0b;}.k1-pairing span{color:#1456c1;}.k1-just-separated-male span{color:#5c2aa6;}.k1-not-pregnant span,.k1-in-treatment span{color:#df2525;}.k1-legend{display:flex;flex-wrap:wrap;gap:9px 16px;padding:14px 18px;border-top:1px solid #e7ebef;font-size:10.5px;color:#263247;}.k1-legend span{display:inline-flex;align-items:center;gap:6px;}.k1-legend-swatch{width:13px;height:13px;border:2px solid #9aa5b1;border-radius:3px;background:#fff;}.k1-legend-swatch.k1-nursing{border-color:#39a45a;background:#effbf1;}.k1-legend-swatch.k1-ready{border-color:#f29a3a;background:#fff6eb;}.k1-legend-swatch.k1-pairing{border-color:#4389e8;background:#eef5ff;}.k1-legend-swatch.k1-just-separated-male{border-color:#8c5ed0;background:#f5efff;}.k1-legend-swatch.k1-not-pregnant,.k1-legend-swatch.k1-in-treatment{border-color:#ef4a4a;background:#fff0f0;}
 
   table{width:100%;border-collapse:collapse;font-size:12.5px;}
   th{text-align:left;font-size:10.5px;color:var(--gray);text-transform:uppercase;padding:8px;border-bottom:1px solid var(--border);}
@@ -2016,13 +2017,25 @@ function renderZoneDetailBody(container, zone, zoneCells){
     }
   }
   var delZoneBtn = isOwner() ? '<button class="btn btn-danger" id="btnDelZone"><span class="material-symbols-outlined">delete</span>Xoá khu này</button>' : "";
+  var isKhu1Breeding = zone.type === "breeding" && /khu\\s*1/i.test(zone.name||"");
+  function renderKhu1Map(){
+    var female = zoneCells.filter(function(c){ return c.sex === "female"; }).sort(function(a,b){ return (a.code||"").localeCompare(b.code||""); });
+    var male = zoneCells.filter(function(c){ return c.sex === "male"; }).sort(function(a,b){ return (a.code||"").localeCompare(b.code||""); });
+    var labels = {vacant:"Trống",nursing:"Đang nuôi con",ready:"Sẵn sàng ghép",pairing:"Đang ghép",just_separated_male:"Mới tách đực",not_pregnant:"Cần theo dõi",in_treatment:"Đang điều trị"};
+    var card = function(c){ var state=c.state||"vacant"; return '<button class="k1-cell k1-'+state.replace(/_/g,"-")+'" data-k1-cid="'+esc(c.id)+'"><strong>'+esc(c.code||"Không xác định")+'</strong><span>'+esc(labels[state]||state)+'</span></button>'; };
+    var rows = function(list){ var out=[]; for(var i=0;i<list.length;i+=8) out.push('<div class="k1-cell-row">'+list.slice(i,i+8).map(card).join("")+'</div>'); return out.join(""); };
+    var legend = Object.keys(labels).map(function(state){ return '<span><i class="k1-legend-swatch k1-'+state.replace(/_/g,"-")+'"></i>'+labels[state]+'</span>'; }).join("");
+    return '<div class="k1-map-card"><div class="k1-map-head"><div><b>Sơ đồ bố trí các dãy chuồng</b><small>Dữ liệu ô chuồng hiện tại của '+esc(zone.name)+'</small></div><span class="k1-map-count">'+zoneCells.length+' ô</span></div><div class="k1-map-canvas"><div class="k1-map-main"><div class="k1-row-label">Cái</div>'+rows(female)+'<div class="k1-row-label male">Đực</div>'+rows(male)+'</div></div><div class="k1-legend">'+legend+'</div></div>';
+  }
 
   // mục "BỐ CỤC Ô": khu nào có ô phân theo giới tính (mọi khu type="breeding"
   // hiện tại và tạo sau này — không hard-code riêng khu nào) hiển thị 2 cột
   // song song Đực/Cái; các khu khác (Hậu bị/Baby/Thương phẩm/Điều trị) giữ
   // nguyên lưới 1 khối như cũ vì ô của các khu đó không phân theo giới tính.
   var cellsHtml;
-  if(zone.type === "breeding"){
+  if(isKhu1Breeding){
+    cellsHtml = renderKhu1Map();
+  } else if(zone.type === "breeding"){
     var maleCells = cellsForDisplay.filter(function(c){ return c.sex === "male"; });
     var femaleCells = cellsForDisplay.filter(function(c){ return c.sex === "female"; });
     var maleHtml = maleCells.map(function(c){ return renderCellCard(c, zone); }).join("") || '<div style="color:var(--gray);font-size:13px;">Không có ô đực nào khớp.</div>';
@@ -2046,6 +2059,7 @@ function renderZoneDetailBody(container, zone, zoneCells){
     '</div>'+cellsHtml+'</div>';
 
   container.querySelectorAll(".cell-card").forEach(function(c){ c.onclick = function(){ openCellModal(c.getAttribute("data-cid"), zone); }; });
+  container.querySelectorAll("[data-k1-cid]").forEach(function(c){ c.onclick = function(){ openCellModal(c.getAttribute("data-k1-cid"), zone); }; });
   document.getElementById("btnBackZoneOverview").onclick = function(){
     window.__zoneViewMode = "overview";
     window.__zoneDetailFilter = null;
