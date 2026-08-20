@@ -190,6 +190,42 @@
   }
   .qr-placeholder .material-symbols-outlined{font-size:26px;color:var(--gray-light);}
 
+  /* ---- Màn hình giới thiệu ảnh/video toàn hệ thống ---- */
+  .system-intro{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    box-shadow:0 4px 18px rgba(0,0,0,.05);
+    overflow:hidden;
+  }
+  .system-intro-label{
+    padding:14px 20px 0 20px;
+    font-size:12px;font-weight:800;letter-spacing:.4px;color:var(--gray);text-transform:uppercase;
+  }
+  .system-intro-frame{
+    position:relative;
+    width:100%;
+    aspect-ratio:21/7;
+    min-height:220px;
+    max-height:460px;
+    background:#0F1B14;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+    margin-top:10px;
+  }
+  .system-intro-frame img,
+  .system-intro-frame video{width:100%;height:100%;object-fit:contain;display:block;background:inherit;}
+  .system-intro-empty{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+    color:#B9C4BD;text-align:center;padding:24px;
+  }
+  .system-intro-empty .material-symbols-outlined{font-size:44px;}
+  .system-intro-actions{position:absolute;top:14px;right:14px;display:flex;gap:8px;z-index:2;}
+  .system-intro-actions .btn{background:rgba(255,255,255,.94);color:var(--ink);font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:9px;display:inline-flex;align-items:center;gap:6px;}
+  .system-intro-actions .btn.danger{background:rgba(239,68,68,.94);color:#fff;}
+  .system-intro-status{padding:8px 20px 14px 20px;font-size:12px;color:var(--gray);min-height:16px;}
+  @media (max-width:860px){ .system-intro-frame{aspect-ratio:16/10;} }
+
   /* ---- Module cards ---- */
   .module-cards{
     display:grid;
@@ -667,8 +703,17 @@
       </div>
     </header>
 
-    <!-- 4 module cards -->
+    <!-- Màn hình giới thiệu ảnh/video toàn hệ thống -->
     <div id="dashboardView">
+    <section style="margin-bottom:20px;">
+      <div class="system-intro">
+        <div class="system-intro-label">Giới thiệu Hệ thống dịch vụ Ngọc Nhi</div>
+        <div class="system-intro-frame" id="systemIntroFrame"></div>
+        <div class="system-intro-status" id="systemIntroStatus"></div>
+      </div>
+    </section>
+
+    <!-- 4 module cards -->
     <section class="module-cards">
       <div class="module-card card-farm">
         <div class="card-title"><span class="material-symbols-outlined">pets</span>TRANG TRẠI DÚI</div>
@@ -783,35 +828,6 @@
           <div class="title"><span class="material-symbols-outlined">pets</span>TRANG TRẠI DÚI (Tổng quan)</div>
           <button class="view-all">Xem đầy đủ</button>
         </div>
-        <div class="panel-body">
-          <div>
-            <div class="section-label" style="margin-bottom:10px">Tình trạng chuồng trại</div>
-            <div class="stat-row">
-              <div class="stat-box"><div class="stat-label">Đang sinh sản</div><div class="stat-value" id="fpBreeding">—</div></div>
-              <div class="stat-box"><div class="stat-label">Thương phẩm</div><div class="stat-value" id="fpCommercial">—</div></div>
-              <div class="stat-box"><div class="stat-label">Hậu bị</div><div class="stat-value" id="fpJuvenile">—</div></div>
-              <div class="stat-box"><div class="stat-label">Trống</div><div class="stat-value" id="fpVacant">—</div></div>
-              <div class="stat-box"><div class="stat-label">Tồn tại cơ sở khác</div><div class="stat-value" id="fpFacilityStock">—</div></div>
-            </div>
-          </div>
-
-          <div>
-            <div class="section-label" style="margin:14px 0 10px">Chuyển thương phẩm từ cơ sở khác (đa cơ sở)</div>
-            <div class="mini-list" id="fpFacilityTransfers"><div class="row">Đang tải…</div></div>
-          </div>
-
-          <div class="two-col">
-            <div>
-              <div class="section-label" style="margin-bottom:10px">Việc cần làm hôm nay</div>
-              <div class="task-list" id="fpTasks"><div class="task">Đang tải…</div></div>
-              <button class="link-btn" style="margin-top:12px" data-goto="trang_trai.html">Xem tất cả công việc</button>
-            </div>
-            <div class="chart-box">
-              <div class="section-label">Cảnh báo gần đây</div>
-              <div class="mini-list" id="fpAlerts"><div class="row">Đang tải…</div></div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- RESTAURANT -->
@@ -828,18 +844,6 @@
               <div class="stat-box"><div class="stat-label">Bàn đang dùng</div><div class="stat-value" id="rpOccupied">—</div></div>
               <div class="stat-box"><div class="stat-label">Đơn hôm nay</div><div class="stat-value" id="rpOrdersToday">—</div></div>
               <div class="stat-box"><div class="stat-label">Đơn đang phục vụ</div><div class="stat-value" id="rpServing">—</div></div>
-            </div>
-          </div>
-
-          <div class="two-col">
-            <div>
-              <div class="section-label" style="margin-bottom:10px">Món bán chạy (đơn đã hoàn thành)</div>
-              <div class="mini-list" id="rpTopItems"><div class="row">Đang tải…</div></div>
-            </div>
-            <div>
-              <div class="section-label" style="margin-bottom:10px">Đồng bộ tồn kho Trang trại</div>
-              <div class="mini-list" id="rpDuiStock"><div class="row">Đang tải…</div></div>
-              <button class="link-btn" style="margin-top:12px" data-goto="quan_an.html">Xem thực đơn</button>
             </div>
           </div>
         </div>
@@ -859,19 +863,6 @@
               <div class="stat-box"><div class="stat-label">Đang xử lý</div><div class="stat-value" id="wpProcessing">—</div></div>
               <div class="stat-box"><div class="stat-label">Chờ sếp duyệt</div><div class="stat-value" id="wpPending">—</div></div>
               <div class="stat-box"><div class="stat-label">Xung đột kho</div><div class="stat-value" id="wpConflict">—</div></div>
-            </div>
-          </div>
-
-          <div class="two-col">
-            <div>
-              <div class="section-label" style="margin-bottom:10px">Lịch tiệc sắp tới (Đang xử lý)</div>
-              <div class="schedule-list" id="wpUpcoming"><div class="row">Đang tải…</div></div>
-              <button class="link-btn tint-pink" style="margin-top:12px" data-goto="tiec_cuoi.html">Xem tất cả hợp đồng</button>
-            </div>
-            <div>
-              <div class="section-label" style="margin-bottom:10px">Gói dịch vụ được dùng nhiều</div>
-              <div class="mini-list" id="wpTopPackages"><div class="row">Đang tải…</div></div>
-              <button class="link-btn" style="margin-top:12px" data-goto="tiec_cuoi.html">Xem chi tiết</button>
             </div>
           </div>
         </div>
@@ -1240,6 +1231,13 @@
   var VIDEO_STORAGE_FOLDER = "system/module-videos";
   var ACCEPTED_VIDEO_MIME  = ["video/mp4", "video/webm"];
 
+  // ---- Ảnh/Video giới thiệu TOÀN HỆ THỐNG (khác với ảnh/video từng module ở
+  // trên) — 1 khung duy nhất, chỉ 1 nội dung (ảnh HOẶC video) tại 1 thời điểm.
+  // Ảnh qua ImgBB (dùng lại uploadToImgBB), video qua Firebase Storage (dùng
+  // lại đúng VIDEO_STORAGE_FOLDER — path đã có sẵn quyền ghi cho mọi fileName).
+  var SYSTEM_INTRO_DB_PATH = "SystemSettings/SystemIntro"; // {type:"image"|"video", url, updatedAt}
+  var SYSTEM_INTRO_VIDEO_FILENAME = "system-intro.mp4";
+
   // ---- 2) Khởi tạo Firebase — an toàn ngay cả khi config còn là placeholder:
   // mọi lỗi kết nối đều rơi về hiển thị Placeholder trên Trang chủ, không
   // làm vỡ giao diện. Khi bạn điền config thật, mọi thứ chạy ngay không
@@ -1529,12 +1527,151 @@
     getVideoSettings: function(){
       if(!firebaseReady) return Promise.resolve({});
       return db.ref(VIDEO_DB_ROOT_PATH).once("value").then(function(snapshot){ return snapshot.val() || {}; });
+    },
+
+    // ---- Ảnh/Video giới thiệu TOÀN HỆ THỐNG (1 khung, 1 nội dung duy nhất
+    // tại 1 thời điểm — khác ảnh/video từng module ở trên). Cùng cơ chế
+    // quyền isCurrentUserAdmin() như mọi hàm ghi khác trong file này. ----
+    setSystemIntroImage: function(file){
+      if(!firebaseReady) return Promise.reject(new Error("firebase-not-configured"));
+      if(!isCurrentUserAdmin()){
+        console.warn("Chỉ tài khoản Administrator mới được phép thay đổi ảnh/video giới thiệu hệ thống.");
+        return Promise.reject(new Error("permission-denied"));
+      }
+      if(!file || ACCEPTED_MIME.indexOf(file.type) === -1){
+        console.warn("Định dạng ảnh không hỗ trợ. Chỉ chấp nhận JPG, PNG, WEBP.");
+        return Promise.reject(new Error("invalid-file-type"));
+      }
+      return uploadToImgBB(file).then(function(url){
+        return db.ref(SYSTEM_INTRO_DB_PATH).set({ type:"image", url:url, updatedAt: Date.now() }).then(function(){ return url; });
+      });
+    },
+    setSystemIntroVideo: function(file){
+      if(!firebaseReady) return Promise.reject(new Error("firebase-not-configured"));
+      if(!isCurrentUserAdmin()){
+        console.warn("Chỉ tài khoản Administrator mới được phép thay đổi ảnh/video giới thiệu hệ thống.");
+        return Promise.reject(new Error("permission-denied"));
+      }
+      if(!file || ACCEPTED_VIDEO_MIME.indexOf(file.type) === -1){
+        console.warn("Định dạng video không hỗ trợ. Chỉ chấp nhận MP4, WEBM.");
+        return Promise.reject(new Error("invalid-file-type"));
+      }
+      var storageRef = storage.ref(VIDEO_STORAGE_FOLDER + "/" + SYSTEM_INTRO_VIDEO_FILENAME);
+      return storageRef.put(file, { contentType: file.type }).then(function(uploadSnapshot){
+        return uploadSnapshot.ref.getDownloadURL();
+      }).then(function(downloadUrl){
+        return db.ref(SYSTEM_INTRO_DB_PATH).set({ type:"video", url:downloadUrl, updatedAt: Date.now() }).then(function(){ return downloadUrl; });
+      });
+    },
+    resetSystemIntro: function(){
+      if(!firebaseReady) return Promise.reject(new Error("firebase-not-configured"));
+      if(!isCurrentUserAdmin()){
+        console.warn("Chỉ tài khoản Administrator mới được phép thay đổi ảnh/video giới thiệu hệ thống.");
+        return Promise.reject(new Error("permission-denied"));
+      }
+      return db.ref(SYSTEM_INTRO_DB_PATH).once("value").then(function(snap){
+        var data = snap.val();
+        var chain = Promise.resolve();
+        if(data && data.type === "video"){
+          chain = storage.ref(VIDEO_STORAGE_FOLDER + "/" + SYSTEM_INTRO_VIDEO_FILENAME).delete().catch(function(){});
+        }
+        return chain.then(function(){ return db.ref(SYSTEM_INTRO_DB_PATH).remove(); });
+      });
+    },
+    getSystemIntro: function(){
+      if(!firebaseReady) return Promise.resolve(null);
+      return db.ref(SYSTEM_INTRO_DB_PATH).once("value").then(function(snapshot){ return snapshot.val() || null; });
+    },
+    onSystemIntroChange: function(callback){
+      if(!firebaseReady){ callback(null); return function(){}; }
+      var ref = db.ref(SYSTEM_INTRO_DB_PATH);
+      ref.on("value", function(snapshot){ callback(snapshot.val() || null); });
+      return function(){ ref.off("value"); };
     }
   };
 
   window.NgocNhiModuleSettings = api;
 
+  // ---- Render khung giới thiệu ảnh/video toàn hệ thống (Trang chủ) ----
+  var latestSystemIntro = null;
+  function renderSystemIntro(){
+    var frame = document.getElementById("systemIntroFrame");
+    if(!frame) return;
+    var data = latestSystemIntro;
+    var admin = isCurrentUserAdmin();
+    frame.innerHTML = "";
+
+    if(data && data.url && data.type === "image"){
+      var img = document.createElement("img");
+      img.src = data.url;
+      img.alt = "Giới thiệu Hệ thống dịch vụ Ngọc Nhi";
+      frame.appendChild(img);
+    } else if(data && data.url && data.type === "video"){
+      var video = document.createElement("video");
+      video.src = data.url;
+      video.controls = true;
+      video.setAttribute("playsinline", "");
+      frame.appendChild(video);
+    } else {
+      var empty = document.createElement("div");
+      empty.className = "system-intro-empty";
+      empty.innerHTML = '<span class="material-symbols-outlined">add_photo_alternate</span>'+
+        '<div style="font-weight:700;">Chưa có ảnh/video giới thiệu hệ thống</div>'+
+        '<div style="font-size:12px;">'+(admin ? 'Bấm "Tải ảnh/video" để thêm nội dung giới thiệu.' : 'Nội dung sẽ sớm được cập nhật.')+'</div>';
+      frame.appendChild(empty);
+    }
+
+    if(admin){
+      var actions = document.createElement("div");
+      actions.className = "system-intro-actions";
+      var btnUpload = document.createElement("button");
+      btnUpload.className = "btn";
+      btnUpload.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">upload</span>'+(data && data.url ? "Thay thế" : "Tải ảnh/video");
+      btnUpload.onclick = triggerSystemIntroUpload;
+      actions.appendChild(btnUpload);
+      if(data && data.url){
+        var btnDel = document.createElement("button");
+        btnDel.className = "btn danger";
+        btnDel.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">delete</span>Xoá';
+        btnDel.onclick = function(){
+          if(!confirm("Xoá ảnh/video giới thiệu hệ thống hiện tại?")) return;
+          setSystemIntroStatus("Đang xoá…");
+          api.resetSystemIntro().then(function(){ setSystemIntroStatus("Đã xoá."); })
+            .catch(function(err){ setSystemIntroStatus("Lỗi: " + (err && err.message ? err.message : "Không xoá được.")); });
+        };
+        actions.appendChild(btnDel);
+      }
+      frame.appendChild(actions);
+    }
+    setSystemIntroStatus("");
+  }
+  function setSystemIntroStatus(text){
+    var el = document.getElementById("systemIntroStatus");
+    if(el) el.textContent = text || "";
+  }
+  function triggerSystemIntroUpload(){
+    var input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/jpeg,image/png,image/webp,video/mp4,video/webm";
+    input.onchange = function(){
+      var file = input.files && input.files[0];
+      if(!file) return;
+      setSystemIntroStatus("Đang tải lên…");
+      var isVideo = file.type.indexOf("video/") === 0;
+      var task = isVideo ? api.setSystemIntroVideo(file) : api.setSystemIntroImage(file);
+      task.then(function(){ setSystemIntroStatus("Đã cập nhật."); })
+        .catch(function(err){ setSystemIntroStatus("Lỗi: " + (err && err.message ? err.message : "Không tải lên được.")); });
+    };
+    input.click();
+  }
+  function startSystemIntroListener(){
+    if(!firebaseReady || !db){ renderSystemIntro(); return; }
+    api.onSystemIntroChange(function(data){ latestSystemIntro = data; renderSystemIntro(); });
+  }
+  if(auth) auth.onAuthStateChanged(function(){ renderSystemIntro(); });
+
   document.addEventListener("DOMContentLoaded", startRealtimeListener);
+  document.addEventListener("DOMContentLoaded", startSystemIntroListener);
 })();
 </script>
 
