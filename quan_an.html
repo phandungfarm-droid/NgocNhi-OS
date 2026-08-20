@@ -189,6 +189,18 @@
   .hero-dots{position:absolute;z-index:2;bottom:12px;left:50%;display:flex;gap:6px;}
   .hero-dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.45);}
   .hero-dots i.active{width:24px;border-radius:8px;background:#fff;}
+  .dashboard-ad-media{position:absolute;inset:0;z-index:1;background:#080706;display:flex;align-items:center;justify-content:center;}
+  .dashboard-ad-media img,.dashboard-ad-media video{width:100%;height:100%;object-fit:cover;display:block;}
+  .dashboard-ad-tools{position:absolute;z-index:6;top:16px;right:16px;display:flex;align-items:center;gap:7px;padding:7px;border-radius:10px;background:rgba(13,10,7,.76);border:1px solid rgba(255,225,163,.35);box-shadow:0 5px 15px rgba(0,0,0,.2);}
+  .dashboard-ad-tools .ad-tools-label{color:#FFE4A3;font-size:10px;font-weight:800;letter-spacing:.04em;margin:0 4px 0 2px;white-space:nowrap;}
+  .dashboard-ad-tools button{display:inline-flex;align-items:center;gap:5px;padding:8px 10px;border-radius:7px;background:#fff;color:#222;font-size:11px;font-weight:800;white-space:nowrap;}
+  .dashboard-ad-tools button:hover{background:#FFE5A0;}
+  .dashboard-ad-tools button.ad-replace{background:#FFC84A;color:#1B160E;}
+  .dashboard-ad-tools button.ad-clear{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);}
+  .dashboard-ad-tools input[type="file"]{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none;}
+  .dashboard-ad-status{position:absolute;z-index:6;left:16px;bottom:12px;max-width:48%;padding:6px 9px;border-radius:6px;background:rgba(13,10,7,.68);color:#FFF3D3;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .dashboard-hero.has-custom-media{background:#080706;}
+  .dashboard-hero.has-custom-media .hero-copy,.dashboard-hero.has-custom-media .hero-featured,.dashboard-hero.has-custom-media .hero-arrow,.dashboard-hero.has-custom-media .hero-dots{display:none;}
   .overview-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;}
   .overview-stat{background:#fff;border:1px solid #EEF0F4;border-radius:12px;min-height:134px;padding:22px 20px;display:flex;align-items:center;gap:15px;box-shadow:0 2px 5px rgba(16,24,40,.035);}
   .overview-stat .stat-icon{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:#fff;}
@@ -303,6 +315,70 @@
 var FIREBASE_CONFIG = window.FIREBASE_CONFIG || {};
 
 var currentView = "overview";
+
+/* Khung quảng cáo Tổng quan — media chỉ tồn tại trong phiên trình duyệt,
+   không ghi Firebase/database và không tác động các luồng nghiệp vụ khác. */
+var dashboardAdMedia = { kind: "", url: "", name: "" };
+var dashboardAdObjectUrl = null;
+var DASHBOARD_AD_ACCEPTED_MIME = ["image/jpeg","image/png","image/webp","video/mp4","video/webm","video/ogg"];
+function revokeDashboardAdObjectUrl(){
+  if(dashboardAdObjectUrl && window.URL && URL.revokeObjectURL) URL.revokeObjectURL(dashboardAdObjectUrl);
+  dashboardAdObjectUrl = null;
+}
+function setDashboardAdStatus(message, isError){
+  var status = document.getElementById("dashboardAdStatus");
+  if(!status) return;
+  status.textContent = message || "";
+  status.className = "dashboard-ad-status" + (isError ? " err" : "");
+}
+function applyDashboardAdFile(file){
+  if(!file) return;
+  if(DASHBOARD_AD_ACCEPTED_MIME.indexOf(file.type) === -1){
+    setDashboardAdStatus("Định dạng không hỗ trợ. Chọn JPG, PNG, WEBP, MP4, WEBM hoặc OGG.", true);
+    return;
+  }
+  revokeDashboardAdObjectUrl();
+  dashboardAdObjectUrl = URL.createObjectURL(file);
+  dashboardAdMedia = { kind: file.type.indexOf("video/") === 0 ? "video" : "image", url: dashboardAdObjectUrl, name: file.name || "Nội dung quảng cáo" };
+  renderDashboardAdMedia();
+}
+function clearDashboardAdMedia(){
+  revokeDashboardAdObjectUrl();
+  dashboardAdMedia = { kind: "", url: "", name: "" };
+  renderDashboardAdMedia();
+}
+function renderDashboardAdMedia(){
+  var hero = document.querySelector(".dashboard-hero");
+  var media = document.getElementById("dashboardAdMedia");
+  if(!hero || !media) return;
+  media.innerHTML = "";
+  hero.classList.remove("has-custom-media");
+  if(!dashboardAdMedia.url){
+    setDashboardAdStatus("Chưa có nội dung tùy chỉnh — đang hiển thị banner mặc định.", false);
+    return;
+  }
+  hero.classList.add("has-custom-media");
+  if(dashboardAdMedia.kind === "video"){
+    media.innerHTML = '<video src="'+esc(dashboardAdMedia.url)+'" controls autoplay muted loop playsinline></video>';
+  }else{
+    media.innerHTML = '<img src="'+esc(dashboardAdMedia.url)+'" alt="Nội dung quảng cáo tùy chỉnh">';
+  }
+  setDashboardAdStatus("Đang hiển thị: " + dashboardAdMedia.name, false);
+}
+function wireDashboardAdControls(){
+  var imageInput = document.getElementById("dashboardAdImageInput");
+  var videoInput = document.getElementById("dashboardAdVideoInput");
+  var imageBtn = document.getElementById("dashboardAdImageBtn");
+  var videoBtn = document.getElementById("dashboardAdVideoBtn");
+  var clearBtn = document.getElementById("dashboardAdClearBtn");
+  if(!imageInput || !videoInput || !imageBtn || !videoBtn) return;
+  imageBtn.onclick = function(){ imageInput.click(); };
+  videoBtn.onclick = function(){ videoInput.click(); };
+  imageInput.onchange = function(){ applyDashboardAdFile(imageInput.files && imageInput.files[0]); imageInput.value = ""; };
+  videoInput.onchange = function(){ applyDashboardAdFile(videoInput.files && videoInput.files[0]); videoInput.value = ""; };
+  if(clearBtn) clearBtn.onclick = clearDashboardAdMedia;
+  renderDashboardAdMedia();
+}
 
 var db = null, auth = null, firebaseReady = false;
 try{
@@ -951,6 +1027,16 @@ function renderOverview(){
     var servingNow = Object.keys(orders).filter(function(id){ return orders[id].status==="serving"; }).length;
     el.innerHTML =
       '<section class="dashboard-hero">'+
+        '<div class="dashboard-ad-media" id="dashboardAdMedia"></div>'+
+        (isStaffOrOwner() ? '<div class="dashboard-ad-tools">'+
+          '<span class="ad-tools-label">NỘI DUNG QUẢNG CÁO</span>'+
+          '<button type="button" id="dashboardAdImageBtn"><span class="material-symbols-outlined">photo_camera</span>Tải ảnh</button>'+
+          '<button type="button" id="dashboardAdVideoBtn"><span class="material-symbols-outlined">movie</span>Tải video</button>'+
+          '<button type="button" class="ad-clear" id="dashboardAdClearBtn" title="Xóa nội dung tùy chỉnh"><span class="material-symbols-outlined">close</span></button>'+
+          '<input id="dashboardAdImageInput" type="file" accept="image/jpeg,image/png,image/webp">'+
+          '<input id="dashboardAdVideoInput" type="file" accept="video/mp4,video/webm,video/ogg">'+
+        '</div>' : '')+
+        '<div id="dashboardAdStatus" class="dashboard-ad-status"></div>'+
         '<button class="hero-arrow" aria-label="Món trước"><span class="material-symbols-outlined">chevron_left</span></button>'+
         '<div class="hero-copy">'+
           '<div class="hero-kicker">Trải nghiệm đặc sản</div>'+
@@ -988,6 +1074,7 @@ function renderOverview(){
         '<div class="commit-item"><span class="material-symbols-outlined">workspace_premium</span><div><b>PHỤC VỤ CHUYÊN NGHIỆP</b><span>Đội ngũ tận tâm, phục vụ chu đáo</span></div></div>'+
         '<div class="commit-item"><span class="material-symbols-outlined">price_check</span><div><b>GIÁ CẢ HỢP LÝ</b><span>Giá tốt nhất đi kèm chất lượng</span></div></div>'+
       '</div></section>';
+    wireDashboardAdControls();
   });
 }
 function renderMenu(){
