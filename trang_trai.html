@@ -257,7 +257,7 @@ var farmDashboardMedia = { imageUrl:null, videoUrl:null };
    https://firebase.google.com/docs/auth/web/start
    Bọc try/catch: nếu SDK Firebase không tải được (mạng chặn CDN, v.v.),
    ứng dụng vẫn không phát sinh lỗi Console không bắt được — sẽ hiển thị
-   thông báo chờ cấu hình thay vì màn hình tr���ng hoặc lỗi đỏ trong Console.
+   thông báo chờ cấu hình thay vì màn hình tr�����ng hoặc lỗi đỏ trong Console.
    ========================================================================= */
 var db = null, auth = null, firebaseReady = false;
 try{
@@ -1821,7 +1821,7 @@ function renderOverview(){
   }).catch(function(err){ console.warn("Không thể tải dashboard trang trại:",err&&err.message); el.innerHTML='<div class="card">Không thể tải dữ liệu tổng quan. Vui lòng kiểm tra kết nối Firebase.</div>'; });
 }
 // Mục đích của từng LOẠI khu — mô tả chức năng chung của loại khu (không phải
-// dữ liệu riêng của 1 khu cụ thể nào), dùng để hiển thị ở Tổng quan Khu.
+// dữ liệu riêng của 1 khu c�� thể nào), dùng để hiển thị ở Tổng quan Khu.
 var ZONE_TYPE_PURPOSE = {
   breeding: "Nuôi ghép đôi đực/cái, theo dõi mang thai, sinh sản và nuôi con.",
   juvenile: "Nuôi hậu bị (đực/cái) cho tới khi đủ thể trạng để chuyển lên khu sinh sản.",
@@ -2028,10 +2028,10 @@ function renderZoneDetailBody(container, zone, zoneCells){
     var male = realCells.filter(function(c){ return c.sex === "male"; });
     var suffix = function(c){ var m=String(c.code||"").match(/(\\d+)$/); return m ? Number(m[1]) : 0; };
     var fixed = {C1:[],C2:[],C3:[],C4:[],C5:[],D1:{top:[],bottom:[]},D2:{top:[],bottom:[]}};
-    female.forEach(function(c){ var n=suffix(c); var lane=n<=16?"C1":n<=32?"C2":n<=48?"C3":n<=64?"C4":"C5"; fixed[lane].push(c); });
-    male.forEach(function(c){ var n=suffix(c); var lane=n<=35?"D1":"D2"; var local=n<=35?n:n-35; fixed[lane][local<=13?"bottom":"top"].push(c); });
+    female.forEach(function(c){ var n=suffix(c); var lane=n<=16?"C1":n<=25?"C2":n<=43?"C3":n<=56?"C4":"C5"; fixed[lane].push(c); });
+    male.forEach(function(c){ var n=suffix(c); var lane=n<=26?"D1":"D2"; var local=n<=26?n:n-26; fixed[lane][local<=13?"bottom":"top"].push(c); });
     Object.keys(fixed).forEach(function(k){ if(Array.isArray(fixed[k])) fixed[k].sort(function(a,b){return suffix(a)-suffix(b);}); else {fixed[k].top.sort(function(a,b){return suffix(a)-suffix(b);});fixed[k].bottom.sort(function(a,b){return suffix(a)-suffix(b);});} });
-    var displayCode = function(c,lane){ var n=suffix(c); var local=(lane==="D2"?n-35:n); return lane+"-"+pad(local,3); };
+    var displayCode = function(c,lane){ var n=suffix(c); var local=(lane==="D2"?n-26:n); return lane+"-"+pad(local,3); };
     var card = function(c,lane){ var state=c.state||"vacant"; return '<button type="button" class="k1-cell '+stateClass(c)+'" data-k1-cid="'+esc(c.id)+'"><strong>'+esc(displayCode(c,lane))+'</strong><span>'+esc(labels[state]||"Không xác định")+'</span></button>'; };
     var strip = function(list,lane){ return '<div class="k1-strip-cells">'+list.map(function(c){return card(c,lane);}).join("")+'</div>'; };
     var vertical = function(list,lane){ return '<div class="k1-vertical-cells">'+list.map(function(c){return card(c,lane);}).join("")+'</div>'; };
@@ -2041,8 +2041,8 @@ function renderZoneDetailBody(container, zone, zoneCells){
     var right = '<div class="k1-right-rail"><div class="k1-flow-label">Cái C2</div><span class="k1-arrow k1-arrow-down">↓</span>'+vertical(fixed.C2,"C2")+'</div>';
     var legend = Object.keys(labels).map(function(state){ return '<span><i class="k1-legend-swatch k1-'+state.replace(/_/g,"-")+'"></i>'+labels[state]+'</span>'; }).join("");
     var uniqueIds = {}; realCells.forEach(function(c){ uniqueIds[c.id] = true; });
-    var mapCheck = Object.keys(uniqueIds).length === 150 && female.length === 80 && male.length === 70 && realCells.length === zoneCells.length;
-    var mapCheckText = mapCheck ? "150 ô · 70 đực · 80 cái" : (realCells.length+" ô · "+male.length+" đực · "+female.length+" cái");
+    var mapCheck = Object.keys(uniqueIds).length === 114 && female.length === 62 && male.length === 52 && realCells.length === zoneCells.length;
+    var mapCheckText = mapCheck ? "114 ô · 52 đực · 62 cái" : (realCells.length+" ô · "+male.length+" đực · "+female.length+" cái");
     return '<div class="k1-map-card"><div class="k1-map-head"><div><b>Khu 1 – Sinh sản</b><small>Sơ đồ bố trí các dãy chuồng trong '+esc(zone.name||"Khu 1")+'</small></div><span class="k1-map-count">'+mapCheckText+'</span></div><div class="k1-flow-canvas">'+left+'<div class="k1-flow-middle">'+middle+'</div>'+right+'</div><div class="k1-legend">'+legend+'</div></div>';
   }
 
@@ -3130,7 +3130,7 @@ function openAddStaffModal(){
    sẽ từ chối các lệnh ghi này (permission-denied) — đây là hành vi ĐÚNG
    và MONG MUỐN. Vì vậy bắt buộc phải có .catch() ở đây để một lượt từ
    chối ghi không làm treo cả luồng khởi động (nếu không, khách tham quan
-   mở trang sẽ không bao giờ thấy được mainApp). Việc khởi tạo khu mặc
+   mở trang sẽ không bao giờ thấy được mainApp). Việc kh���i tạo khu mặc
    định / tính lại tồn kho sẽ tự thực hiện ngay khi Chủ trại đăng nhập
    lần đầu và thực hiện bất kỳ thao tác ghi nào khác. */
 if(workerModeActive){
