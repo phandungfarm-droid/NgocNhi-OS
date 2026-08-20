@@ -133,8 +133,86 @@
   .guest-cart-bar{position:fixed;bottom:0;left:0;right:0;background:var(--ink);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;font-weight:700;}
   .sorry-banner{background:var(--red-tint);color:#B91C1C;padding:12px 16px;border-radius:12px;font-size:12.5px;font-weight:600;margin-bottom:14px;}
 
-  @media (max-width:900px){ .app{flex-direction:column;} .sidebar{width:100%;flex-direction:row;flex-wrap:wrap;} .sidebar-spacer{display:none;} }
-</style>
+  /* Giao diện Quán ăn Ngọc Nhi theo ảnh tham chiếu — chỉ trình bày */
+  .app{max-width:none;background:var(--page-bg);}
+  .sidebar{width:226px;padding:18px 16px 16px;border-right:1px solid #EEF0F4;box-shadow:2px 0 12px rgba(26,35,52,.025);}
+  .back-link{display:none;}
+  .sidebar-logo{padding:6px 8px 25px;gap:12px;}
+  .sidebar-logo .icon{width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,#FFF4E9,#FFE3C4);color:var(--orange);}
+  .sidebar-logo .icon .material-symbols-outlined{font-size:27px;}
+  .sidebar-logo .t1{font-size:11px;letter-spacing:.02em;color:#222334;}
+  .sidebar-logo .t2{font-size:16px;font-weight:800;color:var(--orange);letter-spacing:.01em;}
+  .sidebar>div[style*="padding:0 8px 14px"]{padding:0 0 12px !important;}
+  #btnOrderAlerts{border:0 !important;background:transparent !important;color:#C53030;font-size:12px !important;justify-content:flex-start !important;padding:10px 12px !important;}
+  #btnOrderAlerts .nav-badge{background:#C81E1E;}
+  .nav-list{gap:3px;}
+  .nav-item{padding:11px 12px;border-radius:8px;font-size:13px;gap:11px;color:#2D3345;}
+  .nav-item .material-symbols-outlined{font-size:20px;color:#677184;}
+  .nav-item.active{background:linear-gradient(100deg,#F26A0A,#FF8A08);box-shadow:0 5px 12px rgba(241,107,3,.18);}
+  .sidebar-spacer{min-height:24px;}
+  .auth-box{border:1px solid #EEF0F4;border-radius:12px;padding:12px;background:#fff;}
+  .auth-box .role-badge{background:transparent;color:#202638;padding:0;font-size:12px;margin:0 0 8px;}
+  .auth-box button{background:#F7F8FA;border:1px solid #EEF0F4;}
+  .main{padding:21px 28px 30px;gap:18px;}
+  .topbar{background:transparent;border:0;border-radius:0;box-shadow:none;padding:0 0 2px;min-height:58px;}
+  .topbar h1{font-size:34px;line-height:1.05;letter-spacing:-.04em;}
+  .topbar .sub{font-size:15px;margin-top:7px;color:#394154;}
+  .topbar-actions{gap:18px;}
+  .date-picker{height:46px;padding:0 14px;display:flex;align-items:center;gap:11px;border:1px solid #E8EBF0;border-radius:8px;background:#fff;color:#222838;font-size:13px;font-weight:600;box-shadow:0 1px 2px rgba(16,24,40,.03);}
+  .date-picker>.material-symbols-outlined{font-size:20px;color:#30394A;}
+  .date-picker .chevron{font-size:18px;margin-left:6px;}
+  .profile-chip{display:flex;align-items:center;gap:10px;min-width:155px;}
+  .profile-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#E8EBF1,#BFC6D2);color:#4B5568;overflow:hidden;}
+  .profile-avatar .material-symbols-outlined{font-size:26px;}
+  .profile-copy{display:flex;flex-direction:column;gap:2px;line-height:1.1;}
+  .profile-copy b{font-size:14px;}
+  .profile-copy small{font-size:10px;color:#6B7280;white-space:nowrap;}
+  .profile-chevron{font-size:18px;margin-left:auto;color:#30394A;}
+  #viewContent{display:flex;flex-direction:column;gap:18px;}
+  .dashboard-hero{position:relative;min-height:375px;border-radius:15px;overflow:hidden;background:#1B1109 url("assets/restaurant-hero.jpg") center/cover no-repeat;color:#fff;box-shadow:0 10px 24px rgba(26,18,10,.15);display:flex;align-items:stretch;}
+  .dashboard-hero:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,7,5,.83) 0%,rgba(8,7,5,.62) 35%,rgba(8,7,5,.08) 69%,rgba(8,7,5,.58) 100%);pointer-events:none;}
+  .hero-copy{position:relative;z-index:1;width:61%;padding:42px 28px 28px 74px;display:flex;flex-direction:column;align-items:flex-start;}
+  .hero-kicker{font-family:Georgia,serif;font-style:italic;font-size:28px;color:#F9E5B0;margin-bottom:9px;}
+  .hero-copy h2{max-width:520px;font-family:Georgia,serif;font-size:42px;line-height:1.08;color:#FFE59B;letter-spacing:.015em;text-transform:uppercase;margin-bottom:16px;}
+  .hero-copy p{font-size:15px;line-height:1.6;color:#F8F3E9;max-width:500px;margin-bottom:16px;}
+  .hero-cta{display:inline-flex;align-items:center;gap:9px;border-radius:8px;background:#FFC84A;color:#1B160E;padding:12px 22px;font-weight:800;font-size:13px;}
+  .hero-hotline{display:flex;align-items:center;gap:8px;margin-top:13px;color:#FFD45E;font-weight:800;font-size:14px;}
+  .hero-arrow{position:absolute;z-index:2;left:16px;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;background:rgba(72,47,20,.72);color:#fff;display:flex;align-items:center;justify-content:center;}
+  .hero-featured{position:relative;z-index:1;width:292px;margin:16px 30px 16px auto;padding:16px 18px;border:1px solid rgba(255,226,159,.25);border-radius:10px;background:rgba(15,10,5,.43);backdrop-filter:blur(2px);}
+  .hero-featured h3{font-family:Georgia,serif;font-size:19px;color:#FFE39D;padding-bottom:12px;border-bottom:1px solid rgba(255,226,159,.22);}
+  .featured-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,226,159,.14);}
+  .featured-item:last-child{border-bottom:0;}
+  .featured-thumb{width:50px;height:50px;border-radius:11px;flex:0 0 auto;border:1px solid rgba(255,255,255,.35);background:linear-gradient(145deg,#5D2D14,#D27B22 45%,#2E4B1A);display:flex;align-items:center;justify-content:center;color:#FFE7A6;}
+  .featured-thumb .material-symbols-outlined{font-size:24px;}
+  .featured-item b{display:block;color:#fff4dc;font-size:12.5px;line-height:1.25;}
+  .featured-item small{display:block;color:#E5DAC9;font-size:10.5px;line-height:1.3;margin-top:3px;}
+  .hero-dots{position:absolute;z-index:2;bottom:12px;left:50%;display:flex;gap:6px;}
+  .hero-dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.45);}
+  .hero-dots i.active{width:24px;border-radius:8px;background:#fff;}
+  .overview-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;}
+  .overview-stat{background:#fff;border:1px solid #EEF0F4;border-radius:12px;min-height:134px;padding:22px 20px;display:flex;align-items:center;gap:15px;box-shadow:0 2px 5px rgba(16,24,40,.035);}
+  .overview-stat .stat-icon{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:#fff;}
+  .overview-stat .stat-icon .material-symbols-outlined{font-size:27px;}
+  .overview-stat:nth-child(1) .stat-icon{background:#27A85A;}.overview-stat:nth-child(2) .stat-icon{background:#F59E0B;}.overview-stat:nth-child(3) .stat-icon{background:#2E71D5;}.overview-stat:nth-child(4) .stat-icon{background:#8143C9;}
+  .overview-stat .stat-label{font-size:11px;color:#5F6675;font-weight:600;text-transform:uppercase;white-space:nowrap;}
+  .overview-stat .stat-value{font-size:29px;font-weight:800;line-height:1.1;margin-top:7px;letter-spacing:-.03em;}
+  .overview-stat .stat-note{font-size:11px;color:#6B7280;margin-top:8px;}
+  .overview-stat .stat-note strong{color:#219653;}
+  .quick-card,.commit-card{background:#fff;border:1px solid #EEF0F4;border-radius:12px;padding:18px;box-shadow:0 2px 5px rgba(16,24,40,.035);}
+  .section-title{font-size:14px;font-weight:800;margin:0 0 14px;color:#202638;}
+  .quick-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;}
+  .quick-item{display:flex;align-items:center;gap:10px;border:1px solid #EEF0F4;border-radius:9px;padding:13px 12px;min-height:66px;}
+  .quick-item .quick-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#EAF7EF;color:#23944D;flex:0 0 auto;}
+  .quick-item b{font-size:12px;display:block;}.quick-item small{font-size:10.5px;color:#6B7280;display:block;margin-top:3px;}
+  .commit-card{background:linear-gradient(90deg,#F0FBF4,#F8FCFA);border-color:#EDF7F0;}
+  .commit-card .section-title{color:#218B4C;}
+  .commit-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;}
+  .commit-item{display:flex;align-items:flex-start;gap:9px;}.commit-item .material-symbols-outlined{color:#259654;font-size:25px;}.commit-item b{font-size:11.5px;display:block;}.commit-item span{font-size:10.5px;line-height:1.35;color:#525B69;display:block;margin-top:4px;}
+  .card{box-shadow:0 2px 5px rgba(16,24,40,.035);}
+  @media (max-width:1200px){.hero-copy{padding-left:58px}.hero-featured{width:250px;margin-right:18px}.hero-copy h2{font-size:36px}.quick-grid,.commit-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+  @media (max-width:900px){ .app{flex-direction:column;} .sidebar{width:100%;flex-direction:row;flex-wrap:wrap;} .sidebar-spacer{display:none;} .main{padding:18px 16px 28px}.topbar{align-items:flex-start}.topbar-actions{flex-wrap:wrap;justify-content:flex-end}.dashboard-hero{min-height:520px}.hero-copy{width:100%;padding:35px 28px 26px 54px;justify-content:flex-start}.hero-featured{position:absolute;left:54px;right:22px;bottom:16px;width:auto;margin:0}.overview-stats{grid-template-columns:repeat(2,minmax(0,1fr));}.commit-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+  @media (max-width:560px){.topbar{flex-direction:column;align-items:stretch}.topbar-actions{justify-content:space-between}.date-picker{flex:1}.profile-chip{min-width:0}.hero-copy h2{font-size:30px}.hero-kicker{font-size:22px}.overview-stats,.quick-grid,.commit-grid{grid-template-columns:1fr}.dashboard-hero{min-height:590px;}.hero-featured{left:20px;right:20px}.hero-copy{padding-left:48px;}}
+  </style>
 </head>
 <body>
 
@@ -189,8 +267,11 @@
 
   <div class="main">
     <div class="topbar">
-      <div><h1 id="viewTitle">Tổng quan</h1><div class="sub" id="viewSub">—</div></div>
-      <div class="topbar-actions" id="topbarActions"></div>
+      <div class="page-heading"><h1 id="viewTitle">Tổng quan</h1><div class="sub" id="viewSub">—</div></div>
+      <div class="topbar-actions" id="topbarActions">
+        <div class="date-picker"><span class="material-symbols-outlined">calendar_today</span><span>20/08/2026</span><span class="material-symbols-outlined chevron">expand_more</span></div>
+        <div class="profile-chip"><span class="profile-avatar"><span class="material-symbols-outlined">person</span></span><span class="profile-copy"><b>Admin</b><small>Quản trị hệ thống</small></span><span class="material-symbols-outlined profile-chevron">expand_more</span></div>
+      </div>
     </div>
     <div id="viewContent"></div>
   </div>
@@ -868,14 +949,45 @@ function renderOverview(){
     var today = todayStr();
     var ordersToday = Object.keys(orders).filter(function(id){ return todayStr(new Date(orders[id].createdAt)) === today; }).length;
     var servingNow = Object.keys(orders).filter(function(id){ return orders[id].status==="serving"; }).length;
-    el.innerHTML = '<div class="card"><div class="grid-stats">'+
-      stat(availableCount,"Món đang phục vụ")+stat(occupiedTables,"Bàn đang dùng")+
-      stat(ordersToday,"Đơn hôm nay")+stat(servingNow,"Đơn đang phục vụ")+
-      '</div></div>'+
-      '<div class="card" style="margin-top:14px;"><div style="font-weight:700;margin-bottom:8px;">Đồng bộ tồn kho Trang trại</div>'+
-      '<div style="font-size:13px;color:var(--ink-soft);">Tồn kho dúi thương phẩm khả dụng: <b>'+(farmCommercialStock==null?"đang tải…":farmCommercialStock+" con")+'</b>'+
-      (farmCommercialStock===0 ? ' — <span style="color:#B91C1C;font-weight:700;">món "dúi" đang tự động ẩn khỏi thực đơn khách gọi.</span>' : '')+
-      '</div></div>';
+    el.innerHTML =
+      '<section class="dashboard-hero">'+
+        '<button class="hero-arrow" aria-label="Món trước"><span class="material-symbols-outlined">chevron_left</span></button>'+
+        '<div class="hero-copy">'+
+          '<div class="hero-kicker">Trải nghiệm đặc sản</div>'+
+          '<h2>Dúi ngon số 1<br>tại Ngọc Nhi</h2>'+
+          '<p>Thịt dúi sạch 100% từ trang trại của chúng tôi<br>Tươi ngon — An toàn — Bổ dưỡng</p>'+
+          '<div class="hero-cta"><span class="material-symbols-outlined">restaurant</span>GỌI MÓN NGAY</div>'+
+          '<div class="hero-hotline"><span class="material-symbols-outlined">phone_in_talk</span>Hotline: 0354 957 666</div>'+
+        '</div>'+
+        '<div class="hero-featured">'+
+          '<h3>MÓN NỔI BẬT</h3>'+
+          '<div class="featured-item"><span class="featured-thumb"><span class="material-symbols-outlined">outdoor_grill</span></span><div><b>Dúi nướng mắc khén</b><small>Thơm ngon, đậm vị núi rừng</small></div></div>'+
+          '<div class="featured-item"><span class="featured-thumb"><span class="material-symbols-outlined">ramen_dining</span></span><div><b>Dúi hấp sả</b><small>Ngọt thịt, giữ trọn dinh dưỡng</small></div></div>'+
+          '<div class="featured-item"><span class="featured-thumb"><span class="material-symbols-outlined">local_dining</span></span><div><b>Dúi xào lăn</b><small>Đậm đà, cay nồng hấp dẫn</small></div></div>'+
+          '<div class="featured-item"><span class="featured-thumb"><span class="material-symbols-outlined">soup_kitchen</span></span><div><b>Dúi hầm thuốc bắc</b><small>Bổ dưỡng, tốt cho sức khỏe</small></div></div>'+
+        '</div>'+
+        '<div class="hero-dots"><i class="active"></i><i></i><i></i><i></i><i></i></div>'+
+      '</section>'+
+      '<section class="overview-stats">'+
+        '<div class="overview-stat"><span class="stat-icon"><span class="material-symbols-outlined">table_restaurant</span></span><div><div class="stat-label">Bàn đang dùng</div><div class="stat-value">'+esc(occupiedTables)+' <small style="font-size:12px;font-weight:500;color:#6B7280;">bàn</small></div><div class="stat-note"><strong>'+esc(occupiedTables)+'</strong> đang hoạt động</div></div></div>'+
+        '<div class="overview-stat"><span class="stat-icon"><span class="material-symbols-outlined">room_service</span></span><div><div class="stat-label">Món đang phục vụ</div><div class="stat-value">'+esc(availableCount)+' <small style="font-size:12px;font-weight:500;color:#6B7280;">món</small></div><div class="stat-note">Tất cả món khả dụng</div></div></div>'+
+        '<div class="overview-stat"><span class="stat-icon"><span class="material-symbols-outlined">receipt_long</span></span><div><div class="stat-label">Đơn hôm nay</div><div class="stat-value">'+esc(ordersToday)+' <small style="font-size:12px;font-weight:500;color:#6B7280;">đơn</small></div><div class="stat-note"><strong>↑</strong> Cập nhật theo thời gian thực</div></div></div>'+
+        '<div class="overview-stat"><span class="stat-icon"><span class="material-symbols-outlined">restaurant_menu</span></span><div><div class="stat-label">Đơn đang phục vụ</div><div class="stat-value">'+esc(servingNow)+' <small style="font-size:12px;font-weight:500;color:#6B7280;">đơn</small></div><div class="stat-note">Đang được xử lý</div></div></div>'+
+      '</section>'+
+      '<section class="quick-card"><div class="section-title">THAO TÁC NHANH</div><div class="quick-grid">'+
+        '<div class="quick-item"><span class="quick-icon"><span class="material-symbols-outlined">delivery_dining</span></span><div><b>Gọi món</b><small>Tạo đơn gọi món</small></div></div>'+
+        '<div class="quick-item"><span class="quick-icon"><span class="material-symbols-outlined">receipt_long</span></span><div><b>Đơn hàng</b><small>Quản lý đơn hàng</small></div></div>'+
+        '<div class="quick-item"><span class="quick-icon"><span class="material-symbols-outlined">table_restaurant</span></span><div><b>Bàn ăn</b><small>Sơ đồ bàn ăn</small></div></div>'+
+        '<div class="quick-item"><span class="quick-icon"><span class="material-symbols-outlined">event_available</span></span><div><b>Đặt tiệc</b><small>Lịch đặt tiệc</small></div></div>'+
+        '<div class="quick-item"><span class="quick-icon"><span class="material-symbols-outlined">groups</span></span><div><b>Khách hàng</b><small>Quản lý khách hàng</small></div></div>'+
+      '</div></section>'+
+      '<section class="commit-card"><div class="section-title">NGỌC NHI CAM KẾT</div><div class="commit-grid">'+
+        '<div class="commit-item"><span class="material-symbols-outlined">verified</span><div><b>NGUYÊN LIỆU SẠCH</b><span>100% dúi từ trang trại của chúng tôi</span></div></div>'+
+        '<div class="commit-item"><span class="material-symbols-outlined">touch_app</span><div><b>CHẾ BIẾN TƯƠI NGON</b><span>Chế biến trong ngày, đảm bảo chất lượng</span></div></div>'+
+        '<div class="commit-item"><span class="material-symbols-outlined">ac_unit</span><div><b>KHÔNG GIAN THOÁNG MÁT</b><span>Phòng lạnh, máy lạnh, sức chứa 100+ khách</span></div></div>'+
+        '<div class="commit-item"><span class="material-symbols-outlined">workspace_premium</span><div><b>PHỤC VỤ CHUYÊN NGHIỆP</b><span>Đội ngũ tận tâm, phục vụ chu đáo</span></div></div>'+
+        '<div class="commit-item"><span class="material-symbols-outlined">price_check</span><div><b>GIÁ CẢ HỢP LÝ</b><span>Giá tốt nhất đi kèm chất lượng</span></div></div>'+
+      '</div></section>';
   });
 }
 function renderMenu(){
