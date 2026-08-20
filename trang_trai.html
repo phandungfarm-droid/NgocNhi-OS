@@ -257,7 +257,7 @@ var farmDashboardMedia = { imageUrl:null, videoUrl:null };
    https://firebase.google.com/docs/auth/web/start
    Bọc try/catch: nếu SDK Firebase không tải được (mạng chặn CDN, v.v.),
    ứng dụng vẫn không phát sinh lỗi Console không bắt được — sẽ hiển thị
-   thông báo chờ cấu hình thay vì màn hình tr�����ng hoặc lỗi đỏ trong Console.
+   thông báo chờ cấu hình thay vì màn hình tr�������ng hoặc lỗi đỏ trong Console.
    ========================================================================= */
 var db = null, auth = null, firebaseReady = false;
 try{
@@ -790,14 +790,40 @@ function buildDefaultCell(zone, opts){
   }
   return base;
 }
+function breedingRows(zone, cells){
+  var rows = zone && zone.breedingRows ? zone.breedingRows : {};
+  var seen = {};
+  Object.keys(rows).forEach(function(id){ seen[rows[id].code] = true; });
+  Object.keys(cells||{}).forEach(function(id){
+    var c=cells[id]||{};
+    var m=String(c.code||"").match(/^([^/]+)-([A-Za-z]+)-\\d+$/);
+    if(m && !seen[m[2]]){ rows["legacy-"+m[2]]={code:m[2],name:m[2],sex:(m[2][0]==="D"?"male":"female"),legacy:true}; seen[m[2]]=true; }
+  });
+  return rows;
+}
+function addBreedingRow(zoneId, sex, name){
+  return FirebaseService.read("Farm/Zones/"+zoneId).then(function(zone){
+    if(!zone || zone.type !== "breeding") throw new Error("Chỉ khu sinh sản mới có dãy.");
+    var cells = {};
+    return FirebaseService.queryEqualTo("Farm/Cells","zoneId",zoneId).then(function(found){
+      cells=found||{}; var rows=breedingRows(zone,cells); var code=String(name||"").trim().toUpperCase().replace(/[^A-Z0-9]+/g,"-");
+      if(!code) throw new Error("Tên dãy không hợp lệ.");
+      if(rows[code] || Object.keys(rows).some(function(k){return rows[k].code===code;})) throw new Error("Dãy đã tồn tại.");
+      var patch={}; patch["Farm/Zones/"+zoneId+"/breedingRows/"+code]={code:code,name:String(name).trim(),sex:sex,createdAt:Date.now()};
+      return FirebaseService.updateMultiPath(patch);
+    });
+  });
+}
 function addCell(zoneId, opts){
+  opts=opts||{};
   return FirebaseService.read("Farm/Zones/"+zoneId).then(function(zone){
     return FirebaseService.queryEqualTo("Farm/Cells", "zoneId", zoneId).then(function(cells){
       var codes = Object.keys(cells).map(function(k){ return cells[k].code; });
       var prefix, padW;
       if(zone.type === "breeding"){
         var pfx = ZONE_TYPE_PREFIX.breeding;
-        prefix = zone.code + "-" + (opts.sex === "male" ? pfx.male : pfx.female) + "-"; padW = pfx.pad;
+        var rowCode = opts.rowCode || (opts.sex === "male" ? pfx.male : pfx.female);
+        prefix = zone.code + "-" + rowCode + "-"; padW = pfx.pad;
       } else {
         var p2 = ZONE_TYPE_PREFIX[zone.type];
         prefix = zone.code + "-" + p2.single; padW = p2.pad;
@@ -855,7 +881,7 @@ function separateFromMale(femaleCellId){
       updates["Farm/Cells/"+maleCellId+"/pairStartDate"] = null;
     }
     return FirebaseService.updateMultiPath(updates).then(function(){
-      addHistory(femaleCellId, "Tách ghép", "");
+      addHistory(femaleCellId, "Tách gh��p", "");
       if(maleCellId) addHistory(maleCellId, "Tách ghép — quay lại sẵn sàng ghép", "");
     });
   });
@@ -2009,9 +2035,8 @@ function renderZoneDetailBody(container, zone, zoneCells){
 
   var addCellBtn = "";
   if(isStaffOrOwner()){
-    if(zone.type === "breeding"){
-      addCellBtn = '<button class="btn btn-primary" id="btnAddCellMale"><span class="material-symbols-outlined">add</span>Thêm ô đực</button>'+
-                   '<button class="btn btn-primary" id="btnAddCellFemale"><span class="material-symbols-outlined">add</span>Thêm ô cái</button>';
+  if(zone.type === "breeding"){
+  addCellBtn = '<button class="btn btn-secondary" id="btnAddBreedingRow"><span class="material-symbols-outlined">view_column</span>Thêm dãy</button><button class="btn btn-primary" id="btnAddBreedingCell"><span class="material-symbols-outlined">add</span>Thêm ô</button>';
     } else if(zone.type === "baby"){
       addCellBtn = '<button class="btn btn-primary" id="btnAddCell"><span class="material-symbols-outlined">add</span>Thêm ô Baby</button>';
     } else {
@@ -2091,8 +2116,15 @@ function renderZoneDetailBody(container, zone, zoneCells){
     });
   };
   if(document.getElementById("btnAddCell")) document.getElementById("btnAddCell").onclick = function(){ handleAddCell(zone); };
-  if(document.getElementById("btnAddCellMale")) document.getElementById("btnAddCellMale").onclick = function(){ addCell(window.__activeZone,{sex:"male"}).then(renderZones); };
-  if(document.getElementById("btnAddCellFemale")) document.getElementById("btnAddCellFemale").onclick = function(){ addCell(window.__activeZone,{sex:"female"}).then(renderZones); };
+  if(document.getElementById("btnAddBreedingRow")) document.getElementById("btnAddBreedingRow").onclick = function(){
+    openFormModal("Thêm dãy sinh sản",[{id:"sex",label:"Loại dãy",type:"select",options:[{value:"male",label:"Đực"},{value:"female",label:"Cái"}],required:true},{id:"name",label:"Tên dãy",required:true}],function(v){ addBreedingRow(zone.id,v.sex,v.name).then(function(){closeModal();renderZones();}).catch(function(e){showToast(e.message||"Không tạo được dãy.");}); },"Tạo dãy");
+  };
+  if(document.getElementById("btnAddBreedingCell")) document.getElementById("btnAddBreedingCell").onclick = function(){
+    var rows=breedingRows(zone,zoneCells.reduce(function(a,c){a[c.id]=c;return a;},{}));
+    var options=Object.keys(rows).map(function(k){return {value:rows[k].code,label:rows[k].name+" ("+(rows[k].sex==="male"?"Đực":"Cái")+")"};});
+    if(!options.length){showToast("Hãy tạo dãy trước khi thêm ô.");return;}
+    openFormModal("Thêm ô sinh sản",[{id:"rowCode",label:"Dãy",type:"select",options:options,required:true}],function(v){ addCell(zone.id,{sex:rows[Object.keys(rows).filter(function(k){return rows[k].code===v.rowCode;})[0]].sex,rowCode:v.rowCode}).then(function(){closeModal();renderZones();}).catch(function(e){showToast(e.message||"Không tạo được ô.");}); },"Tạo ô");
+  };
 }
 // ===== ĐIỀU HƯỚNG KHU & Ô CHUỒNG =========================================
 // Nguyên tắc: bấm vào 1 khu (đổi tab) luôn quay về Tổng quan Khu trước;
