@@ -215,7 +215,9 @@
   .quick-card,.commit-card{background:#fff;border:1px solid #EEF0F4;border-radius:12px;padding:18px;box-shadow:0 2px 5px rgba(16,24,40,.035);}
   .section-title{font-size:14px;font-weight:800;margin:0 0 14px;color:#202638;}
   .quick-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;}
-  .quick-item{display:flex;align-items:center;gap:10px;border:1px solid #EEF0F4;border-radius:9px;padding:13px 12px;min-height:66px;}
+  .quick-item{display:flex;align-items:center;gap:10px;border:1px solid #EEF0F4;border-radius:9px;padding:13px 12px;min-height:66px;cursor:pointer;text-align:left;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;}
+  .quick-item:hover{transform:translateY(-1px);border-color:#BFE2CB;box-shadow:0 5px 14px rgba(35,148,77,.10);}
+  .quick-item:focus-visible{outline:2px solid #23944D;outline-offset:2px;}
   .quick-item .quick-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#EAF7EF;color:#23944D;flex:0 0 auto;}
   .quick-item b{font-size:12px;display:block;}.quick-item small{font-size:10.5px;color:#6B7280;display:block;margin-top:3px;}
   .commit-card{background:linear-gradient(90deg,#F0FBF4,#F8FCFA);border-color:#EDF7F0;}
@@ -366,6 +368,29 @@ function renderDashboardAdMedia(){
     media.innerHTML = '<img src="'+esc(dashboardAdMedia.url)+'" alt="Nội dung quảng cáo tùy chỉnh">';
   }
   setDashboardAdStatus("Đang hiển thị: " + dashboardAdMedia.name, false);
+}
+function activateRestaurantView(view){
+  var item = document.querySelector('.nav-item[data-view="'+view+'"]');
+  if(item) item.click();
+}
+function wireQuickActions(){
+  document.querySelectorAll("[data-quick-action]").forEach(function(action){
+    action.setAttribute("role", "button");
+    action.setAttribute("tabindex", "0");
+    action.onclick = function(){
+      var target = action.getAttribute("data-quick-action");
+      if(target === "party"){
+        onlineOrderTab = "party";
+        var onlineFab = document.getElementById("onlineOrderFab");
+        if(onlineFab) onlineFab.click();
+        return;
+      }
+      activateRestaurantView(target);
+    };
+    action.onkeydown = function(event){
+      if(event.key === "Enter" || event.key === " "){ event.preventDefault(); action.click(); }
+    };
+  });
 }
 function wireDashboardAdControls(){
   var imageInput = document.getElementById("dashboardAdImageInput");
@@ -1063,11 +1088,11 @@ function renderOverview(){
         '<div class="overview-stat"><span class="stat-icon"><span class="material-symbols-outlined">restaurant_menu</span></span><div><div class="stat-label">Đơn đang phục vụ</div><div class="stat-value">'+esc(servingNow)+' <small style="font-size:12px;font-weight:500;color:#6B7280;">đơn</small></div><div class="stat-note">Đang được xử lý</div></div></div>'+
       '</section>'+
       '<section class="quick-card"><div class="section-title">THAO TÁC NHANH</div><div class="quick-grid">'+
-        '<div class="quick-item"><span class="quick-icon"><span class="material-symbols-outlined">delivery_dining</span></span><div><b>Gọi món</b><small>Tạo đơn gọi món</small></div></div>'+
-        '<div class="quick-item"><span class="quick-icon"><span class="material-symbols-outlined">receipt_long</span></span><div><b>Đơn hàng</b><small>Quản lý đơn hàng</small></div></div>'+
-        '<div class="quick-item"><span class="quick-icon"><span class="material-symbols-outlined">table_restaurant</span></span><div><b>Bàn ăn</b><small>Sơ đồ bàn ăn</small></div></div>'+
-        '<div class="quick-item"><span class="quick-icon"><span class="material-symbols-outlined">event_available</span></span><div><b>Đặt tiệc</b><small>Lịch đặt tiệc</small></div></div>'+
-        '<div class="quick-item"><span class="quick-icon"><span class="material-symbols-outlined">groups</span></span><div><b>Khách hàng</b><small>Quản lý khách hàng</small></div></div>'+
+        '<div class="quick-item" data-quick-action="tables"><span class="quick-icon"><span class="material-symbols-outlined">delivery_dining</span></span><div><b>Gọi món</b><small>Tạo đơn gọi món</small></div></div>'+
+        '<div class="quick-item" data-quick-action="tickets"><span class="quick-icon"><span class="material-symbols-outlined">receipt_long</span></span><div><b>Đơn hàng</b><small>Quản lý đơn hàng</small></div></div>'+
+        '<div class="quick-item" data-quick-action="tables"><span class="quick-icon"><span class="material-symbols-outlined">table_restaurant</span></span><div><b>Bàn ăn</b><small>Sơ đồ bàn ăn</small></div></div>'+
+        '<div class="quick-item" data-quick-action="party"><span class="quick-icon"><span class="material-symbols-outlined">event_available</span></span><div><b>Đặt tiệc</b><small>Lịch đặt tiệc</small></div></div>'+
+        '<div class="quick-item" data-quick-action="tickets"><span class="quick-icon"><span class="material-symbols-outlined">groups</span></span><div><b>Khách hàng</b><small>Quản lý khách hàng</small></div></div>'+
       '</div></section>'+
       '<section class="commit-card"><div class="section-title">NGỌC NHI CAM KẾT</div><div class="commit-grid">'+
         '<div class="commit-item"><span class="material-symbols-outlined">verified</span><div><b>NGUYÊN LIỆU SẠCH</b><span>100% dúi từ trang trại của chúng tôi</span></div></div>'+
@@ -1077,6 +1102,7 @@ function renderOverview(){
         '<div class="commit-item"><span class="material-symbols-outlined">price_check</span><div><b>GIÁ CẢ HỢP LÝ</b><span>Giá tốt nhất đi kèm chất lượng</span></div></div>'+
       '</div></section>';
     wireDashboardAdControls();
+    wireQuickActions();
   });
 }
 function renderMenu(){
