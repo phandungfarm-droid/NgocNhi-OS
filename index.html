@@ -713,112 +713,6 @@
       </div>
     </section>
 
-    <!-- 4 module cards -->
-    <section class="module-cards">
-      <div class="module-card card-farm">
-        <div class="card-title"><span class="material-symbols-outlined">pets</span>TRANG TRẠI DÚI</div>
-        <div class="card-photo-placeholder" data-module-image="farm" data-default-label="Ảnh Trang trại Dúi&lt;br&gt;(chờ upload)"><span class="material-symbols-outlined">image</span><span>Ảnh Trang trại Dúi<br>(chờ upload)</span></div>
-        <div class="check-list">
-          <div class="item"><span class="material-symbols-outlined">check_circle</span>Quản lý chuồng trại</div>
-          <div class="item"><span class="material-symbols-outlined">check_circle</span>Theo dõi sinh sản</div>
-          <div class="item"><span class="material-symbols-outlined">check_circle</span>Thương phẩm</div>
-          <div class="item"><span class="material-symbols-outlined">check_circle</span>Lịch chăm sóc</div>
-        </div>
-        <a href="trang_trai.html" class="card-cta">Vào hệ thống</a>
-      </div>
-
-      <div class="module-card card-restaurant">
-        <div class="card-title"><span class="material-symbols-outlined">skillet</span>QUÁN ĂN NGỌC NHI</div>
-        <div class="card-photo-placeholder" data-module-image="restaurant" data-default-label="Ảnh Quán ăn&lt;br&gt;(chờ upload)"><span class="material-symbols-outlined">image</span><span>Ảnh Quán ăn<br>(chờ upload)</span></div>
-        <div class="check-list">
-          <div class="item"><span class="material-symbols-outlined">check_circle</span>Quản lý menu</div>
-          <div class="item"><span class="material-symbols-outlined">check_circle</span>Đặt món online</div>
-          <div class="item"><span class="material-symbols-outlined">check_circle</span>Quản lý bàn</div>
-          <div class="item"><span class="material-symbols-outlined">check_circle</span>Theo dõi đơn hàng</div>
-        </div>
-        <a href="quan_an.html" class="card-cta">Vào hệ thống</a>
-      </div>
-
-      <div class="module-card card-wedding">
-        <div class="card-title"><span class="material-symbols-outlined">favorite</span>DỊCH VỤ TIỆC CƯỚI</div>
-        <div class="card-photo-placeholder" data-module-image="wedding" data-default-label="Ảnh Tiệc cưới&lt;br&gt;(chờ upload)"><span class="material-symbols-outlined">image</span><span>Ảnh Tiệc cưới<br>(chờ upload)</span></div>
-        <div class="check-list">
-          <div class="item"><span class="material-symbols-outlined">favorite</span>Quản lý tiệc cưới</div>
-          <div class="item"><span class="material-symbols-outlined">favorite</span>Lịch đặt tiệc</div>
-          <div class="item"><span class="material-symbols-outlined">favorite</span>Thực đơn tiệc</div>
-          <div class="item"><span class="material-symbols-outlined">favorite</span>Hợp đồng</div>
-        </div>
-        <a href="tiec_cuoi.html" class="card-cta">Vào hệ thống</a>
-      </div>
-
-      <div class="module-card card-admin">
-        <div class="card-title"><span class="material-symbols-outlined">account_balance</span>TRUNG TÂM ĐIỀU HÀNH</div>
-        <div class="card-body">
-          <div class="card-photo-placeholder" data-module-image="admin" data-default-label="Ảnh Trung tâm điều hành&lt;br&gt;(chờ upload)"><span class="material-symbols-outlined">image</span><span>Ảnh Trung tâm điều hành<br>(chờ upload)</span></div>
-          <div class="check-list">
-            <div class="item"><span class="material-symbols-outlined">check_circle</span>Kho thương phẩm (đa cơ sở)</div>
-            <div class="item"><span class="material-symbols-outlined">check_circle</span>Tài chính - Thu chi</div>
-            <div class="item"><span class="material-symbols-outlined">check_circle</span>Khách hàng</div>
-            <div class="item"><span class="material-symbols-outlined">check_circle</span>Báo cáo tổng hợp</div>
-            <div class="item"><span class="material-symbols-outlined">check_circle</span>Nhà cung cấp</div>
-            <div class="item"><span class="material-symbols-outlined">check_circle</span>Thông báo hệ thống</div>
-          </div>
-        </div>
-        <button class="card-cta" id="btnGoFinance">Vào trung tâm</button>
-      </div>
-    </section>
-
-    <!-- Quick info -->
-    <section style="display:flex;flex-direction:column;gap:12px;">
-      <div class="quick-info-header">
-        <h2>THÔNG TIN NHANH <span>(Hiển thị cho tất cả người dùng)</span></h2>
-        <div class="quick-info-note">
-          <span class="material-symbols-outlined">visibility</span>
-          Nhân viên và khách hàng chỉ xem được thông tin theo quyền được cấp.
-          <span class="material-symbols-outlined">lock</span>
-        </div>
-      </div>
-
-      <div class="quick-info-grid">
-        <div class="quick-card qc-green">
-          <div class="icon-circle"><span class="material-symbols-outlined">cottage</span></div>
-          <div><div class="label">Trang trại dúi</div><div class="sub">Tổng số ô chuồng</div></div>
-          <div class="value" id="qiFarmCells">—</div>
-          <button class="detail-btn" data-goto="trang_trai.html">Xem chi tiết</button>
-        </div>
-        <div class="quick-card qc-orange">
-          <div class="icon-circle"><span class="material-symbols-outlined">restaurant</span></div>
-          <div><div class="label">Quán ăn</div><div class="sub">Món đang phục vụ</div></div>
-          <div class="value" id="qiRestaurantItems">—</div>
-          <button class="detail-btn" data-goto="quan_an.html">Xem chi tiết</button>
-        </div>
-        <div class="quick-card qc-pink">
-          <div class="icon-circle"><span class="material-symbols-outlined">favorite</span></div>
-          <div><div class="label">Tiệc cưới</div><div class="sub">Tiệc sắp diễn ra</div></div>
-          <div class="value" id="qiWeddingUpcoming">—</div>
-          <button class="detail-btn" data-goto="tiec_cuoi.html">Xem chi tiết</button>
-        </div>
-        <div class="quick-card qc-blue">
-          <div class="icon-circle"><span class="material-symbols-outlined">group</span></div>
-          <div><div class="label">Khách hàng</div><div class="sub">Khách hàng tiệc cưới</div></div>
-          <div class="value" id="qiWeddingCustomers">—</div>
-          <button class="detail-btn" data-goto="tiec_cuoi.html">Xem chi tiết</button>
-        </div>
-        <div class="quick-card qc-purple">
-          <div class="icon-circle"><span class="material-symbols-outlined">notifications</span></div>
-          <div><div class="label">Thông báo</div><div class="sub">Phiếu đặt mới (Quán ăn)</div></div>
-          <div class="value" id="qiTicketsNew">—</div>
-          <button class="detail-btn" data-goto="quan_an.html">Xem chi tiết</button>
-        </div>
-        <div class="quick-card qc-navy">
-          <div class="icon-circle"><span class="material-symbols-outlined">calendar_month</span></div>
-          <div><div class="label">Lịch làm việc</div><div class="sub">Hôm nay</div></div>
-          <div class="value" id="qiToday">—</div>
-          <button class="detail-btn" id="btnGoFinance2">Xem chi tiết</button>
-        </div>
-      </div>
-    </section>
-
     <!-- Overview panels -->
     <section class="overview-panels">
 
@@ -836,17 +730,6 @@
           <div class="title"><span class="material-symbols-outlined">skillet</span>QUÁN ĂN NGỌC NHI (Tổng quan)</div>
           <button class="view-all">Xem đầy đủ</button>
         </div>
-        <div class="panel-body">
-          <div>
-            <div class="section-label" style="margin-bottom:10px">Tổng quan hoạt động</div>
-            <div class="stat-row">
-              <div class="stat-box"><div class="stat-label">Món đang phục vụ</div><div class="stat-value" id="rpAvailable">—</div></div>
-              <div class="stat-box"><div class="stat-label">Bàn đang dùng</div><div class="stat-value" id="rpOccupied">—</div></div>
-              <div class="stat-box"><div class="stat-label">Đơn hôm nay</div><div class="stat-value" id="rpOrdersToday">—</div></div>
-              <div class="stat-box"><div class="stat-label">Đơn đang phục vụ</div><div class="stat-value" id="rpServing">—</div></div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- WEDDING -->
@@ -855,49 +738,8 @@
           <div class="title"><span class="material-symbols-outlined">favorite</span>DỊCH VỤ TIỆC CƯỚI (Tổng quan)</div>
           <button class="view-all">Xem đầy đủ</button>
         </div>
-        <div class="panel-body">
-          <div>
-            <div class="section-label" style="margin-bottom:10px">Tình hình tiệc cưới</div>
-            <div class="stat-row">
-              <div class="stat-box"><div class="stat-label">Tổng hợp đồng</div><div class="stat-value" id="wpTotal">—</div></div>
-              <div class="stat-box"><div class="stat-label">Đang xử lý</div><div class="stat-value" id="wpProcessing">—</div></div>
-              <div class="stat-box"><div class="stat-label">Chờ sếp duyệt</div><div class="stat-value" id="wpPending">—</div></div>
-              <div class="stat-box"><div class="stat-label">Xung đột kho</div><div class="stat-value" id="wpConflict">—</div></div>
-            </div>
-          </div>
-        </div>
       </div>
 
-    </section>
-
-    <!-- Role info row -->
-    <section class="role-row">
-      <div class="role-card">
-        <div class="role-highlight">
-          <span class="material-symbols-outlined">info</span>
-          <span>LƯU Ý</span>
-        </div>
-        <div class="role-cols">
-          <div class="role-col staff">
-            <div class="head"><span class="material-symbols-outlined">person</span><h3>ĐỐI VỚI NHÂN VIÊN</h3></div>
-            <p>Bạn chỉ xem được thông tin tổng quan, công việc và hoạt động. Các số liệu tài chính được ẩn để bảo mật.</p>
-          </div>
-          <div class="role-col customer">
-            <div class="head"><span class="material-symbols-outlined">person</span><h3>ĐỐI VỚI KHÁCH HÀNG</h3></div>
-            <p>Bạn chỉ xem được thông tin công khai như menu, dịch vụ, hình ảnh, tin tức. Các thông tin tài chính được ẩn.</p>
-          </div>
-          <div class="role-col admin">
-            <div class="head"><span class="material-symbols-outlined">shield</span><h3>ĐỐI VỚI ADMIN</h3></div>
-            <p>Bạn có toàn quyền xem thông tin chi tiết, tài chính, báo cáo và quản trị toàn bộ hệ thống.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="legend-card">
-        <h3>CHÚ THÍCH</h3>
-        <div class="row"><span class="material-symbols-outlined">lock</span>Chỉ Admin xem được thông tin quản trị.</div>
-        <div class="row"><span class="material-symbols-outlined">visibility</span>Thông tin hiển thị cho tất cả người dùng.</div>
-      </div>
     </section>
 
     </div><!-- /#dashboardView -->
