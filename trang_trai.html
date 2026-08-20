@@ -257,7 +257,7 @@ var farmDashboardMedia = { imageUrl:null, videoUrl:null };
    https://firebase.google.com/docs/auth/web/start
    Bọc try/catch: nếu SDK Firebase không tải được (mạng chặn CDN, v.v.),
    ứng dụng vẫn không phát sinh lỗi Console không bắt được — sẽ hiển thị
-   thông báo chờ cấu hình thay vì màn hình trắng hoặc lỗi đỏ trong Console.
+   thông báo chờ cấu hình thay vì màn hình tr���ng hoặc lỗi đỏ trong Console.
    ========================================================================= */
 var db = null, auth = null, firebaseReady = false;
 try{
@@ -1759,7 +1759,7 @@ function renderCurrentView(){
     return;
   }
   var titles = {
-    overview:["Tổng quan trang trại","Thống kê thời gian thực toàn bộ đàn"],
+    overview:["Tổng quan trang tr��i","Thống kê thời gian thực toàn bộ đàn"],
     zones:["Khu & Ô chuồng","Quản lý cấu trúc khu, ô và vòng đời từng cá thể"],
     tasks:["Việc cần làm hôm nay","Tổng hợp việc đến hạn / quá hạn"],
     alerts:["Cảnh báo & Báo cáo","Nhật ký cảnh báo tự động gửi cho Chủ trại"],
@@ -2026,16 +2026,19 @@ function renderZoneDetailBody(container, zone, zoneCells){
     var realCells = zoneCells.filter(function(c){ return c && c.id && c.zoneId === zone.id; }).sort(function(a,b){ return String(a.code||"").localeCompare(String(b.code||""),undefined,{numeric:true}); });
     var female = realCells.filter(function(c){ return c.sex === "female"; });
     var male = realCells.filter(function(c){ return c.sex === "male"; });
-    var split = function(list,count){ var out=[]; for(var i=0;i<count;i++) out.push(list.slice(Math.floor(i*list.length/count),Math.floor((i+1)*list.length/count))); return out; };
-    var femaleRows = split(female,5);
-    var maleRows = split(male,2);
-    var card = function(c){ var state=c.state||"vacant"; return '<button type="button" class="k1-cell '+stateClass(c)+'" data-k1-cid="'+esc(c.id)+'"><strong>'+esc(c.code||"Không xác định")+'</strong><span>'+esc(labels[state]||"Không xác định")+'</span></button>'; };
-    var strip = function(list){ return '<div class="k1-strip-cells">'+list.map(card).join("")+'</div>'; };
-    var vertical = function(list){ return '<div class="k1-vertical-cells">'+list.map(card).join("")+'</div>'; };
-    var labelled = function(label,list,kind){ var content = kind === "k1-double-row" ? '<div class="k1-double-strips"><div class="k1-strip">'+strip(list.slice(0,Math.ceil(list.length/2)))+'</div><div class="k1-strip">'+strip(list.slice(Math.ceil(list.length/2)))+'</div></div>' : '<div class="k1-strip">'+strip(list)+'</div>'; return '<div class="k1-flow-row '+(kind||"")+'"><div class="k1-flow-label">'+label+'</div><span class="k1-arrow">→</span>'+content+'</div>'; };
-    var left = '<div class="k1-left-rail"><div class="k1-flow-label">Cái C5</div>'+vertical(femaleRows[4])+'<span class="k1-arrow k1-arrow-up">↑</span></div>';
-    var middle = labelled("Cái C3",femaleRows[2])+labelled("Cái C4",femaleRows[3])+labelled("Đực D2",maleRows[1],"k1-double-row")+labelled("Đực D1",maleRows[0],"k1-double-row")+labelled("Cái C1",femaleRows[0]);
-    var right = '<div class="k1-right-rail"><div class="k1-flow-label">Cái C2</div><span class="k1-arrow k1-arrow-down">↓</span>'+vertical(femaleRows[1])+'</div>';
+    var suffix = function(c){ var m=String(c.code||"").match(/(\\d+)$/); return m ? Number(m[1]) : 0; };
+    var fixed = {C1:[],C2:[],C3:[],C4:[],C5:[],D1:{top:[],bottom:[]},D2:{top:[],bottom:[]}};
+    female.forEach(function(c){ var n=suffix(c); var lane=n<=16?"C1":n<=32?"C2":n<=48?"C3":n<=64?"C4":"C5"; fixed[lane].push(c); });
+    male.forEach(function(c){ var n=suffix(c); var lane=n<=35?"D1":"D2"; var local=n<=35?n:n-35; fixed[lane][local<=13?"bottom":"top"].push(c); });
+    Object.keys(fixed).forEach(function(k){ if(Array.isArray(fixed[k])) fixed[k].sort(function(a,b){return suffix(a)-suffix(b);}); else {fixed[k].top.sort(function(a,b){return suffix(a)-suffix(b);});fixed[k].bottom.sort(function(a,b){return suffix(a)-suffix(b);});} });
+    var displayCode = function(c,lane){ var n=suffix(c); var local=(lane==="D2"?n-35:n); return lane+"-"+pad(local,3); };
+    var card = function(c,lane){ var state=c.state||"vacant"; return '<button type="button" class="k1-cell '+stateClass(c)+'" data-k1-cid="'+esc(c.id)+'"><strong>'+esc(displayCode(c,lane))+'</strong><span>'+esc(labels[state]||"Không xác định")+'</span></button>'; };
+    var strip = function(list,lane){ return '<div class="k1-strip-cells">'+list.map(function(c){return card(c,lane);}).join("")+'</div>'; };
+    var vertical = function(list,lane){ return '<div class="k1-vertical-cells">'+list.map(function(c){return card(c,lane);}).join("")+'</div>'; };
+    var labelled = function(label,lane,kind){ var content = kind === "k1-double-row" ? '<div class="k1-double-strips"><div class="k1-strip">'+strip(fixed[lane].bottom,lane)+'</div><div class="k1-strip">'+strip(fixed[lane].top,lane)+'</div></div>' : '<div class="k1-strip">'+strip(fixed[lane],lane)+'</div>'; return '<div class="k1-flow-row '+(kind||"")+'"><div class="k1-flow-label">'+label+'</div><span class="k1-arrow">→</span>'+content+'</div>'; };
+    var left = '<div class="k1-left-rail"><div class="k1-flow-label">Cái C5</div>'+vertical(fixed.C5,"C5")+'<span class="k1-arrow k1-arrow-up">↑</span></div>';
+    var middle = labelled("Cái C3","C3")+labelled("Cái C4","C4")+labelled("Đực Đ2","D2","k1-double-row")+labelled("Đực Đ1","D1","k1-double-row")+labelled("Cái C1","C1");
+    var right = '<div class="k1-right-rail"><div class="k1-flow-label">Cái C2</div><span class="k1-arrow k1-arrow-down">↓</span>'+vertical(fixed.C2,"C2")+'</div>';
     var legend = Object.keys(labels).map(function(state){ return '<span><i class="k1-legend-swatch k1-'+state.replace(/_/g,"-")+'"></i>'+labels[state]+'</span>'; }).join("");
     var uniqueIds = {}; realCells.forEach(function(c){ uniqueIds[c.id] = true; });
     var mapCheck = Object.keys(uniqueIds).length === 150 && female.length === 80 && male.length === 70 && realCells.length === zoneCells.length;
