@@ -136,7 +136,9 @@
   /* Giao diện Quán ăn Ngọc Nhi theo ảnh tham chiếu — chỉ trình bày */
   .app{max-width:none;background:var(--page-bg);}
   .sidebar{width:226px;padding:18px 16px 16px;border-right:1px solid #EEF0F4;box-shadow:2px 0 12px rgba(26,35,52,.025);}
-  .back-link{display:none;}
+  .back-link{display:flex;align-items:center;gap:8px;margin:0 0 14px;padding:10px 12px;border:1px solid #F5D3B7;border-radius:9px;background:#FFF8F2;color:#C95508;font-size:12.5px;font-weight:800;transition:background .18s ease,border-color .18s ease,transform .18s ease;}
+  .back-link:hover{background:#FFEFE1;border-color:#F2B27C;transform:translateX(-1px);}
+  .back-link .back-arrow{font-size:18px;line-height:1;font-weight:500;}
   .sidebar-logo{padding:6px 8px 25px;gap:12px;}
   .sidebar-logo .icon{width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,#FFF4E9,#FFE3C4);color:var(--orange);}
   .sidebar-logo .icon .material-symbols-outlined{font-size:27px;}
@@ -253,7 +255,7 @@
 <!-- ============ ỨNG DỤNG CHÍNH (chủ quán / nhân viên / khách tham quan) ============ -->
 <div id="mainApp" class="app hidden">
   <aside class="sidebar">
-    <a class="back-link" href="index.html"><span class="material-symbols-outlined">arrow_back</span>Về Trang chủ</a>
+    <a class="back-link" href="index.html" aria-label="Về trang chủ Trung tâm hệ thống"><span class="back-arrow" aria-hidden="true">←</span>Về trang chủ</a>
     <div class="sidebar-logo">
       <div class="icon"><span class="material-symbols-outlined">skillet</span></div>
       <div class="txt"><div class="t1">QUÁN ĂN</div><div class="t2">NGỌC NHI</div></div>
