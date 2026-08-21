@@ -637,15 +637,26 @@
 
     <div class="sidebar-spacer"></div>
 
-    <div class="sidebar-user">
+    <div class="sidebar-user" id="centerUserBox">
       <div class="avatar"><span class="material-symbols-outlined">person</span></div>
       <div class="info">
-        <div class="name">Phan Văn Dũng</div>
-        <div class="role">Administrator</div>
+        <div class="name">Khách hàng</div>
+        <div class="role">Chỉ xem nội dung công khai</div>
       </div>
-      <span class="material-symbols-outlined">expand_more</span>
+      <button id="btnOpenCenterLogin" type="button" title="Đăng nhập Admin"><span class="material-symbols-outlined">login</span></button>
     </div>
-  </aside>
+  </div>
+
+  <div id="centerLoginOverlay" class="modal-overlay-fc hidden-view">
+    <div class="modal-fc">
+      <h3>Đăng nhập Trung tâm điều hành</h3>
+      <div style="font-size:12px;color:var(--gray);margin-bottom:14px;">Chỉ đăng nhập khi cần chức năng Nhân viên hoặc Admin. Phiên Firebase sẽ được dùng chung khi chuyển sang các phân hệ khác.</div>
+      <div class="field"><label>Email</label><input type="email" id="centerLoginEmail" placeholder="ten@ngocnhi.vn"></div>
+      <div class="field"><label>Mật khẩu</label><input type="password" id="centerLoginPassword"></div>
+      <div id="centerLoginError" style="color:#B91C1C;font-size:12px;margin-bottom:8px;"></div>
+      <div class="modal-fc-actions"><button class="link-btn" id="centerLoginCancel" style="padding:9px 14px;">Đóng</button><button class="btn-primary-sm" id="centerLoginSubmit">Đăng nhập</button></div>
+    </div>
+  </div>
 
   <!-- ===== MAIN ===== -->
   <div class="main">
@@ -1255,18 +1266,74 @@
     console.warn("Firebase chưa sẵn sàng (config còn là placeholder?). Trang chủ sẽ hiển thị Placeholder cho tới khi kết nối được.", err);
   }
 
-  // ---- 3) Kiểm tra quyền Administrator (Firebase Authentication hiện có của DA2) ----
-  // GHI CHÚ CẤU HÌNH: DA2 hiện xác định vai trò Administrator theo cơ chế
-  // đăng nhập Admin hiện có của hệ thống. Ở đây mặc định coi MỌI tài khoản
-  // đã đăng nhập thành công qua Firebase Authentication là Administrator
-  // (đúng với mô hình DA2 hiện tại: khách hàng/nhân viên dùng luồng không
-  // đăng nhập, chỉ chủ trại/quản trị mới đăng nhập). Nếu DA2 có thêm vai
-  // trò khác đăng nhập qua Firebase Auth, chỉ cần sửa DUY NHẤT hàm này để
-  // đọc đúng field phân quyền (custom claims hoặc node Users/{uid}/role).
-  function isCurrentUserAdmin(){
-    if(!firebaseReady || !auth) return false;
-    return !!auth.currentUser;
+  // ---- 3) Quyền dùng chung — không hard-code role, không bootstrap account ----
+  var centerRole = null, centerUid = null, centerAccount = null;
+  var centerAuthResolved = false, pendingCenterAction = null;
+  function isCurrentUserAdmin(){ return centerRole === "owner"; }
+  function isCurrentUserStaff(){ return centerRole === "owner" || centerRole === "staff"; }
+  function openCenterLogin(){
+    var overlay = document.getElementById("centerLoginOverlay");
+    if(overlay) overlay.classList.remove("hidden-view");
   }
+  function closeCenterLogin(){
+    var overlay = document.getElementById("centerLoginOverlay");
+    if(overlay) overlay.classList.add("hidden-view");
+  }
+  function centerEsc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function renderCenterUserBox(){
+    var box = document.getElementById("centerUserBox");
+    if(!box) return;
+    var name = "Khách hàng", roleText = "Chỉ xem nội dung công khai", action = '<button id="btnOpenCenterLogin" type="button" title="Đăng nhập nhân viên/Admin"><span class="material-symbols-outlined">login</span></button>';
+    if(!centerAuthResolved){ name = "Đang xác thực"; roleText = "Đang kiểm tra quyền"; }
+    else if(centerRole === "owner" || centerRole === "staff"){
+      name = (centerAccount && (centerAccount.name || centerAccount.email)) || (auth && auth.currentUser && (auth.currentUser.email || "Người dùng")) || "Người dùng";
+      roleText = centerRole === "owner" ? "Admin / Chủ hệ thống" : "Nhân viên";
+      action = '<button id="btnCenterLogout" type="button" title="Đăng xuất toàn hệ thống"><span class="material-symbols-outlined">logout</span></button>';
+    }
+    box.innerHTML = '<div class="avatar"><span class="material-symbols-outlined">person</span></div><div class="info"><div class="name">'+centerEsc(name)+'</div><div class="role">'+centerEsc(roleText)+'</div></div>'+action;
+    var loginBtn = document.getElementById("btnOpenCenterLogin");
+    if(loginBtn) loginBtn.onclick = openCenterLogin;
+    var logoutBtn = document.getElementById("btnCenterLogout");
+    if(logoutBtn) logoutBtn.onclick = function(){ if(auth) auth.signOut(); };
+  }
+  function requireCenterRole(requiredRole, action){
+    var allowed = requiredRole === "owner" ? isCurrentUserAdmin() : isCurrentUserStaff();
+    if(allowed){ if(typeof action === "function") action(); return true; }
+    pendingCenterAction = typeof action === "function" ? action : null;
+    if(!auth || !auth.currentUser || auth.currentUser.isAnonymous) openCenterLogin();
+    else alert(requiredRole === "owner" ? "Chức năng này chỉ dành cho Admin." : "Chức năng này cần quyền Nhân viên hoặc Admin.");
+    return false;
+  }
+  renderCenterUserBox();
+  window.__NgocNhiCenterAuth = {
+    apply: function(result){
+      centerUid = result && result.uid ? result.uid : null;
+      centerRole = result && result.role ? result.role : null;
+      centerAccount = result && result.account ? result.account : null;
+      centerAuthResolved = true;
+      renderCenterUserBox();
+    },
+    getRole: function(){ return centerRole; },
+    getPending: function(){ return pendingCenterAction; },
+    clearPending: function(){ pendingCenterAction = null; },
+    require: requireCenterRole,
+    openLogin: openCenterLogin,
+    closeLogin: closeCenterLogin
+  };
+  var centerLoginCancel = document.getElementById("centerLoginCancel");
+  if(centerLoginCancel) centerLoginCancel.onclick = closeCenterLogin;
+  var centerLoginSubmit = document.getElementById("centerLoginSubmit");
+  if(centerLoginSubmit) centerLoginSubmit.onclick = function(){
+    var email = document.getElementById("centerLoginEmail").value.trim();
+    var pass = document.getElementById("centerLoginPassword").value;
+    var errEl = document.getElementById("centerLoginError");
+    errEl.textContent = "";
+    if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ errEl.textContent = "Nhập đúng định dạng email."; return; }
+    if(!pass){ errEl.textContent = "Nhập mật khẩu."; return; }
+    if(!auth){ errEl.textContent = "Firebase Auth chưa sẵn sàng."; return; }
+    centerLoginSubmit.disabled = true;
+    auth.signInWithEmailAndPassword(email, pass).then(function(){ closeCenterLogin(); }).catch(function(err){ errEl.textContent = "Sai email hoặc mật khẩu."; console.warn(err); }).then(function(){ centerLoginSubmit.disabled = false; });
+  };
 
   // ---- 4) Render 1 khung ảnh module theo đúng khung/kích thước/bo góc hiện có ----
   function renderPlaceholder(container, label){
@@ -1599,8 +1666,7 @@
   // Không admin -> không mở financeView, quay lại Trang chủ.
   function showFinanceOverview(){
     if(!isAdminUser()){
-      alert("Trung tâm điều hành chỉ dành cho tài khoản quản trị. Vui lòng đăng nhập với tài khoản Chủ trại/quản trị (qua Trang trại Dúi) để truy cập.");
-      showDashboard();
+      window.__NgocNhiCenterAuth.require("owner", showFinanceOverview);
       return;
     }
     document.getElementById("dashboardView").classList.add("hidden-view");
@@ -1617,8 +1683,7 @@
   // được bất kỳ panel chi tiết nào (Tài chính/Kho/Hợp đồng/NCC/Thư viện).
   function showFinanceDetail(panelId){
     if(!isAdminUser()){
-      alert("Trung tâm điều hành chỉ dành cho tài khoản quản trị. Vui lòng đăng nhập với tài khoản Chủ trại/quản trị (qua Trang trại Dúi) để truy cập.");
-      showDashboard();
+      window.__NgocNhiCenterAuth.require("owner", function(){ showFinanceDetail(panelId); });
       return;
     }
     document.getElementById("dashboardView").classList.add("hidden-view");
@@ -1637,11 +1702,11 @@
   }
   ["navFinance","btnGoFinance","btnGoFinance2"].forEach(function(id){
     var el = document.getElementById(id);
-    if(el) el.addEventListener("click", function(e){ e.preventDefault(); showFinanceOverview(); });
+    if(el) el.onclick = function(e){ e.preventDefault(); showFinanceOverview(); };
   });
   ["admFinance","admKho","admContracts","admSuppliers","admLibrary"].forEach(function(id){
     var el = document.getElementById(id);
-    if(el) el.addEventListener("click", function(e){ e.preventDefault(); showFinanceDetail(el.getAttribute("data-target")); });
+    if(el) el.onclick = function(e){ e.preventDefault(); showFinanceDetail(el.getAttribute("data-target")); };
   });
   document.querySelectorAll('[data-finance-detail]').forEach(function(b){
     b.addEventListener("click", function(){ showFinanceDetail(b.getAttribute("data-finance-detail")); });
@@ -1674,7 +1739,7 @@
      thật, mọi người mở trang đều thấy được số liệu tài chính.
      ========================================================================= */
   function isAdminUser(){
-    return !!(window.NgocNhiModuleSettings && window.NgocNhiModuleSettings.isAdmin && window.NgocNhiModuleSettings.isAdmin());
+    return !!(window.__NgocNhiCenterAuth && window.__NgocNhiCenterAuth.getRole() === "owner");
   }
   function renderFinanceGate(){
     var admin = isAdminUser();
@@ -1691,10 +1756,25 @@
       if(body) body.classList.toggle("hidden-view", !admin);
     });
   }
-  if(auth) auth.onAuthStateChanged(function(){
-    renderFinanceGate();
-    var fv = document.getElementById("financeView");
-    if(fv && !fv.classList.contains("hidden-view") && !isAdminUser()) showDashboard();
+  if(auth) auth.onAuthStateChanged(function(user){
+    var resolver = window.NgocNhiAuth && window.NgocNhiAuth.resolveRole;
+    var apply = window.__NgocNhiCenterAuth && window.__NgocNhiCenterAuth.apply;
+    if(!resolver || !apply){ renderFinanceGate(); return; }
+    resolver(auth, db, user).then(function(result){
+      apply(result);
+      renderFinanceGate();
+      var fv = document.getElementById("financeView");
+      if(fv && !fv.classList.contains("hidden-view") && !isAdminUser()) showDashboard();
+      var pending = window.__NgocNhiCenterAuth.getPending();
+      if(pending && isAdminUser()){
+        window.__NgocNhiCenterAuth.clearPending();
+        pending();
+      }
+    }).catch(function(err){
+      console.warn("Không đọc được role dùng chung:", err && err.message);
+      apply({uid:user ? user.uid : null, role:null, account:null});
+      renderFinanceGate();
+    });
   });
   renderFinanceGate();
 
