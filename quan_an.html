@@ -131,12 +131,23 @@
   .guest-item .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
   .guest-item .name{font-weight:700;font-size:13px;} .guest-item .price{font-size:11.5px;color:var(--gray);}
   .guest-cart-bar{position:fixed;bottom:0;left:0;right:0;background:var(--ink);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;font-weight:700;}
+  .guest-choice-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 14px;}
+  .guest-choice-row label{border:1px solid var(--border);border-radius:9px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;}
+  .guest-choice-row label:has(input:checked){border-color:var(--orange);background:var(--orange-tint);}
+  .guest-choice-row input{margin-right:5px;}
+  .guest-bill-row{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid var(--border);padding:9px 0;font-size:12px;}
+  .guest-bill-row .bill-name{flex:1;font-weight:700;min-width:0;}
+  .guest-bill-row .bill-price{white-space:nowrap;color:var(--gray);}
+  .guest-status-line{padding:7px 9px;border-radius:7px;background:var(--orange-tint);font-size:12px;font-weight:700;}
+  .guest-status-line.done{background:var(--green-tint);color:var(--green-dark);}
   .sorry-banner{background:var(--red-tint);color:#B91C1C;padding:12px 16px;border-radius:12px;font-size:12.5px;font-weight:600;margin-bottom:14px;}
 
   /* Giao diện Quán ăn Ngọc Nhi theo ảnh tham chiếu — chỉ trình bày */
   .app{max-width:none;background:var(--page-bg);}
   .sidebar{width:226px;padding:18px 16px 16px;border-right:1px solid #EEF0F4;box-shadow:2px 0 12px rgba(26,35,52,.025);}
-  .back-link{display:none;}
+  .back-link{display:flex;align-items:center;gap:8px;margin:0 0 14px;padding:10px 12px;border:1px solid #F5D3B7;border-radius:9px;background:#FFF8F2;color:#C95508;font-size:12.5px;font-weight:800;transition:background .18s ease,border-color .18s ease,transform .18s ease;}
+  .back-link:hover{background:#FFEFE1;border-color:#F2B27C;transform:translateX(-1px);}
+  .back-link .back-arrow{font-size:18px;line-height:1;font-weight:500;}
   .sidebar-logo{padding:6px 8px 25px;gap:12px;}
   .sidebar-logo .icon{width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,#FFF4E9,#FFE3C4);color:var(--orange);}
   .sidebar-logo .icon .material-symbols-outlined{font-size:27px;}
@@ -189,6 +200,18 @@
   .hero-dots{position:absolute;z-index:2;bottom:12px;left:50%;display:flex;gap:6px;}
   .hero-dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.45);}
   .hero-dots i.active{width:24px;border-radius:8px;background:#fff;}
+  .dashboard-ad-media{position:absolute;inset:0;z-index:1;background:#080706;display:flex;align-items:center;justify-content:center;}
+  .dashboard-ad-media img,.dashboard-ad-media video{width:100%;height:100%;object-fit:cover;display:block;}
+  .dashboard-ad-tools{position:absolute;z-index:6;top:16px;right:16px;display:flex;align-items:center;gap:7px;padding:7px;border-radius:10px;background:rgba(13,10,7,.76);border:1px solid rgba(255,225,163,.35);box-shadow:0 5px 15px rgba(0,0,0,.2);}
+  .dashboard-ad-tools .ad-tools-label{color:#FFE4A3;font-size:10px;font-weight:800;letter-spacing:.04em;margin:0 4px 0 2px;white-space:nowrap;}
+  .dashboard-ad-tools button{display:inline-flex;align-items:center;gap:5px;padding:8px 10px;border-radius:7px;background:#fff;color:#222;font-size:11px;font-weight:800;white-space:nowrap;}
+  .dashboard-ad-tools button:hover{background:#FFE5A0;}
+  .dashboard-ad-tools button.ad-replace{background:#FFC84A;color:#1B160E;}
+  .dashboard-ad-tools button.ad-clear{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);}
+  .dashboard-ad-tools input[type="file"]{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none;}
+  .dashboard-ad-status{position:absolute;z-index:6;left:16px;bottom:12px;max-width:48%;padding:6px 9px;border-radius:6px;background:rgba(13,10,7,.68);color:#FFF3D3;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .dashboard-hero.has-custom-media{background:#080706;}
+  .dashboard-hero.has-custom-media .hero-copy,.dashboard-hero.has-custom-media .hero-featured,.dashboard-hero.has-custom-media .hero-arrow,.dashboard-hero.has-custom-media .hero-dots{display:none;}
   .overview-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;}
   .overview-stat{background:#fff;border:1px solid #EEF0F4;border-radius:12px;min-height:134px;padding:22px 20px;display:flex;align-items:center;gap:15px;box-shadow:0 2px 5px rgba(16,24,40,.035);}
   .overview-stat .stat-icon{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:#fff;}
@@ -200,8 +223,10 @@
   .overview-stat .stat-note strong{color:#219653;}
   .quick-card,.commit-card{background:#fff;border:1px solid #EEF0F4;border-radius:12px;padding:18px;box-shadow:0 2px 5px rgba(16,24,40,.035);}
   .section-title{font-size:14px;font-weight:800;margin:0 0 14px;color:#202638;}
-  .quick-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;}
-  .quick-item{display:flex;align-items:center;gap:10px;border:1px solid #EEF0F4;border-radius:9px;padding:13px 12px;min-height:66px;}
+  .quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+  .quick-item{display:flex;align-items:center;gap:10px;border:1px solid #EEF0F4;border-radius:9px;padding:13px 12px;min-height:66px;cursor:pointer;text-align:left;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;}
+  .quick-item:hover{transform:translateY(-1px);border-color:#BFE2CB;box-shadow:0 5px 14px rgba(35,148,77,.10);}
+  .quick-item:focus-visible{outline:2px solid #23944D;outline-offset:2px;}
   .quick-item .quick-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#EAF7EF;color:#23944D;flex:0 0 auto;}
   .quick-item b{font-size:12px;display:block;}.quick-item small{font-size:10.5px;color:#6B7280;display:block;margin-top:3px;}
   .commit-card{background:linear-gradient(90deg,#F0FBF4,#F8FCFA);border-color:#EDF7F0;}
@@ -209,7 +234,7 @@
   .commit-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;}
   .commit-item{display:flex;align-items:flex-start;gap:9px;}.commit-item .material-symbols-outlined{color:#259654;font-size:25px;}.commit-item b{font-size:11.5px;display:block;}.commit-item span{font-size:10.5px;line-height:1.35;color:#525B69;display:block;margin-top:4px;}
   .card{box-shadow:0 2px 5px rgba(16,24,40,.035);}
-  @media (max-width:1200px){.hero-copy{padding-left:58px}.hero-featured{width:250px;margin-right:18px}.hero-copy h2{font-size:36px}.quick-grid,.commit-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+  @media (max-width:1200px){.hero-copy{padding-left:58px}.hero-featured{width:250px;margin-right:18px}.hero-copy h2{font-size:36px}.commit-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
   @media (max-width:900px){ .app{flex-direction:column;} .sidebar{width:100%;flex-direction:row;flex-wrap:wrap;} .sidebar-spacer{display:none;} .main{padding:18px 16px 28px}.topbar{align-items:flex-start}.topbar-actions{flex-wrap:wrap;justify-content:flex-end}.dashboard-hero{min-height:520px}.hero-copy{width:100%;padding:35px 28px 26px 54px;justify-content:flex-start}.hero-featured{position:absolute;left:54px;right:22px;bottom:16px;width:auto;margin:0}.overview-stats{grid-template-columns:repeat(2,minmax(0,1fr));}.commit-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
   @media (max-width:560px){.topbar{flex-direction:column;align-items:stretch}.topbar-actions{justify-content:space-between}.date-picker{flex:1}.profile-chip{min-width:0}.hero-copy h2{font-size:30px}.hero-kicker{font-size:22px}.overview-stats,.quick-grid,.commit-grid{grid-template-columns:1fr}.dashboard-hero{min-height:590px;}.hero-featured{left:20px;right:20px}.hero-copy{padding-left:48px;}}
   </style>
@@ -226,14 +251,29 @@
   <div id="guestMenu"></div>
   <div class="guest-cart-bar">
     <span id="guestCartCount">0 món</span>
-    <button class="btn btn-primary" id="guestSubmitBtn" style="background:#fff;color:var(--ink);">Gửi order</button>
+    <button class="btn btn-primary" id="guestSubmitBtn" style="background:#fff;color:var(--ink);">Xem Bill / Chốt đơn</button>
+  </div>
+</div>
+<div id="guestBillOverlay" class="modal-overlay hidden">
+  <div class="modal" style="max-width:560px;">
+    <h3>Bill / Giỏ hàng</h3>
+    <div id="guestBillBody"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" id="guestBillCloseBtn">Tiếp tục chọn món</button><button class="btn btn-primary" id="guestBillCheckoutBtn">Chốt đơn</button></div>
+  </div>
+</div>
+<div id="guestCheckoutOverlay" class="modal-overlay hidden">
+  <div class="modal" style="max-width:560px;">
+    <h3>Chốt đơn</h3>
+    <div id="guestCheckoutBody"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" id="guestCheckoutBackBtn">Quay lại Bill</button><button class="btn btn-primary" id="guestCheckoutSubmitBtn">Xác nhận đặt món</button></div>
   </div>
 </div>
 <div id="guestConfirmOverlay" class="modal-overlay hidden">
   <div class="modal" style="text-align:center;">
     <span class="material-symbols-outlined" style="font-size:48px;color:var(--green);">check_circle</span>
-    <h3>Đã gửi order!</h3>
-    <p style="color:var(--gray);font-size:13px;">Nhà bếp đã nhận được yêu cầu của bạn.</p>
+    <h3 id="guestConfirmTitle">Đã gửi order!</h3>
+    <p id="guestConfirmText" style="color:var(--gray);font-size:13px;">Nhà bếp đã nhận được yêu cầu của bạn.</p>
+    <div id="guestOrderStatus" style="margin-top:12px;text-align:left;"></div>
     <div class="modal-actions" style="justify-content:center;"><button class="btn btn-primary" id="guestConfirmCloseBtn">Đóng</button></div>
   </div>
 </div>
@@ -241,7 +281,7 @@
 <!-- ============ ỨNG DỤNG CHÍNH (chủ quán / nhân viên / khách tham quan) ============ -->
 <div id="mainApp" class="app hidden">
   <aside class="sidebar">
-    <a class="back-link" href="index.html"><span class="material-symbols-outlined">arrow_back</span>Về Trang chủ</a>
+    <a class="back-link" href="index.html" aria-label="Về trang chủ Trung tâm hệ thống"><span class="back-arrow" aria-hidden="true">←</span>Về trang chủ</a>
     <div class="sidebar-logo">
       <div class="icon"><span class="material-symbols-outlined">skillet</span></div>
       <div class="txt"><div class="t1">QUÁN ĂN</div><div class="t2">NGỌC NHI</div></div>
@@ -303,6 +343,93 @@
 var FIREBASE_CONFIG = window.FIREBASE_CONFIG || {};
 
 var currentView = "overview";
+
+/* Khung quảng cáo Tổng quan — media chỉ tồn tại trong phiên trình duyệt,
+   không ghi Firebase/database và không tác động các luồng nghiệp vụ khác. */
+var dashboardAdMedia = { kind: "", url: "", name: "" };
+var dashboardAdObjectUrl = null;
+var DASHBOARD_AD_ACCEPTED_MIME = ["image/jpeg","image/png","image/webp","video/mp4","video/webm","video/ogg"];
+function revokeDashboardAdObjectUrl(){
+  if(dashboardAdObjectUrl && window.URL && URL.revokeObjectURL) URL.revokeObjectURL(dashboardAdObjectUrl);
+  dashboardAdObjectUrl = null;
+}
+function setDashboardAdStatus(message, isError){
+  var status = document.getElementById("dashboardAdStatus");
+  if(!status) return;
+  status.textContent = message || "";
+  status.className = "dashboard-ad-status" + (isError ? " err" : "");
+}
+function applyDashboardAdFile(file){
+  if(!file) return;
+  if(DASHBOARD_AD_ACCEPTED_MIME.indexOf(file.type) === -1){
+    setDashboardAdStatus("Định dạng không hỗ trợ. Chọn JPG, PNG, WEBP, MP4, WEBM hoặc OGG.", true);
+    return;
+  }
+  revokeDashboardAdObjectUrl();
+  dashboardAdObjectUrl = URL.createObjectURL(file);
+  dashboardAdMedia = { kind: file.type.indexOf("video/") === 0 ? "video" : "image", url: dashboardAdObjectUrl, name: file.name || "Nội dung quảng cáo" };
+  renderDashboardAdMedia();
+}
+function clearDashboardAdMedia(){
+  revokeDashboardAdObjectUrl();
+  dashboardAdMedia = { kind: "", url: "", name: "" };
+  renderDashboardAdMedia();
+}
+function renderDashboardAdMedia(){
+  var hero = document.querySelector(".dashboard-hero");
+  var media = document.getElementById("dashboardAdMedia");
+  if(!hero || !media) return;
+  media.innerHTML = "";
+  hero.classList.remove("has-custom-media");
+  if(!dashboardAdMedia.url){
+    setDashboardAdStatus("Chưa có nội dung tùy chỉnh — đang hiển thị banner mặc định.", false);
+    return;
+  }
+  hero.classList.add("has-custom-media");
+  if(dashboardAdMedia.kind === "video"){
+    media.innerHTML = '<video src="'+esc(dashboardAdMedia.url)+'" controls autoplay muted loop playsinline></video>';
+  }else{
+    media.innerHTML = '<img src="'+esc(dashboardAdMedia.url)+'" alt="Nội dung quảng cáo tùy chỉnh">';
+  }
+  setDashboardAdStatus("Đang hiển thị: " + dashboardAdMedia.name, false);
+}
+function activateRestaurantView(view){
+  var item = document.querySelector('.nav-item[data-view="'+view+'"]');
+  if(item) item.click();
+}
+function wireQuickActions(){
+  document.querySelectorAll("[data-quick-action]").forEach(function(action){
+    action.setAttribute("role", "button");
+    action.setAttribute("tabindex", "0");
+    action.onclick = function(){
+      var target = action.getAttribute("data-quick-action");
+      if(target === "party"){
+        onlineOrderTab = "party";
+        var onlineFab = document.getElementById("onlineOrderFab");
+        if(onlineFab) onlineFab.click();
+        return;
+      }
+      activateRestaurantView(target);
+    };
+    action.onkeydown = function(event){
+      if(event.key === "Enter" || event.key === " "){ event.preventDefault(); action.click(); }
+    };
+  });
+}
+function wireDashboardAdControls(){
+  var imageInput = document.getElementById("dashboardAdImageInput");
+  var videoInput = document.getElementById("dashboardAdVideoInput");
+  var imageBtn = document.getElementById("dashboardAdImageBtn");
+  var videoBtn = document.getElementById("dashboardAdVideoBtn");
+  var clearBtn = document.getElementById("dashboardAdClearBtn");
+  if(!imageInput || !videoInput || !imageBtn || !videoBtn) return;
+  imageBtn.onclick = function(){ imageInput.click(); };
+  videoBtn.onclick = function(){ videoInput.click(); };
+  imageInput.onchange = function(){ applyDashboardAdFile(imageInput.files && imageInput.files[0]); imageInput.value = ""; };
+  videoInput.onchange = function(){ applyDashboardAdFile(videoInput.files && videoInput.files[0]); videoInput.value = ""; };
+  if(clearBtn) clearBtn.onclick = clearDashboardAdMedia;
+  renderDashboardAdMedia();
+}
 
 var db = null, auth = null, firebaseReady = false;
 try{
@@ -400,7 +527,7 @@ var FirebaseService = (function(){
    — imageUrl: URL ảnh món ăn lưu trên ImgBB (không dùng Firebase Storage),
      tuỳ chọn (có thể rỗng/không tồn tại nếu món chưa gán ảnh).
    Restaurant/Tables/{tableId}        { name, capacity, status }
-   Restaurant/Orders/{orderId}        { tableId, status, source, items:{menuItemId:qty}, note, createdAt, completedAt, totalAmount }
+   Restaurant/Orders/{orderId}        { tableId, tableName, status, source, orderType:TAKEAWAY|ONLINE|DINE_IN, customerName, phone, address, items:{menuItemId:qty}, note, createdAt, updatedAt, completedAt, totalAmount }
    Restaurant/Tickets/{ticketId}      { type, status, customerName, phone, ...chi tiết theo loại, createdAt }
    Restaurant/Accounts/{uid}          { name, email, role: owner|staff }
    Restaurant/AccessLog/{date}/{role} number
@@ -531,22 +658,41 @@ function runMigrations(){
 }
 
 /* =========================================================================
-   VAI TRÒ (mục "bỏ đăng nhập" — Quán ăn không yêu cầu đăng nhập: mọi người
-   mở thẳng giao diện quản lý (không phải qua link QR khách bàn) đều được
-   coi là nhân viên quán, thao tác đầy đủ ngay không cần qua bước xác thực)
+   VAI TRÒ — xác thực bằng Firebase Auth và đọc role tại
+   Restaurant/Accounts/{auth.uid}; không tự bootstrap hoặc mặc định owner.
+   Guest QR Anonymous Auth được khởi tạo riêng ở luồng khách bên dưới.
    ========================================================================= */
-var currentRole = "owner", currentUid = null, currentAccounts = {};
+var currentRole = null, currentUid = null, currentAccounts = {}, adminAuthResolved = false;
 function isOwner(){ return currentRole === "owner"; }
 function isStaffOrOwner(){ return currentRole === "owner" || currentRole === "staff"; }
 function logAccess(role){
-  FirebaseService.transaction("Restaurant/AccessLog/"+todayStr()+"/"+role, function(cur){ return (cur||0)+1; });
+  if(!role || !isStaffOrOwner()) return Promise.resolve();
+  return FirebaseService.transaction("Restaurant/AccessLog/"+todayStr()+"/"+role, function(cur){ return (cur||0)+1; });
+}
+function renderAdminIdentity(){
+  var chip = document.querySelector(".profile-chip");
+  if(!chip) return;
+  var acc = currentAccounts[currentUid] || {}, user = auth && auth.currentUser;
+  var name = isStaffOrOwner() ? (acc.name || (user && user.email) || "Admin") : "Chưa xác thực";
+  var roleText = isOwner() ? "Chủ quán" : (currentRole === "staff" ? "Nhân viên" : "Chỉ xem / bị giới hạn");
+  var nameEl = chip.querySelector(".profile-copy b"), roleEl = chip.querySelector(".profile-copy small");
+  if(nameEl) nameEl.textContent = name;
+  if(roleEl) roleEl.textContent = roleText;
 }
 function renderAuthBox(){
   var box = document.getElementById("authBox");
-  box.innerHTML = '<span class="role-badge role-owner">QUẢN LÝ QUÁN ĂN</span>'+
+  if(!box) return;
+  if(!isStaffOrOwner()){
+    box.innerHTML = '<span class="role-badge">CHƯA XÁC THỰC</span>'+
+      '<div style="font-size:11px;color:var(--gray);margin-top:5px;">Cần Firebase Auth + role owner/staff</div>';
+    renderAdminIdentity();
+    return;
+  }
+  box.innerHTML = '<span class="role-badge '+(isOwner()?"role-owner":"role-staff")+'">'+(isOwner()?"CHỦ QUÁN":"NHÂN VIÊN")+'</span>'+
     '<button id="btnEnablePush">Bật thông báo đơn hàng</button>';
   var btn = document.getElementById("btnEnablePush");
   if(btn) btn.onclick = enablePushNotifications;
+  renderAdminIdentity();
 }
 
 /* =========================================================================
@@ -837,6 +983,84 @@ function updateTicketStatus(ticketId, status){ return FirebaseService.updateAt("
    ========================================================================= */
 var guestCart = {}; // {menuItemId: qty}
 var guestTableId = null;
+var guestOrderId = null;
+var guestOrderUnsubscribe = null;
+var GUEST_ORDER_STATUS_LABELS = {
+  pending: "Chờ xử lý", preparing: "Đang chế biến", completed: "Đã hoàn thành",
+  waiting_delivery: "Chờ giao hàng", delivered: "Đã giao", served: "Phục vụ",
+  payment: "Thanh toán", finished: "Hoàn tất", cancelled: "Đã huỷ"
+};
+var GUEST_ORDER_FLOW = {
+  TAKEAWAY: ["pending","preparing","completed","waiting_delivery","delivered","payment","finished"],
+  ONLINE: ["pending","preparing","completed","waiting_delivery","delivered","payment","finished"],
+  DINE_IN: ["pending","preparing","completed","served","payment","finished"]
+};
+function guestOrderTypeLabel(type){ return ({TAKEAWAY:"Mang về", ONLINE:"Giao hàng Online", DINE_IN:"Ăn tại quán"}[type]) || type; }
+function guestOrderStatusLabel(status){ return GUEST_ORDER_STATUS_LABELS[status] || status || "Chờ xử lý"; }
+function guestOrderTotal(itemsMap, menuItems){
+  return Object.keys(itemsMap||{}).reduce(function(total,id){
+    var it = (menuItems||{})[id];
+    return total + (it ? (Number(it.price)||0) * (Number(itemsMap[id])||0) : 0);
+  }, 0);
+}
+function createGuestOrder(orderType, tableId, itemsMap, customer){
+  var orderId = FirebaseService.generateKey("Restaurant/Orders");
+  var base = {
+    tableId: tableId || "", status: "pending", source: "guest_qr", orderType: orderType,
+    ownerUid: auth && auth.currentUser ? auth.currentUser.uid : "",
+    items: itemsMap, note: customer.note || "", customerName: customer.name || "Khách QR",
+    phone: customer.phone || "", address: customer.address || "", createdAt: Date.now()
+  };
+  var writeOrder = function(tableName){
+    base.tableName = tableName || "";
+    return FirebaseService.write("Restaurant/Orders/"+orderId, base).then(function(){
+      return Promise.all([
+        notifyFarmNewOrder("food", "Đơn khách "+guestOrderTypeLabel(orderType)),
+        pushOrderAlert("online", {orderId:orderId, customerName:base.customerName, tableId:tableId||"", tableName:base.tableName, message:"🛎️ Đơn khách mới – "+base.customerName})
+      ]);
+    }).then(function(){ return orderId; });
+  };
+  if(orderType !== "DINE_IN") return writeOrder("");
+  return FirebaseService.read("Restaurant/Tables/"+tableId).then(function(table){
+    if(!table) throw new Error("Không tìm thấy bàn đã chọn.");
+    return FirebaseService.write("Restaurant/Tables/"+tableId+"/status", "occupied").then(function(){ return writeOrder(table.name); });
+  });
+}
+function updateGuestOrderStatus(orderId, status){
+  return FirebaseService.updateAt("Restaurant/Orders/"+orderId, {status:status, updatedAt:Date.now()});
+}
+function finishGuestOrder(order){
+  if(!order || order.status === "finished") return Promise.resolve();
+  return FirebaseService.read("Restaurant/MenuItems").then(function(menuItems){
+    var total = guestOrderTotal(order.items, menuItems);
+    return FirebaseService.updateAt("Restaurant/Orders/"+order.id, {status:"finished", completedAt:Date.now(), totalAmount:total}).then(function(){
+      var tablePromise = order.tableId ? FirebaseService.write("Restaurant/Tables/"+order.tableId+"/status", "empty") : Promise.resolve();
+      if(total <= 0) return tablePromise;
+      return tablePromise.then(function(){
+        return FirebaseService.push("AdminCenter/Transactions", {type:"thu", module:"restaurant", date:todayStr(), amount:total, note:"Khách "+guestOrderTypeLabel(order.orderType)+" (đơn #"+order.id+")", createdAt:Date.now()});
+      });
+    });
+  });
+}
+function renderGuestOrderStatus(order){
+  var el = document.getElementById("guestOrderStatus");
+  if(!el || !order) return;
+  var flow = GUEST_ORDER_FLOW[order.orderType] || GUEST_ORDER_FLOW.TAKEAWAY;
+  var currentIndex = flow.indexOf(order.status);
+  el.innerHTML = '<div class="guest-status-line '+(order.status==="finished"?"done":"")+'">'+esc(guestOrderTypeLabel(order.orderType))+" — "+esc(guestOrderStatusLabel(order.status))+"</div>"+
+    '<div style="margin-top:8px;font-size:11px;color:var(--gray);">'+flow.map(function(s,i){ return (i===currentIndex?"<b>":"")+esc(guestOrderStatusLabel(s))+(i===currentIndex?"</b>":""); }).join(" → ")+'</div>';
+}
+function showGuestOrderConfirmation(orderId){
+  guestOrderId = orderId;
+  if(guestOrderUnsubscribe) guestOrderUnsubscribe();
+  guestOrderUnsubscribe = FirebaseService.listen("Restaurant/Orders/"+orderId, function(order){
+    if(!order) return;
+    order.id = orderId; renderGuestOrderStatus(order);
+    document.getElementById("guestConfirmTitle").textContent = order.status === "finished" ? "Đơn đã hoàn tất" : "Đã gửi đơn!";
+    document.getElementById("guestConfirmText").textContent = "Mã đơn: "+orderId+" — Nhà bếp sẽ cập nhật trạng thái cho bạn.";
+  });
+  document.getElementById("guestConfirmOverlay").classList.remove("hidden");
+}
 (function initGuestModeIfNeeded(){
   var params = new URLSearchParams(window.location.search);
   var tableId = params.get("table");
@@ -848,10 +1072,16 @@ var guestTableId = null;
     document.getElementById("guestTableName").textContent = "Chưa kết nối được Firebase.";
     return;
   }
-  renderGuestMenu();
-  FirebaseService.listen("Restaurant/MenuItems", function(){ renderGuestMenu(); });
-  FirebaseService.read("Restaurant/Tables/"+tableId).then(function(t){
-    document.getElementById("guestTableName").textContent = t ? ("Bàn "+t.name) : "Không tìm thấy bàn";
+  var guestAuth = auth.currentUser ? Promise.resolve(auth.currentUser) : auth.signInAnonymously().then(function(cred){ return cred.user; });
+  guestAuth.then(function(){
+    renderGuestMenu();
+    FirebaseService.listen("Restaurant/MenuItems", function(){ renderGuestMenu(); });
+    return FirebaseService.read("Restaurant/Tables/"+tableId).then(function(t){
+      document.getElementById("guestTableName").textContent = t ? ("Bàn "+t.name) : "Không tìm thấy bàn";
+    });
+  }).catch(function(err){
+    console.warn("Không thể xác thực khách QR bằng Anonymous Auth:", err && err.message);
+    document.getElementById("guestTableName").textContent = "Không thể xác thực phiên khách. Vui lòng tải lại trang.";
   });
 })();
 function refreshGuestScreenStockBanner(){
@@ -869,7 +1099,6 @@ function renderGuestMenu(){
     var byCat = {};
     Object.keys(items).forEach(function(id){
       var it = items[id];
-      if(!isItemAvailable(it)) return;
       byCat[it.category] = byCat[it.category] || [];
       byCat[it.category].push(Object.assign({id:id}, it));
     });
@@ -877,31 +1106,80 @@ function renderGuestMenu(){
     Object.keys(byCat).forEach(function(cat){
       html += '<div class="guest-cat"><h3>'+esc(cat)+'</h3>';
       byCat[cat].forEach(function(it){
-        var qty = guestCart[it.id] || 0;
-        html += '<div class="guest-item"><div class="info">'+
-          (it.imageUrl ? '<div class="thumb"><img src="'+esc(it.imageUrl)+'"></div>' : '')+
-          '<div><div class="name">'+esc(it.name)+'</div><div class="price">'+(it.priceNote||fmtVND(it.price))+'</div></div></div>'+
-          '<div class="qty-control"><button class="gminus" data-id="'+it.id+'">−</button><span class="n">'+qty+'</span><button class="gplus" data-id="'+it.id+'">+</button></div></div>';
+        var avail = isItemAvailable(it), qty = guestCart[it.id] || 0;
+        html += '<div class="guest-item"><div class="info"><div><div class="name">'+esc(it.name)+"</div><div class=\"price\">"+(it.priceNote||fmtVND(it.price))+"</div><div style=\"margin-top:4px;\"><span class=\"badge "+(avail?"b-available":"b-unavailable")+"\">"+(avail?"Còn hàng":"Hết hàng")+"</span>"+(qty?" <span style=\"font-size:11px;color:var(--gray);\">Đã chọn: "+qty+"</span>":"")+"</div></div></div>"+
+          '<button class="btn btn-primary guestChooseBtn" data-id="'+it.id+'" '+(avail?"":"disabled")+'>Chọn món</button></div>';
       });
       html += '</div>';
     });
-    container.innerHTML = html || '<div style="color:var(--gray);font-size:13px;">Hiện chưa có món khả dụng.</div>';
-    container.querySelectorAll(".gplus").forEach(function(b){ b.onclick=function(){ guestCart[b.dataset.id]=(guestCart[b.dataset.id]||0)+1; renderGuestMenu(); updateGuestCartBar(); }; });
-    container.querySelectorAll(".gminus").forEach(function(b){ b.onclick=function(){ if(guestCart[b.dataset.id]>0){ guestCart[b.dataset.id]--; if(guestCart[b.dataset.id]===0) delete guestCart[b.dataset.id]; } renderGuestMenu(); updateGuestCartBar(); }; });
+    container.innerHTML = html || '<div style="color:var(--gray);font-size:13px;">Hiện chưa có món.</div>';
+    container.querySelectorAll(".guestChooseBtn").forEach(function(b){ b.onclick=function(){ guestCart[b.dataset.id]=(guestCart[b.dataset.id]||0)+1; renderGuestMenu(); updateGuestCartBar(); }; });
   });
 }
 function updateGuestCartBar(){
   var total = Object.values(guestCart).reduce(function(a,b){return a+b;},0);
   document.getElementById("guestCartCount").textContent = total+" món";
 }
+function renderGuestBill(){
+  var body = document.getElementById("guestBillBody"), totalQty = 0;
+  FirebaseService.read("Restaurant/MenuItems").then(function(menuItems){
+    var rows = Object.keys(guestCart).map(function(id){
+      var it=menuItems[id], qty=guestCart[id]; totalQty += qty;
+      return '<div class="guest-bill-row"><span class="bill-name">'+esc(it?it.name:"Món đã xoá")+'</span><button class="btn btn-secondary guestBillMinus" data-id="'+id+'">−</button><span>'+qty+'</span><button class="btn btn-secondary guestBillPlus" data-id="'+id+'">+</button><span class="bill-price">'+fmtVND(it?(Number(it.price)||0)*qty:0)+'</span><button class="btn btn-danger guestBillRemove" data-id="'+id+'">Xóa</button></div>';
+    }).join("");
+    var total = guestOrderTotal(guestCart, menuItems);
+    body.innerHTML = (rows||'<div style="color:var(--gray);font-size:13px;">Bill đang trống.</div>')+'<div style="text-align:right;font-weight:800;margin-top:12px;">Tổng: '+fmtVND(total)+'</div>';
+    document.getElementById("guestBillCheckoutBtn").disabled = !totalQty;
+    body.querySelectorAll(".guestBillPlus").forEach(function(b){ b.onclick=function(){ guestCart[b.dataset.id]++; renderGuestBill(); updateGuestCartBar(); renderGuestMenu(); }; });
+    body.querySelectorAll(".guestBillMinus").forEach(function(b){ b.onclick=function(){ guestCart[b.dataset.id]--; if(guestCart[b.dataset.id]<=0) delete guestCart[b.dataset.id]; renderGuestBill(); updateGuestCartBar(); renderGuestMenu(); }; });
+    body.querySelectorAll(".guestBillRemove").forEach(function(b){ b.onclick=function(){ delete guestCart[b.dataset.id]; renderGuestBill(); updateGuestCartBar(); renderGuestMenu(); }; });
+  });
+}
+function renderGuestCheckout(){
+  var body = document.getElementById("guestCheckoutBody");
+  body.innerHTML = '<div class="field"><label>Hình thức nhận món *</label><div class="guest-choice-row">'+
+    '<label><input type="radio" name="guestOrderType" value="TAKEAWAY" checked>Mang về</label>'+
+    '<label><input type="radio" name="guestOrderType" value="ONLINE">Giao hàng Online</label>'+
+    '<label><input type="radio" name="guestOrderType" value="DINE_IN">Ăn tại quán</label></div></div>'+
+    '<div class="field"><label>Họ tên *</label><input id="guestCustomerName"></div>'+
+    '<div class="field"><label>Số điện thoại *</label><input id="guestCustomerPhone" type="tel"></div>'+
+    '<div class="field" id="guestAddressField"><label>Địa chỉ giao hàng *</label><input id="guestCustomerAddress"></div>'+
+    '<div class="field" id="guestTableField" style="display:none;"><label>Chọn bàn *</label><select id="guestCustomerTable"></select></div>'+
+    '<div class="field"><label>Ghi chú</label><input id="guestCustomerNote"></div>';
+  function syncChoice(){
+    var type = document.querySelector('input[name="guestOrderType"]:checked').value;
+    document.getElementById("guestAddressField").style.display = type === "ONLINE" ? "block" : "none";
+    document.getElementById("guestTableField").style.display = type === "DINE_IN" ? "block" : "none";
+    if(type === "ONLINE") document.getElementById("guestCustomerAddress").setAttribute("required","required"); else document.getElementById("guestCustomerAddress").removeAttribute("required");
+  }
+  body.querySelectorAll('input[name="guestOrderType"]').forEach(function(r){ r.onchange=syncChoice; });
+  FirebaseService.read("Restaurant/Tables").then(function(tables){
+    var select=document.getElementById("guestCustomerTable"), ids=Object.keys(tables||{}).filter(function(id){ return (tables[id].status||"empty")==="empty" || id===guestTableId; });
+    select.innerHTML=ids.map(function(id){ return '<option value="'+id+'" '+(id===guestTableId?"selected":"")+'>'+esc(tables[id].name||id)+"</option>"; }).join("") || '<option value="">Không có bàn trống</option>';
+  });
+  syncChoice();
+}
 document.getElementById("guestSubmitBtn").onclick = function(){
   if(Object.keys(guestCart).length === 0){ showToast("Vui lòng chọn ít nhất 1 món."); return; }
-  createOrder(guestTableId, guestCart, "qr_guest").then(function(){
-    guestCart = {}; updateGuestCartBar(); renderGuestMenu();
-    document.getElementById("guestConfirmOverlay").classList.remove("hidden");
-  });
+  renderGuestBill(); document.getElementById("guestBillOverlay").classList.remove("hidden");
 };
-document.getElementById("guestConfirmCloseBtn").onclick = function(){ document.getElementById("guestConfirmOverlay").classList.add("hidden"); };
+document.getElementById("guestBillCloseBtn").onclick = function(){ document.getElementById("guestBillOverlay").classList.add("hidden"); };
+document.getElementById("guestBillCheckoutBtn").onclick = function(){
+  document.getElementById("guestBillOverlay").classList.add("hidden"); renderGuestCheckout(); document.getElementById("guestCheckoutOverlay").classList.remove("hidden");
+};
+document.getElementById("guestCheckoutBackBtn").onclick = function(){ document.getElementById("guestCheckoutOverlay").classList.add("hidden"); renderGuestBill(); document.getElementById("guestBillOverlay").classList.remove("hidden"); };
+document.getElementById("guestCheckoutSubmitBtn").onclick = function(){
+  var type=document.querySelector('input[name="guestOrderType"]:checked').value;
+  var name=document.getElementById("guestCustomerName").value.trim(), phone=document.getElementById("guestCustomerPhone").value.trim(), addr=document.getElementById("guestCustomerAddress").value.trim(), tableId=document.getElementById("guestCustomerTable").value;
+  if(!name||!phone){ showToast("Vui lòng nhập họ tên và số điện thoại."); return; }
+  if(type === "ONLINE" && !addr){ showToast("Vui lòng nhập địa chỉ giao hàng."); return; }
+  if(type === "DINE_IN" && !tableId){ showToast("Vui lòng chọn bàn."); return; }
+  var btn=document.getElementById("guestCheckoutSubmitBtn"); btn.disabled=true;
+  createGuestOrder(type, type === "DINE_IN" ? tableId : "", guestCart, {name:name,phone:phone,address:addr,note:document.getElementById("guestCustomerNote").value.trim()}).then(function(orderId){
+    guestCart={}; updateGuestCartBar(); renderGuestMenu(); document.getElementById("guestCheckoutOverlay").classList.add("hidden"); showGuestOrderConfirmation(orderId);
+  }).catch(function(err){ btn.disabled=false; showToast(err&&err.message?err.message:"Không thể tạo đơn."); });
+};
+document.getElementById("guestConfirmCloseBtn").onclick = function(){ document.getElementById("guestConfirmOverlay").classList.add("hidden"); if(guestOrderUnsubscribe){guestOrderUnsubscribe();guestOrderUnsubscribe=null;} };
 
 /* =========================================================================
    UI — RENDER CÁC MÀN HÌNH (chỉ chạy khi không ở chế độ khách QR)
@@ -951,13 +1229,23 @@ function renderOverview(){
     var servingNow = Object.keys(orders).filter(function(id){ return orders[id].status==="serving"; }).length;
     el.innerHTML =
       '<section class="dashboard-hero">'+
+        '<div class="dashboard-ad-media" id="dashboardAdMedia"></div>'+
+        (isStaffOrOwner() ? '<div class="dashboard-ad-tools">'+
+          '<span class="ad-tools-label">NỘI DUNG QUẢNG CÁO</span>'+
+          '<button type="button" id="dashboardAdImageBtn"><span class="material-symbols-outlined">photo_camera</span>Tải ảnh</button>'+
+          '<button type="button" id="dashboardAdVideoBtn"><span class="material-symbols-outlined">movie</span>Tải video</button>'+
+          '<button type="button" class="ad-clear" id="dashboardAdClearBtn" title="Xóa nội dung tùy chỉnh"><span class="material-symbols-outlined">close</span></button>'+
+          '<input id="dashboardAdImageInput" type="file" accept="image/jpeg,image/png,image/webp">'+
+          '<input id="dashboardAdVideoInput" type="file" accept="video/mp4,video/webm,video/ogg">'+
+        '</div>' : '')+
+        '<div id="dashboardAdStatus" class="dashboard-ad-status"></div>'+
         '<button class="hero-arrow" aria-label="Món trước"><span class="material-symbols-outlined">chevron_left</span></button>'+
         '<div class="hero-copy">'+
           '<div class="hero-kicker">Trải nghiệm đặc sản</div>'+
           '<h2>Dúi ngon số 1<br>tại Ngọc Nhi</h2>'+
           '<p>Thịt dúi sạch 100% từ trang trại của chúng tôi<br>Tươi ngon — An toàn — Bổ dưỡng</p>'+
           '<div class="hero-cta"><span class="material-symbols-outlined">restaurant</span>GỌI MÓN NGAY</div>'+
-          '<div class="hero-hotline"><span class="material-symbols-outlined">phone_in_talk</span>Hotline: 0354 957 666</div>'+
+          '<div class="hero-hotline"><span class="material-symbols-outlined">phone_in_talk</span>Hotline: 0967823801</div>'+
         '</div>'+
         '<div class="hero-featured">'+
           '<h3>MÓN NỔI BẬT</h3>'+
@@ -975,11 +1263,8 @@ function renderOverview(){
         '<div class="overview-stat"><span class="stat-icon"><span class="material-symbols-outlined">restaurant_menu</span></span><div><div class="stat-label">Đơn đang phục vụ</div><div class="stat-value">'+esc(servingNow)+' <small style="font-size:12px;font-weight:500;color:#6B7280;">đơn</small></div><div class="stat-note">Đang được xử lý</div></div></div>'+
       '</section>'+
       '<section class="quick-card"><div class="section-title">THAO TÁC NHANH</div><div class="quick-grid">'+
-        '<div class="quick-item"><span class="quick-icon"><span class="material-symbols-outlined">delivery_dining</span></span><div><b>Gọi món</b><small>Tạo đơn gọi món</small></div></div>'+
-        '<div class="quick-item"><span class="quick-icon"><span class="material-symbols-outlined">receipt_long</span></span><div><b>Đơn hàng</b><small>Quản lý đơn hàng</small></div></div>'+
-        '<div class="quick-item"><span class="quick-icon"><span class="material-symbols-outlined">table_restaurant</span></span><div><b>Bàn ăn</b><small>Sơ đồ bàn ăn</small></div></div>'+
-        '<div class="quick-item"><span class="quick-icon"><span class="material-symbols-outlined">event_available</span></span><div><b>Đặt tiệc</b><small>Lịch đặt tiệc</small></div></div>'+
-        '<div class="quick-item"><span class="quick-icon"><span class="material-symbols-outlined">groups</span></span><div><b>Khách hàng</b><small>Quản lý khách hàng</small></div></div>'+
+        '<div class="quick-item" data-quick-action="menu"><span class="quick-icon"><span class="material-symbols-outlined">delivery_dining</span></span><div><b>Gọi món</b><small>Mở thực đơn</small></div></div>'+
+        '<div class="quick-item" data-quick-action="tables"><span class="quick-icon"><span class="material-symbols-outlined">table_restaurant</span></span><div><b>Đặt bàn</b><small>Mở chức năng đặt bàn</small></div></div>'+
       '</div></section>'+
       '<section class="commit-card"><div class="section-title">NGỌC NHI CAM KẾT</div><div class="commit-grid">'+
         '<div class="commit-item"><span class="material-symbols-outlined">verified</span><div><b>NGUYÊN LIỆU SẠCH</b><span>100% dúi từ trang trại của chúng tôi</span></div></div>'+
@@ -988,6 +1273,8 @@ function renderOverview(){
         '<div class="commit-item"><span class="material-symbols-outlined">workspace_premium</span><div><b>PHỤC VỤ CHUYÊN NGHIỆP</b><span>Đội ngũ tận tâm, phục vụ chu đáo</span></div></div>'+
         '<div class="commit-item"><span class="material-symbols-outlined">price_check</span><div><b>GIÁ CẢ HỢP LÝ</b><span>Giá tốt nhất đi kèm chất lượng</span></div></div>'+
       '</div></section>';
+    wireDashboardAdControls();
+    wireQuickActions();
   });
 }
 function renderMenu(){
@@ -1227,13 +1514,14 @@ function renderTickets(){
   var el = document.getElementById("viewContent");
   if(!isStaffOrOwner()){ el.innerHTML = '<div class="card">Chỉ tài khoản đã đăng nhập mới quản lý được phiếu đặt.</div>'; return; }
   el.innerHTML = '<div class="card">Đang tải…</div>';
-  FirebaseService.read("Restaurant/Tickets").then(function(tickets){
-    tickets = tickets || {};
-    var newCount = Object.keys(tickets).filter(function(id){ return tickets[id].status==="new"; }).length;
+  Promise.all([FirebaseService.read("Restaurant/Tickets"), FirebaseService.read("Restaurant/Orders"), FirebaseService.read("Restaurant/MenuItems")]).then(function(res){
+    var tickets = res[0] || {}, orders = res[1] || {}, menuItems = res[2] || {};
+    var newTicketCount = Object.keys(tickets).filter(function(id){ return tickets[id].status==="new"; }).length;
+    var newOrderCount = Object.keys(orders).filter(function(id){ return orders[id].source==="guest_qr" && orders[id].status==="pending"; }).length;
     var badge = document.getElementById("ticketBadge");
-    badge.textContent = newCount; badge.classList.toggle("hidden", newCount===0);
-    var list = Object.keys(tickets).sort(function(a,b){ return tickets[b].createdAt - tickets[a].createdAt; });
-    var rows = list.map(function(id){
+    badge.textContent = newTicketCount + newOrderCount; badge.classList.toggle("hidden", (newTicketCount+newOrderCount)===0);
+    var ticketList = Object.keys(tickets).sort(function(a,b){ return (tickets[b].createdAt||0) - (tickets[a].createdAt||0); });
+    var ticketRows = ticketList.map(function(id){
       var t = tickets[id];
       var detail = t.type==="food" ? "Giao/mang về — "+esc(t.addressOrTable||"") : ("Tiệc "+esc(t.partyType||"")+" — "+esc(t.eventDate||"")+" — "+(t.guestCount||0)+" khách");
       var itemLines = Object.keys(t.items||{}).length ? Object.keys(t.items).map(function(k){return k+" × "+t.items[k];}).join(", ") : "(không chọn món)";
@@ -1247,8 +1535,28 @@ function renderTickets(){
         '<td><span class="badge b-'+t.status+'">'+({new:"Mới",confirmed:"Đã xác nhận",done:"Hoàn tất",cancelled:"Đã huỷ"}[t.status])+'</span></td>'+
         '<td>'+actions+'</td></tr>';
     }).join("");
-    el.innerHTML = '<div class="card"><table><thead><tr><th>Khách hàng</th><th>Loại</th><th>Chi tiết món</th><th>Trạng thái</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="5" style="color:var(--gray);">Chưa có phiếu đặt nào.</td></tr>')+'</tbody></table></div>';
+    var orderList = Object.keys(orders).filter(function(id){ return orders[id].source === "guest_qr"; }).sort(function(a,b){ return (orders[b].createdAt||0) - (orders[a].createdAt||0); });
+    var orderRows = orderList.map(function(id){
+      var o=orders[id], flow=GUEST_ORDER_FLOW[o.orderType]||GUEST_ORDER_FLOW.TAKEAWAY, statusIndex=flow.indexOf(o.status);
+      var itemLines=Object.keys(o.items||{}).map(function(k){return k+" × "+o.items[k];}).join(", ");
+      var nextStatus = flow[statusIndex+1], actions = "";
+      if(o.status !== "finished" && o.status !== "cancelled" && nextStatus) actions += '<button class="btn btn-primary guestOrderActBtn" data-id="'+id+'" data-s="'+nextStatus+'">'+(nextStatus==="finished"?"Hoàn tất":("Chuyển: "+guestOrderStatusLabel(nextStatus)))+'</button>';
+      if(o.status !== "finished" && o.status !== "cancelled") actions += ' <button class="btn btn-danger guestOrderActBtn" data-id="'+id+'" data-s="cancelled">Huỷ</button>';
+      return '<tr><td>'+esc(o.customerName||"Khách QR")+'<br><span style="color:var(--gray);font-size:11px;">'+esc(o.phone||"")+'</span></td>'+
+        '<td>'+esc(guestOrderTypeLabel(o.orderType))+(o.tableName?'<br><span style="color:var(--gray);font-size:11px;">Bàn '+esc(o.tableName)+'</span>':"")+'</td>'+
+        '<td style="max-width:240px;">'+esc(itemLines)+'<br><span style="color:var(--gray);font-size:11px;">'+fmtVNDQA(guestOrderTotal(o.items, menuItems))+'</span></td>'+
+        '<td><span class="badge b-'+esc(o.status)+'">'+esc(guestOrderStatusLabel(o.status))+'</span><br><span style="color:var(--gray);font-size:10px;">'+flow.map(function(s,i){return i===statusIndex?"<b>"+esc(guestOrderStatusLabel(s))+"</b>":esc(guestOrderStatusLabel(s));}).join(" → ")+'</span></td>'+
+        '<td>'+actions+'</td></tr>';
+    }).join("");
+    el.innerHTML = '<div class="card" style="margin-bottom:14px;"><div style="font-weight:800;margin-bottom:10px;">Đơn gọi món của khách hàng</div><table><thead><tr><th>Khách hàng</th><th>Hình thức</th><th>Bill / Món</th><th>Trạng thái</th><th></th></tr></thead><tbody>'+(orderRows||'<tr><td colspan="5" style="color:var(--gray);">Chưa có đơn gọi món của khách.</td></tr>')+'</tbody></table></div>'+
+      '<div class="card"><div style="font-weight:800;margin-bottom:10px;">Phiếu đặt hiện có</div><table><thead><tr><th>Khách hàng</th><th>Loại</th><th>Chi tiết món</th><th>Trạng thái</th><th></th></tr></thead><tbody>'+(ticketRows||'<tr><td colspan="5" style="color:var(--gray);">Chưa có phiếu đặt nào.</td></tr>')+'</tbody></table></div>';
     el.querySelectorAll(".tActBtn").forEach(function(b){ b.onclick=function(){ updateTicketStatus(b.dataset.id, b.dataset.s).then(renderTickets); }; });
+    el.querySelectorAll(".guestOrderActBtn").forEach(function(b){ b.onclick=function(){
+      var id=b.dataset.id, status=b.dataset.s;
+      if(status === "finished") FirebaseService.read("Restaurant/Orders/"+id).then(function(order){ order.id=id; return finishGuestOrder(order); }).then(renderTickets);
+      else if(status === "cancelled") FirebaseService.read("Restaurant/Orders/"+id).then(function(order){ var p=order&&order.tableId?FirebaseService.write("Restaurant/Tables/"+order.tableId+"/status","empty"):Promise.resolve(); return p.then(function(){return updateGuestOrderStatus(id,status);}); }).then(renderTickets);
+      else updateGuestOrderStatus(id,status).then(renderTickets);
+    }; });
   });
 }
 function renderAccounts(){
@@ -1358,14 +1666,17 @@ function renderOnlineOrderBody(){
     body.querySelectorAll(".ominus").forEach(function(b){ b.onclick=function(){ if(onlineCart[b.dataset.id]>0){ onlineCart[b.dataset.id]--; if(onlineCart[b.dataset.id]===0) delete onlineCart[b.dataset.id]; } renderOnlineOrderBody(); }; });
   });
 }
-/* Cập nhật badge số phiếu Mới trên sidebar liên tục (mục 3.3, 3.4 Đặc tả Menu) */
+/* Cập nhật badge Đặt hàng Online cho cả Ticket cũ và Order khách dùng chung. */
+var latestTicketsForBadge = {}, latestGuestOrdersForBadge = {};
+function refreshTicketBadge(){
+  var ticketCount = Object.values(latestTicketsForBadge||{}).filter(function(t){ return t.status==="new"; }).length;
+  var orderCount = Object.values(latestGuestOrdersForBadge||{}).filter(function(o){ return o.source==="guest_qr" && o.status==="pending"; }).length;
+  var badge = document.getElementById("ticketBadge"), total = ticketCount + orderCount;
+  if(badge){ badge.textContent = total; badge.classList.toggle("hidden", total===0); }
+}
 if(firebaseReady){
-  FirebaseService.listen("Restaurant/Tickets", function(tickets){
-    tickets = tickets || {};
-    var newCount = Object.values(tickets).filter(function(t){ return t.status==="new"; }).length;
-    var badge = document.getElementById("ticketBadge");
-    if(badge){ badge.textContent = newCount; badge.classList.toggle("hidden", newCount===0); }
-  });
+  FirebaseService.listen("Restaurant/Tickets", function(tickets){ latestTicketsForBadge = tickets || {}; refreshTicketBadge(); });
+  FirebaseService.listen("Restaurant/Orders", function(orders){ latestGuestOrdersForBadge = orders || {}; refreshTicketBadge(); });
 }
 
 /* =========================================================================
@@ -1474,18 +1785,43 @@ function enablePushNotifications(){
 
 /* ---- Khởi động ứng dụng ---- */
 if(!guestTableId){
-  renderAuthBox();
-  if(firebaseReady){
-    logAccess("owner");
-    runMigrations().catch(function(err){
-      console.warn("Bỏ qua migration lúc khởi động (chưa đủ quyền ghi):", err && err.message);
-    }).then(function(){
-      document.getElementById("mainApp").classList.remove("hidden");
-      renderCurrentView();
-    });
-  } else {
+  function renderAdminAfterAuth(){
+    renderAuthBox();
     document.getElementById("mainApp").classList.remove("hidden");
     renderCurrentView();
+  }
+  if(firebaseReady){
+    FirebaseService.onAuthStateChanged(function(user){
+      adminAuthResolved = true;
+      currentUid = user ? user.uid : null;
+      currentRole = null;
+      currentAccounts = {};
+      if(!user || user.isAnonymous){
+        renderAdminAfterAuth();
+        return;
+      }
+      FirebaseService.read("Restaurant/Accounts/"+user.uid).then(function(account){
+        account = account || null;
+        if(account && (account.role === "owner" || account.role === "staff")){
+          currentAccounts[user.uid] = account;
+          currentRole = account.role;
+          return logAccess(currentRole);
+        }
+        return Promise.resolve();
+      }).catch(function(err){
+        console.warn("Không đọc được role Admin:", err && err.message);
+      }).then(function(){
+        renderAdminAfterAuth();
+        if(isStaffOrOwner()){
+          runMigrations().catch(function(err){
+            console.warn("Bỏ qua migration lúc khởi động (chưa đủ quyền ghi):", err && err.message);
+          });
+        }
+      });
+    });
+  } else {
+    adminAuthResolved = true;
+    renderAdminAfterAuth();
   }
 }
 </script>
