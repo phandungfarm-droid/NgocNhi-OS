@@ -790,17 +790,9 @@ function buildDefaultCell(zone, opts){
   }
   return base;
 }
-function breedingRows(zone, cells){
-  var rows = zone && zone.breedingRows ? zone.breedingRows : {};
-  var seen = {};
-  Object.keys(rows).forEach(function(id){ seen[rows[id].code] = true; });
-  Object.keys(cells||{}).forEach(function(id){
-    var c=cells[id]||{};
-    var m=String(c.code||"").match(/^([^/]+)-([A-Za-z]+)-\\d+$/);
-    if(m && !seen[m[2]]){ rows["legacy-"+m[2]]={code:m[2],name:m[2],sex:(m[2][0]==="D"?"male":"female"),legacy:true}; seen[m[2]]=true; }
-  });
-  return rows;
-}
+function breedingRows(zone){
+  return zone && zone.breedingRows ? zone.breedingRows : {};
+  }
 function addBreedingRow(zoneId, sex, name, layout){
   return FirebaseService.read("Farm/Zones/"+zoneId).then(function(zone){
     if(!zone || zone.type !== "breeding") throw new Error("Chỉ khu sinh sản mới có dãy.");
@@ -1398,7 +1390,7 @@ function addPriceItem(item){ return FirebaseService.push("Farm/Sales/PriceList",
 function updatePriceItem(id, item){ return FirebaseService.updateAt("Farm/Sales/PriceList/"+id, item); }
 function deletePriceItem(id){ return FirebaseService.remove("Farm/Sales/PriceList/"+id); }
 // mục 7.1 — bộ giá mặc định, chỉ seed một lần nếu Farm/Sales/PriceList chưa có dữ liệu
-// Bảng giá CHUẨN đã chốt — tự sửa đúng mỗi lần vào trang Bán dúi, không chỉ
+// Bảng giá CHUẨN đã ch���t — tự sửa đúng mỗi lần vào trang Bán dúi, không chỉ
 // seed một lần lúc trống, để dữ liệu cũ (nếu đã lỡ ghi giá/tên cũ trước đây)
 // luôn được cập nhật lại đúng chuẩn mới nhất. Không đụng tới các mục giá
 // khác do chủ trại tự thêm ngoài 6 mục chuẩn này.
@@ -2065,19 +2057,18 @@ function renderZoneDetailBody(container, zone, zoneCells){
   var isKhu1Breeding = zone.type === "breeding" && /khu\s*1/i.test(zone.name||"");
   function renderKhu1Map(){
   var labels = {vacant:"Trống",nursing:"Đang nuôi con",ready:"Sẵn sàng ghép",pairing:"Đang ghép",just_separated_male:"Mới tách đực",not_pregnant:"Cần theo dõi, xử lý",in_treatment:"Đang điều trị"};
-  var rowData = breedingRows(zone,zoneCells.reduce(function(a,c){a[c.id]=c;return a;},{}));
+  var rowData = breedingRows(zone);
     var stateClass = function(c){ return "k1-"+String(c.state||"vacant").replace(/_/g,"-"); };
   var realCells = zoneCells.filter(function(c){ return c && c.id && c.zoneId === zone.id; }).sort(function(a,b){ return String(a.code||"").localeCompare(String(b.code||""),undefined,{numeric:true}); });
   var rowByCode = {}; Object.keys(rowData).forEach(function(k){ rowByCode[rowData[k].code]=rowData[k]; });
-  var cellRow = function(c){ return c.rowCode && rowByCode[c.rowCode] ? c.rowCode : ((String(c.code||"").match(/^([^/]+)-([A-Za-z0-9]+)-/)||[])[2]||""); };
+  var cellRow = function(c){ return c.rowCode && rowByCode[c.rowCode] ? c.rowCode : null; };
   var female = realCells.filter(function(c){ return c.sex === "female"; });
   var male = realCells.filter(function(c){ return c.sex === "male"; });
     var suffix = function(c){ var m=String(c.code||"").match(/(\\d+)$/); return m ? Number(m[1]) : 0; };
   var fixed = {}; Object.keys(rowByCode).forEach(function(code){ fixed[code]=[]; });
   realCells.forEach(function(c){ var code=cellRow(c); if(!fixed[code]) fixed[code]=[]; fixed[code].push(c); });
   Object.keys(fixed).forEach(function(code){ fixed[code].sort(function(a,b){return suffix(a)-suffix(b);}); });
-    Object.keys(fixed).forEach(function(k){ if(Array.isArray(fixed[k])) fixed[k].sort(function(a,b){return suffix(a)-suffix(b);}); else {fixed[k].top.sort(function(a,b){return suffix(a)-suffix(b);});fixed[k].bottom.sort(function(a,b){return suffix(a)-suffix(b);});} });
-    var displayCode = function(c,lane){ var n=suffix(c); var local=(lane==="D2"?n-26:n); return lane+"-"+pad(local,3); };
+      var displayCode = function(c){ return c.code || "Không xác định"; };
     var card = function(c,lane){ var state=c.state||"vacant"; return '<button type="button" class="k1-cell '+stateClass(c)+'" data-k1-cid="'+esc(c.id)+'"><strong>'+esc(displayCode(c,lane))+'</strong><span>'+esc(labels[state]||"Không xác định")+'</span></button>'; };
     var strip = function(list,lane){ return '<div class="k1-strip-cells">'+list.map(function(c){return card(c,lane);}).join("")+'</div>'; };
     var vertical = function(list,lane){ return '<div class="k1-vertical-cells">'+list.map(function(c){return card(c,lane);}).join("")+'</div>'; };
@@ -2085,7 +2076,7 @@ function renderZoneDetailBody(container, zone, zoneCells){
     var leftCode = rowByCode.C5 ? "C5" : Object.keys(rowByCode).filter(function(k){return rowByCode[k].sex==="female";}).slice(-1)[0];
   var rightCode = rowByCode.C2 ? "C2" : Object.keys(rowByCode).filter(function(k){return rowByCode[k].sex==="female";})[1];
   var left = '<div class="k1-left-rail"><div class="k1-flow-label">'+esc((rowByCode[leftCode]&&rowByCode[leftCode].name)||leftCode||"Cái")+'</div>'+vertical(fixed[leftCode]||[],leftCode||"")+'<span class="k1-arrow k1-arrow-up">↑</span></div>';
-    var rowLayout = function(code){ var r=rowByCode[code]||{}; return r.layout || (r.sex==="male" || /^D/i.test(code) || (r.sex==="female" && !/^N/i.test(code)) ? "two" : "one"); };
+    var rowLayout = function(code){ var r=rowByCode[code]||{}; return r.layout === "two" ? "two" : "one"; };
   var renderLane = function(label,code){ var list=fixed[code]||[]; return labelled(label,code,rowLayout(code)==="two"?"k1-double-row":""); };
   var preferred = ["C3","C4","D2","D1","C1"], ordered = preferred.filter(function(code){return rowByCode[code];});
   Object.keys(rowByCode).forEach(function(code){if(ordered.indexOf(code)<0 && code!==leftCode && code!==rightCode) ordered.push(code);});
@@ -3014,7 +3005,7 @@ function renderSalesCustomers(el, data){
   el.innerHTML = '<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;"><div style="font-weight:700;">Khách hàng</div>'+addBtn+'</div>'+
     '<table><thead><tr><th>Tên</th><th>Điện thoại</th><th>��ịa chỉ</th><th>Tổng đã mua</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   if(document.getElementById("btnAddCust")) document.getElementById("btnAddCust").onclick = function(){
-    openFormModal("Thêm khách hàng", [
+    openFormModal("Thêm kh��ch hàng", [
       {id:"name", label:"Tên", required:true}, {id:"phone", label:"Điện thoại"}, {id:"address", label:"Địa chỉ"}, {id:"note", label:"Ghi ch��", type:"textarea"}
     ], function(v){ addCustomer(v).then(function(){ closeModal(); renderSales(); }); }, "Lưu");
   };
