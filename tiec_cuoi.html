@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
 <style>
@@ -117,8 +118,8 @@
       <a class="nav-item" data-view="menu"><span class="material-symbols-outlined">restaurant_menu</span>Thực đơn tham khảo</a>
     </nav>
     <div class="sidebar-spacer"></div>
-    <div class="info-box">
-      Phân hệ độc lập — không yêu cầu đăng nhập. Tồn kho dúi được đồng bộ thời gian thực với Trang trại.
+    <div class="info-box" id="weddingAuthBox">
+      Khách hàng có thể xem nội dung công khai. Đăng nhập khi cần chức năng Nhân viên/Admin.
     </div>
   </aside>
 
@@ -132,6 +133,16 @@
 </div>
 
 <div id="modalRoot"></div>
+<div id="weddingLoginOverlay" class="modal-overlay hidden">
+  <div class="modal" style="max-width:420px;">
+    <h3>Đăng nhập Nhân viên / Admin</h3>
+    <div style="font-size:12px;color:var(--gray);margin-bottom:14px;">Phiên Firebase hiện có từ Trung tâm điều hành sẽ được dùng lại trên Tiệc cưới.</div>
+    <div class="field"><label>Email</label><input type="email" id="weddingLoginEmail" placeholder="ten@ngocnhi.vn"></div>
+    <div class="field"><label>Mật khẩu</label><input type="password" id="weddingLoginPassword"></div>
+    <div id="weddingLoginError" style="color:#B91C1C;font-size:12px;margin-bottom:8px;"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" id="weddingLoginCancel">Đóng</button><button class="btn btn-primary" id="weddingLoginSubmit">Đăng nhập</button></div>
+  </div>
+</div>
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
@@ -144,11 +155,12 @@ var FIREBASE_CONFIG = window.FIREBASE_CONFIG || {};
 
 var currentView = "overview";
 
-var db = null, firebaseReady = false;
+var db = null, auth = null, firebaseReady = false;
 try{
   if(typeof firebase === "undefined") throw new Error("Firebase SDK chưa tải được (kiểm tra kết nối mạng / chặn CDN).");
   if(!firebase.apps.length){ firebase.initializeApp(FIREBASE_CONFIG); }
   db = firebase.database();
+  auth = firebase.auth();
   firebaseReady = true;
 }catch(err){
   console.warn("Firebase chưa sẵn sàng:", err && err.message);
@@ -205,9 +217,46 @@ var FirebaseService = (function(){
       var newRef = ref(path).push();
       return newRef.set(value).then(function(){ return newRef.key; });
     },
-    remove: function(path){ return ref(path).remove(); }
+    remove: function(path){ return ref(path).remove(); },
+    signIn: function(email, password){ return auth.signInWithEmailAndPassword(email, password); },
+    signOut: function(){ return auth.signOut(); },
+    onAuthStateChanged: function(callback){ return auth.onAuthStateChanged(callback); },
+    getCurrentUser: function(){ return auth.currentUser; }
   };
 })();
+
+var weddingRole = null, weddingUid = null, weddingAccount = null, weddingAuthResolved = false, pendingWeddingAction = null;
+function weddingIsOwner(){ return weddingRole === "owner"; }
+function weddingIsStaff(){ return weddingRole === "owner" || weddingRole === "staff"; }
+function openWeddingLogin(){ document.getElementById("weddingLoginOverlay").classList.remove("hidden"); }
+function closeWeddingLogin(){ document.getElementById("weddingLoginOverlay").classList.add("hidden"); }
+function requireWeddingRole(requiredRole, action){
+  var allowed = requiredRole === "owner" ? weddingIsOwner() : weddingIsStaff();
+  if(allowed){ if(typeof action === "function") action(); return true; }
+  pendingWeddingAction = typeof action === "function" ? action : null;
+  if(!auth || !auth.currentUser || auth.currentUser.isAnonymous || !weddingAuthResolved) openWeddingLogin();
+  else showToast(requiredRole === "owner" ? "Chức năng này chỉ dành cho Admin." : "Chức năng này cần quyền Nhân viên hoặc Admin.");
+  return false;
+}
+function renderWeddingAuthBox(){
+  var box = document.getElementById("weddingAuthBox"); if(!box) return;
+  var text = "Khách hàng có thể xem nội dung công khai. Đăng nhập khi cần chức năng Nhân viên/Admin.";
+  if(!weddingAuthResolved) text = "Đang kiểm tra phiên Firebase…";
+  else if(weddingIsStaff()) text = (weddingRole === "owner" ? "Admin / Chủ hệ thống" : "Nhân viên") + " — đã đăng nhập trên toàn hệ thống.";
+  box.innerHTML = esc(text) + (weddingIsStaff() ? '<button class="btn btn-secondary" id="weddingLogoutBtn" style="margin-top:8px;width:100%;">Đăng xuất toàn hệ thống</button>' : '<button class="btn btn-secondary" id="weddingLoginBtn" style="margin-top:8px;width:100%;">Đăng nhập Nhân viên/Admin</button>');
+  var lb = document.getElementById("weddingLoginBtn"); if(lb) lb.onclick = openWeddingLogin;
+  var lo = document.getElementById("weddingLogoutBtn"); if(lo) lo.onclick = function(){ FirebaseService.signOut(); };
+}
+var weddingLoginSubmit = document.getElementById("weddingLoginSubmit");
+if(document.getElementById("weddingLoginCancel")) document.getElementById("weddingLoginCancel").onclick = closeWeddingLogin;
+if(weddingLoginSubmit) weddingLoginSubmit.onclick = function(){
+  var email = document.getElementById("weddingLoginEmail").value.trim(), pass = document.getElementById("weddingLoginPassword").value, errEl = document.getElementById("weddingLoginError");
+  errEl.textContent = "";
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ errEl.textContent = "Nhập đúng định dạng email."; return; }
+  if(!pass){ errEl.textContent = "Nhập mật khẩu."; return; }
+  weddingLoginSubmit.disabled = true;
+  FirebaseService.signIn(email, pass).then(function(){ closeWeddingLogin(); }).catch(function(){ errEl.textContent = "Sai email hoặc mật khẩu."; }).then(function(){ weddingLoginSubmit.disabled = false; });
+};
 
 /* =========================================================================
    SƠ ĐỒ DỮ LIỆU
@@ -408,11 +457,25 @@ function deleteExternalRevenue(id){ return FirebaseService.remove("Wedding/Exter
    ========================================================================= */
 document.getElementById("navList").addEventListener("click", function(e){
   var item = e.target.closest(".nav-item"); if(!item) return;
+  var target = item.getAttribute("data-view");
+  var required = target === "revenue" ? "owner" : ((target === "customers" || target === "contracts") ? "staff" : null);
+  if(required && !requireWeddingRole(required, function(){
+    document.querySelectorAll(".nav-item").forEach(function(n){ n.classList.remove("active"); });
+    item.classList.add("active"); currentView = target; renderCurrentView();
+  })) return;
   document.querySelectorAll(".nav-item").forEach(function(n){ n.classList.remove("active"); });
-  item.classList.add("active"); currentView = item.getAttribute("data-view"); renderCurrentView();
+  item.classList.add("active"); currentView = target; renderCurrentView();
 });
 function stat(v,l){ return '<div class="stat-box"><div class="v">'+esc(v)+'</div><div class="l">'+esc(l)+'</div></div>'; }
 function renderCurrentView(){
+  if((currentView === "customers" || currentView === "contracts") && !weddingIsStaff()){
+    requireWeddingRole("staff", renderCurrentView);
+    return;
+  }
+  if(currentView === "revenue" && !weddingIsOwner()){
+    requireWeddingRole("owner", renderCurrentView);
+    return;
+  }
   if(!firebaseReady){
     document.getElementById("viewTitle").textContent = "Đang chờ cấu hình Firebase";
     document.getElementById("viewSub").textContent = "—";
@@ -444,10 +507,10 @@ function renderOverview(){
   var el = document.getElementById("viewContent");
   el.innerHTML = '<div class="card">Đang tải…</div>';
   Promise.all([
-    FirebaseService.read("Wedding/Customers"),
+    weddingIsStaff() ? FirebaseService.read("Wedding/Customers") : Promise.resolve({}),
     FirebaseService.read("Wedding/Packages"),
-    FirebaseService.read("Wedding/Contracts"),
-    FirebaseService.read("Wedding/ExternalRevenue")
+    weddingIsStaff() ? FirebaseService.read("Wedding/Contracts") : Promise.resolve({}),
+    weddingIsStaff() ? FirebaseService.read("Wedding/ExternalRevenue") : Promise.resolve({})
   ]).then(function(res){
     var customers = res[0]||{}, packages = res[1]||{}, contracts = res[2]||{}, external = res[3]||{};
     var processingList = Object.keys(contracts).filter(function(id){ return contracts[id].status==="processing"; });
@@ -466,7 +529,7 @@ function renderOverview(){
       stat(Object.keys(customers).length,"Khách hàng")+
       stat(Object.keys(packages).length,"Gói dịch vụ")+
       stat(processingList.length,"Hợp đồng đang xử lý")+
-      stat(fmtVND(totalRevenue),"Tổng doanh thu đã thu")+
+      stat(weddingIsStaff() ? fmtVND(totalRevenue) : "—","Tổng doanh thu đã thu")+
       '</div></div>'+
       '<div class="card" style="margin-top:14px;"><div style="font-weight:700;margin-bottom:10px;">Hợp đồng đang xử lý sắp diễn ra</div>'+
       '<table><thead><tr><th>Khách hàng</th><th>Ngày tổ chức</th></tr></thead><tbody>'+upcomingHtml+'</tbody></table></div>';
@@ -476,6 +539,7 @@ function renderOverview(){
 /* ---- Khách hàng (mục 1) ---- */
 function renderCustomers(){
   var el = document.getElementById("viewContent");
+  if(!weddingIsStaff()){ requireWeddingRole("staff", renderCustomers); return; }
   document.getElementById("topbarActions").innerHTML = '<button class="btn btn-primary" id="btnAddCustomer"><span class="material-symbols-outlined">add</span>Thêm khách hàng</button>';
   document.getElementById("btnAddCustomer").onclick = openAddCustomerModal;
   el.innerHTML = '<div class="card">Đang tải…</div>';
@@ -513,8 +577,9 @@ function openAddCustomerModal(){
 /* ---- Gói dịch vụ (mục 2) ---- */
 function renderPackages(){
   var el = document.getElementById("viewContent");
-  document.getElementById("topbarActions").innerHTML = '<button class="btn btn-primary" id="btnAddPackage"><span class="material-symbols-outlined">add</span>Thêm gói dịch vụ</button>';
-  document.getElementById("btnAddPackage").onclick = openAddPackageModal;
+  document.getElementById("topbarActions").innerHTML = weddingIsStaff() ? '<button class="btn btn-primary" id="btnAddPackage"><span class="material-symbols-outlined">add</span>Thêm gói dịch vụ</button>' : '<span style="font-size:11.5px;color:var(--gray);">Chế độ xem công khai</span>';
+  var addPackageBtn = document.getElementById("btnAddPackage");
+  if(addPackageBtn) addPackageBtn.onclick = openAddPackageModal;
   el.innerHTML = '<div class="card">Đang tải…</div>';
   FirebaseService.read("Wedding/Packages").then(function(packages){
     packages = packages || {};
@@ -523,7 +588,7 @@ function renderPackages(){
       return '<tr><td><b>'+esc(p.name)+'</b><br><span style="color:var(--gray);font-size:11px;">'+esc(p.description||"")+'</span></td>'+
         '<td><span class="badge '+(p.venueType==="outdoor"?"b-outdoor":"b-indoor")+'">'+(p.venueType==="outdoor"?"Ngoài trời":"Trong nhà")+'</span></td>'+
         '<td>'+fmtVND(p.price)+'</td><td>'+esc(p.gifts||"—")+'</td>'+
-        '<td><div class="row-actions"><button class="danger" data-id="'+id+'" data-act="del">Xoá</button></div></td></tr>';
+        '<td>'+(weddingIsStaff() ? '<div class="row-actions"><button class="danger" data-id="'+id+'" data-act="del">Xoá</button></div>' : '')+'</td></tr>';
     }).join("") || '<tr><td colspan="5" style="color:var(--gray);">Chưa có gói dịch vụ nào.</td></tr>';
     el.innerHTML = '<div class="card"><table><thead><tr><th>Tên gói</th><th>Loại tiệc</th><th>Giá</th><th>Quà tặng kèm</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
     el.querySelectorAll('[data-act="del"]').forEach(function(b){
@@ -556,6 +621,7 @@ function openAddPackageModal(){
 /* ---- Hợp đồng (mục 3) ---- */
 function renderContracts(){
   var el = document.getElementById("viewContent");
+  if(!weddingIsStaff()){ requireWeddingRole("staff", renderContracts); return; }
   el.innerHTML = '<div class="card">Đang tải…</div>';
   document.getElementById("topbarActions").innerHTML = "";
   Promise.all([
@@ -662,6 +728,7 @@ function openRecordPaymentModal(contractId){
 /* ---- Doanh thu & Báo cáo (mục 4, 5) ---- */
 function renderRevenue(){
   var el = document.getElementById("viewContent");
+  if(!weddingIsOwner()){ requireWeddingRole("owner", renderRevenue); return; }
   document.getElementById("topbarActions").innerHTML = '<button class="btn btn-primary" id="btnAddExternal"><span class="material-symbols-outlined">add</span>Ghi doanh thu ngoài hệ thống</button>';
   document.getElementById("btnAddExternal").onclick = openAddExternalRevenueModal;
   el.innerHTML = '<div class="card">Đang tải…</div>';
@@ -777,7 +844,30 @@ function renderMenuReference(){
 
 /* ---- Khởi động ứng dụng ---- */
 document.getElementById("mainApp").classList.remove("hidden");
+renderWeddingAuthBox();
 renderCurrentView();
+if(firebaseReady){
+  FirebaseService.onAuthStateChanged(function(user){
+    weddingAuthResolved = false;
+    renderWeddingAuthBox();
+    var resolver = window.NgocNhiAuth && window.NgocNhiAuth.resolveRole;
+    var rolePromise = resolver ? resolver(auth, db, user) : Promise.resolve({uid:user ? user.uid : null, role:null, account:null});
+    rolePromise.then(function(result){
+      weddingUid = result && result.uid ? result.uid : null;
+      weddingRole = result && result.role ? result.role : null;
+      weddingAccount = result && result.account ? result.account : null;
+      weddingAuthResolved = true;
+      renderWeddingAuthBox();
+      renderCurrentView();
+      var pending = pendingWeddingAction;
+      pendingWeddingAction = null;
+      if(pending && ((weddingRole === "owner") || (weddingRole === "staff"))) pending();
+    }).catch(function(err){
+      console.warn("Không đọc được role dùng chung của Tiệc cưới:", err && err.message);
+      weddingRole = null; weddingAuthResolved = true; renderWeddingAuthBox(); renderCurrentView();
+    });
+  });
+}
 </script>
 </body>
 </html>
