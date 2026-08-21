@@ -257,7 +257,7 @@ var farmDashboardMedia = { imageUrl:null, videoUrl:null };
    https://firebase.google.com/docs/auth/web/start
    Bọc try/catch: nếu SDK Firebase không tải được (mạng chặn CDN, v.v.),
    ứng dụng vẫn không phát sinh lỗi Console không bắt được — sẽ hiển thị
-   thông báo chờ cấu hình thay vì màn hình tr�����������������ng hoặc lỗi đỏ trong Console.
+   thông báo chờ cấu hình thay vì màn hình tr�������ng hoặc lỗi đỏ trong Console.
    ========================================================================= */
 var db = null, auth = null, firebaseReady = false;
 try{
@@ -504,6 +504,7 @@ var DEFAULT_ZONES = [
 // Số ô mặc định cho từng khu mặc định (mục 1.2) — dùng bởi migration v2 để
 // tự động sinh đủ số ô khi khu mặc định đó chưa có ô nào.
 var DEFAULT_ZONE_CELL_COUNTS = {
+  K1: {male:70, female:80}, K2: {male:70, female:80},
   K3: {count:50}, K4: {perSegment:2}, K5: {count:5}, K6: {count:10}
 };
 var BABY_SEGMENTS = ["3-4 lạng","5-7 lạng","8 lạng-1kg1"];
@@ -568,7 +569,19 @@ var MIGRATIONS = {
         if(!spec) return; // không phải khu mặc định (khu do chủ trại tự thêm) — bỏ qua
         if(cellCountByZone[zid]) return; // khu đã có ô — không tự sinh thêm, tránh trùng
         if(zone.type === "breeding"){
-          return;
+          var pfx = ZONE_TYPE_PREFIX.breeding;
+          for(var i=1;i<=spec.male;i++){
+            var mid = FirebaseService.generateKey("Farm/Cells");
+            var mc = buildDefaultCell(zone, {zoneId:zid, sex:"male"});
+            mc.code = zone.code+"-"+pfx.male+"-"+pad(i,pfx.pad);
+            updates["Farm/Cells/"+mid] = mc;
+          }
+          for(var j=1;j<=spec.female;j++){
+            var fid = FirebaseService.generateKey("Farm/Cells");
+            var fc = buildDefaultCell(zone, {zoneId:zid, sex:"female"});
+            fc.code = zone.code+"-"+pfx.female+"-"+pad(j,pfx.pad);
+            updates["Farm/Cells/"+fid] = fc;
+          }
         } else if(zone.type === "juvenile"){
           var jpfx = ZONE_TYPE_PREFIX.juvenile;
           for(var k=1;k<=spec.count;k++){
@@ -642,23 +655,26 @@ var ownerNotificationsEnabled = false;
 
 function isOwner(){ return currentRole === "owner"; }
 function isStaffOrOwner(){ return currentRole === "owner" || currentRole === "staff"; }
+var pendingFarmAction = null;
+function requireFarmStaff(action){
+  if(isStaffOrOwner()){ if(typeof action === "function") action(); return true; }
+  pendingFarmAction = typeof action === "function" ? action : null;
+  document.getElementById("loginOverlay").classList.remove("hidden");
+  return false;
+}
 
-// Đăng nhập lần đầu tiên của toàn hệ thống (Farm/Accounts trống) sẽ tự động
-// trở thành Chủ trại (bootstrap) — các lượt đăng nhập sau đọc role đã lưu.
-function bootstrapOrLoadAccount(user){
-  return FirebaseService.read("Farm/Accounts").then(function(accounts){
-    accounts = accounts || {};
-    if(accounts[user.uid]) return accounts[user.uid];
-    if(Object.keys(accounts).length === 0){
-      var owner = { name: user.email, email: user.email, role: "owner" };
-      return FirebaseService.write("Farm/Accounts/"+user.uid, owner).then(function(){ return owner; });
-    }
-    return null; // đã có Chủ trại nhưng tài khoản này chưa được cấp quyền
-  });
+// Đọc role từ các Accounts hiện có của hệ thống; không bootstrap,
+// không tự tạo Farm/Accounts và không thay đổi schema dữ liệu.
+function resolveFarmAccess(user){
+  if(!window.NgocNhiAuth || !window.NgocNhiAuth.resolveRole){
+    return Promise.resolve({user:user, uid:user ? user.uid : null, role:null, account:null});
+  }
+  return window.NgocNhiAuth.resolveRole(auth, db, user);
 }
 function logAccess(role){
+  if(!role) return Promise.resolve();
   var d = todayStr();
-  FirebaseService.transaction("Farm/AccessLog/"+d+"/"+role, function(cur){ return (cur||0)+1; });
+  return FirebaseService.transaction("Farm/AccessLog/"+d+"/"+role, function(cur){ return (cur||0)+1; }).catch(function(){ return null; });
 }
 function enableOwnerNotifications(){
   FirebaseService.requestNotificationPermission().then(function(perm){
@@ -722,24 +738,33 @@ document.getElementById("loginCancelBtn").onclick = function(){
 
 if(firebaseReady){
   FirebaseService.onAuthStateChanged(function(user){
-    if(user){
-      bootstrapOrLoadAccount(user).then(function(acc){
-        if(!acc){
-          showToast("Tài khoản chưa được cấp quyền trong Trang trại. Liên hệ Chủ trại.");
-          FirebaseService.signOut();
-          return;
-        }
-        currentUid = user.uid; currentAccounts[user.uid] = acc; currentRole = acc.role;
-        logAccess(currentRole);
-        renderAuthBox(); renderCurrentView();
-      });
-    } else {
-      currentUid = null; currentRole = "visitor";
-      logAccess("visitor");
+    resolveFarmAccess(user).then(function(result){
+      currentUid = result && result.uid ? result.uid : null;
+      currentRole = result && result.role ? result.role : "visitor";
+      currentAccounts = {};
+      if(result && result.account && currentUid) currentAccounts[currentUid] = result.account;
+      renderAuthBox();
+      renderCurrentView();
+      if(isStaffOrOwner()){
+        runMigrations().catch(function(err){ console.warn("Bỏ qua migration Farm khi chưa đủ quyền:", err && err.message); }).then(function(){
+          return recomputeCommercialStock().catch(function(err){ console.warn("Bỏ qua tính lại tồn kho Farm:", err && err.message); });
+        });
+        refreshFacilitySwitcher().catch(function(){});
+        var pending = pendingFarmAction;
+        pendingFarmAction = null;
+        if(pending) pending();
+      }
+      return logAccess(currentRole);
+    }).catch(function(err){
+      console.warn("Không đọc được role Trang trại:", err && err.message);
+      currentUid = user ? user.uid : null;
+      currentRole = "visitor";
+      currentAccounts = {};
       renderAuthBox(); renderCurrentView();
-    }
+    });
   });
 } else {
+  currentRole = "visitor";
   renderAuthBox();
 }
 
@@ -777,10 +802,18 @@ function buildDefaultCell(zone, opts){
   }
   return base;
 }
-function breedingRows(zone){
-  return zone && zone.breedingRows ? zone.breedingRows : {};
-  }
-function addBreedingRow(zoneId, sex, name, layout){
+function breedingRows(zone, cells){
+  var rows = zone && zone.breedingRows ? zone.breedingRows : {};
+  var seen = {};
+  Object.keys(rows).forEach(function(id){ seen[rows[id].code] = true; });
+  Object.keys(cells||{}).forEach(function(id){
+    var c=cells[id]||{};
+    var m=String(c.code||"").match(/^([^/]+)-([A-Za-z]+)-\\d+$/);
+    if(m && !seen[m[2]]){ rows["legacy-"+m[2]]={code:m[2],name:m[2],sex:(m[2][0]==="D"?"male":"female"),legacy:true}; seen[m[2]]=true; }
+  });
+  return rows;
+}
+function addBreedingRow(zoneId, sex, name){
   return FirebaseService.read("Farm/Zones/"+zoneId).then(function(zone){
     if(!zone || zone.type !== "breeding") throw new Error("Chỉ khu sinh sản mới có dãy.");
     var cells = {};
@@ -788,42 +821,29 @@ function addBreedingRow(zoneId, sex, name, layout){
       cells=found||{}; var rows=breedingRows(zone,cells); var code=String(name||"").trim().toUpperCase().replace(/[^A-Z0-9]+/g,"-");
       if(!code) throw new Error("Tên dãy không hợp lệ.");
       if(rows[code] || Object.keys(rows).some(function(k){return rows[k].code===code;})) throw new Error("Dãy đã tồn tại.");
-      var patch={}; patch["Farm/Zones/"+zoneId+"/breedingRows/"+code]={code:code,name:String(name).trim(),sex:sex,layout:layout==="two"?"two":"one",createdAt:Date.now()};
+      var patch={}; patch["Farm/Zones/"+zoneId+"/breedingRows/"+code]={code:code,name:String(name).trim(),sex:sex,createdAt:Date.now()};
       return FirebaseService.updateMultiPath(patch);
     });
   });
 }
-  function updateBreedingRow(zoneId, rowCode, name, sex, layout){
-    return FirebaseService.updateAt("Farm/Zones/"+zoneId+"/breedingRows/"+rowCode,{name:String(name).trim(),sex:sex,layout:layout==="two"?"two":"one"});
-  }
-  function deleteBreedingRow(zoneId, rowCode){
-    return FirebaseService.queryEqualTo("Farm/Cells","zoneId",zoneId).then(function(cells){
-      var linked=Object.keys(cells||{}).filter(function(id){return cells[id] && cells[id].rowCode===rowCode;});
-      if(linked.length && !confirm("Dãy đang có "+linked.length+" ô. Xóa dãy sẽ xóa các ô thuộc dãy này. Tiếp tục?")) return false;
-      var updates={}; updates["Farm/Zones/"+zoneId+"/breedingRows/"+rowCode]=null;
-      linked.forEach(function(id){updates["Farm/Cells/"+id]=null;});
-      return FirebaseService.updateMultiPath(updates).then(function(){return true;});
-    });
-  }
-  function addCell(zoneId, opts){
+function addCell(zoneId, opts){
   opts=opts||{};
   return FirebaseService.read("Farm/Zones/"+zoneId).then(function(zone){
     return FirebaseService.queryEqualTo("Farm/Cells", "zoneId", zoneId).then(function(cells){
       var codes = Object.keys(cells).map(function(k){ return cells[k].code; });
       var prefix, padW;
       if(zone.type === "breeding"){
-        var rowCode = String(opts.rowCode||"").trim();
-        if(!rowCode) throw new Error("Phải chọn dãy trước khi thêm ô.");
-        prefix = zone.code + "-" + rowCode + "-"; padW = 3;
+        var pfx = ZONE_TYPE_PREFIX.breeding;
+        var rowCode = opts.rowCode || (opts.sex === "male" ? pfx.male : pfx.female);
+        prefix = zone.code + "-" + rowCode + "-"; padW = pfx.pad;
       } else {
         var p2 = ZONE_TYPE_PREFIX[zone.type];
         prefix = zone.code + "-" + p2.single; padW = p2.pad;
       }
       var code = nextCellNumber(codes, prefix, padW);
       var cellId = FirebaseService.generateKey("Farm/Cells");
-  var cellData = buildDefaultCell(zone, {zoneId:zoneId, sex:opts.sex, weightSegment:opts.weightSegment});
-  if(zone.type === "breeding" && opts.rowCode){ cellData.rowCode = opts.rowCode; cellData.rowName = opts.rowName || opts.rowCode; }
-  cellData.code = code;
+      var cellData = buildDefaultCell(zone, {zoneId:zoneId, sex:opts.sex, weightSegment:opts.weightSegment});
+      cellData.code = code;
       return FirebaseService.write("Farm/Cells/"+cellId, cellData).then(function(){ return {cellId:cellId, code:code}; });
     });
   });
@@ -845,7 +865,7 @@ function addHistory(cellId, action, note){
 }
 
 /* =========================================================================
-   VÒNG ĐỜI SINH SẢN ��� Khu Sinh sản K1/K2 (mục 2)
+   VÒNG ĐỜI SINH SẢN — Khu Sinh sản K1/K2 (mục 2)
    ========================================================================= */
 function pairCells(maleCellId, femaleCellId, pairDate){
   var updates = {};
@@ -1100,7 +1120,7 @@ function recomputeCommercialStock(){
 /* =========================================================================
    ĐA CƠ SỞ — Cơ sở 1 chính là trại đang quản lý trong file này (đầu mối
    thương phẩm cung cấp cho Quán ăn & Tiệc cưới qua Farm/CommercialStock).
-   Cơ sở 2 trở đi có TOÀN BỘ cấu trúc & nghi���p vụ y hệt Cơ sở 1 (K1-K6, đủ
+   Cơ sở 2 trở đi có TOÀN BỘ cấu trúc & nghiệp vụ y hệt Cơ sở 1 (K1-K6, đủ
    ô, đủ vòng đời chăn nuôi — lưu tách biệt tại Facilities/{id}/Farm/...),
    cộng thêm ĐÚNG MỘT chức năng riêng: Chuyển thương phẩm về Cơ sở 1. Một
    chiều duy nhất — KHÔNG có chiều ngược lại Cơ sở 1 → cơ sở khác.
@@ -1150,7 +1170,7 @@ function transferFacilityToBase(facilityId, facilityName, sourceCellId, sourceCe
   });
 }
 function loadFacilityTransfers(){ return db.ref("FacilityTransfers").once("value").then(function(s){ return s.val()||{}; }); }
-// Đọc danh sách ô Thương phẩm (Khu 5) của MỘT cơ sở cụ thể (d��ng khi chọn ô
+// Đọc danh sách ô Thương phẩm (Khu 5) của MỘT cơ sở cụ thể (dùng khi chọn ô
 // nguồn để chuyển đi, hoặc ô đích tại Cơ sở 1 để nhận hàng).
 function loadCommercialCellsOf(facilityId){
   return withFacilityContext(facilityId, function(){
@@ -1260,7 +1280,7 @@ function treatmentConclude(treatmentCellId, outcome, opts){
         chain = FirebaseService.updateAt("Farm/Cells/"+patient.sourceCellId+"/compartments/"+patient.sex, {state:"growing", startDate: todayStr()});
       } else if(patient.sourceType === "baby" || patient.sourceType === "commercial"){
         // mục 4: quy trình chung cho cả Baby & Thương phẩm — hoàn trả đúng số lượng
-        // lư��ng đã bị trừ khỏi ô nguồn khi chuyển vào điều trị (mục 5).
+        // lượng đã bị trừ khỏi ô nguồn khi chuyển vào điều trị (mục 5).
         chain = FirebaseService.transaction("Farm/Cells/"+patient.sourceCellId+"/quantity", function(cur){ return (cur||0)+(patient.quantity||0); }).then(function(){
           return patient.sourceType === "commercial" ? recomputeCommercialStock() : null;
         });
@@ -1377,7 +1397,7 @@ function addPriceItem(item){ return FirebaseService.push("Farm/Sales/PriceList",
 function updatePriceItem(id, item){ return FirebaseService.updateAt("Farm/Sales/PriceList/"+id, item); }
 function deletePriceItem(id){ return FirebaseService.remove("Farm/Sales/PriceList/"+id); }
 // mục 7.1 — bộ giá mặc định, chỉ seed một lần nếu Farm/Sales/PriceList chưa có dữ liệu
-// Bảng giá CHUẨN đã ch���t — tự sửa đúng mỗi lần vào trang Bán dúi, không chỉ
+// Bảng giá CHUẨN đã chốt — tự sửa đúng mỗi lần vào trang Bán dúi, không chỉ
 // seed một lần lúc trống, để dữ liệu cũ (nếu đã lỡ ghi giá/tên cũ trước đây)
 // luôn được cập nhật lại đúng chuẩn mới nhất. Không đụng tới các mục giá
 // khác do chủ trại tự thêm ngoài 6 mục chuẩn này.
@@ -1393,7 +1413,7 @@ function ensureDefaultPriceList(){
     Object.keys(list).forEach(function(id){ byName[list[id].name] = id; });
     var updates = {};
     // 1) Xoá các mục mang TÊN CŨ (đã đổi tên trong bảng giá chuẩn mới) để
-    // không c��n hàng trùng/giá sai lởn vởn trong danh mục.
+    // không còn hàng trùng/giá sai lởn vởn trong danh mục.
     Object.keys(PRICE_LIST_OLD_NAME_ALIASES).forEach(function(oldName){
       if(byName[oldName]) updates["Farm/Sales/PriceList/"+byName[oldName]] = null;
     });
@@ -1522,7 +1542,7 @@ function releaseDuiReservation(contractId){ return FirebaseService.remove("Farm/
 /* =========================================================================
    TÍCH HỢP LIÊN MODULE (mục 8, 9.3) — QUA FIREBASE DATABASE, KHÔNG QUA window.*
    -------------------------------------------------------------------------
-   V�� kiến trúc hệ thống dùng 4 FILE HTML ĐỘC LẬP (không phải một trang
+   Vì kiến trúc hệ thống dùng 4 FILE HTML ĐỘC LẬP (không phải một trang
    SPA), mỗi module chạy trong một document/window riêng của trình duyệt
    khi mở — một hàm gắn vào window ở file này KHÔNG thể gọi được từ
    quan_an.html hay tiec_cuoi.html vì chúng không chia sẻ chung global
@@ -1717,7 +1737,8 @@ function computeStats(){
       sickBtn.querySelector("span:last-child").textContent = sickFlag ? "Đã báo ốm — bấm để tắt" : "Báo ốm";
     }
     renderSick();
-    sickBtn.onclick = function(){
+      sickBtn.onclick = function(){
+      if(!requireFarmStaff(function(){ sickBtn.click(); })) return;
       sickFlag = !sickFlag;
       FirebaseService.write("Farm/Cells/"+cellId+"/sickFlag", sickFlag);
       addHistory(cellId, sickFlag ? "Công nhân báo ốm (QR)" : "Công nhân tắt báo ốm (QR)", "");
@@ -1728,6 +1749,7 @@ function computeStats(){
       fedBtn.disabled = true; fedBtn.querySelector("span:last-child").textContent = "Đã ghi nhận hôm nay";
     }
     fedBtn.onclick = function(){
+      if(!requireFarmStaff(function(){ fedBtn.click(); })) return;
       FirebaseService.write("Farm/Cells/"+cellId+"/lastFedDate", today);
       addHistory(cellId, "Đã cho ăn hôm nay (QR)", "");
       fedBtn.disabled = true; fedBtn.querySelector("span:last-child").textContent = "Đã ghi nhận hôm nay";
@@ -1755,7 +1777,7 @@ function refreshFacilitySwitcher(){
     facilityNamesCache = facilities;
     var sel = document.getElementById("facilitySwitcher");
     if(!sel) return;
-    sel.innerHTML = '<option value="">Cơ sở 1 (��ầu mối)</option>' +
+    sel.innerHTML = '<option value="">Cơ sở 1 (đầu mối)</option>' +
       Object.keys(facilities).map(function(id){ return '<option value="'+id+'">'+esc(facilities[id].name)+'</option>'; }).join("");
     sel.value = currentFacilityId || "";
   });
@@ -1763,6 +1785,11 @@ function refreshFacilitySwitcher(){
 var facilityNamesCache = {};
 var facilitySwitcherEl = document.getElementById("facilitySwitcher");
 if(facilitySwitcherEl) facilitySwitcherEl.addEventListener("change", function(e){
+  if(!isStaffOrOwner()){
+    e.target.value = currentFacilityId || "";
+    document.getElementById("loginOverlay").classList.remove("hidden");
+    return;
+  }
   currentFacilityId = e.target.value || null;
   currentView = "overview";
   document.querySelectorAll(".nav-item").forEach(function(n){ n.classList.remove("active"); });
@@ -1842,7 +1869,7 @@ function renderOverview(){
 // dữ liệu riêng của 1 khu c�� thể nào), dùng để hiển thị ở Tổng quan Khu.
 var ZONE_TYPE_PURPOSE = {
   breeding: "Nuôi ghép đôi đực/cái, theo dõi mang thai, sinh sản và nuôi con.",
-  juvenile: "Nuôi hậu bị (đực/cái) cho tới khi đủ thể trạng ��ể chuyển lên khu sinh sản.",
+  juvenile: "Nuôi hậu bị (đực/cái) cho tới khi đủ thể trạng để chuyển lên khu sinh sản.",
   baby: "Nuôi dúi con theo từng phân khúc cân nặng sau khi tách mẹ.",
   commercial: "Nuôi dúi thương phẩm chờ xuất bán.",
   treatment: "Cách ly và điều trị các cá thể có vấn đề sức khoẻ."
@@ -2026,11 +2053,6 @@ function renderZoneDetailBody(container, zone, zoneCells){
   }
 
   var addCellBtn = "";
-  var breedingRowActions = "";
-  if(zone.type === "breeding"){
-    var actionRows = breedingRows(zone);
-    breedingRowActions = Object.keys(actionRows).map(function(k){var r=actionRows[k];return '<button type="button" class="btn btn-secondary breeding-row-edit" data-row-code="'+esc(r.code)+'">Sửa '+esc(r.name)+'</button><button type="button" class="btn btn-danger breeding-row-delete" data-row-code="'+esc(r.code)+'">Xóa</button>';}).join("");
-  }
   if(isStaffOrOwner()){
   if(zone.type === "breeding"){
   addCellBtn = '<button class="btn btn-secondary" id="btnAddBreedingRow"><span class="material-symbols-outlined">view_column</span>Thêm dãy</button><button class="btn btn-primary" id="btnAddBreedingCell"><span class="material-symbols-outlined">add</span>Thêm ô</button>';
@@ -2041,22 +2063,49 @@ function renderZoneDetailBody(container, zone, zoneCells){
     }
   }
   var delZoneBtn = isOwner() ? '<button class="btn btn-danger" id="btnDelZone"><span class="material-symbols-outlined">delete</span>Xoá khu này</button>' : "";
-  function renderBreedingMap(){
-    var labels={vacant:"Trống",nursing:"Đang nuôi con",ready:"Sẵn sàng ghép",pairing:"Đang ghép",just_separated_male:"Mới tách đực",not_pregnant:"Cần theo dõi, xử lý",in_treatment:"Đang điều trị"};
-    var rows=breedingRows(zone), cells=zoneCells.filter(function(c){return c&&c.id&&c.zoneId===zone.id;}), byRow={};
-    Object.keys(rows).forEach(function(k){var r=rows[k];if(r&&r.code)byRow[r.code]=[];});
-    cells.forEach(function(c){if(c.rowCode&&byRow[c.rowCode])byRow[c.rowCode].push(c);});
-    Object.keys(byRow).forEach(function(k){byRow[k].sort(function(a,b){return String(a.code).localeCompare(String(b.code),undefined,{numeric:true});});});
-    var card=function(c){var state=c.state||"vacant";return '<button type="button" class="k1-cell k1-'+String(state).replace(/_/g,"-")+'" data-k1-cid="'+esc(c.id)+'"><strong>'+esc(c.code||"Không xác định")+'</strong><span>'+esc(labels[state]||"Không xác định")+'</span></button>';};
-    var strip=function(list){return '<div class="k1-strip-cells">'+list.map(card).join("")+'</div>';};
-    var rowHtml=function(code){var r=rows[Object.keys(rows).filter(function(k){return rows[k].code===code;})[0]]||{},list=byRow[code]||[],mid=Math.ceil(list.length/2),content=r.layout==="two"?'<div class="k1-double-strips"><div class="k1-strip">'+strip(list.slice(0,mid))+'</div><div class="k1-strip">'+strip(list.slice(mid))+'</div></div>':'<div class="k1-strip">'+strip(list)+'</div>';return '<div class="k1-flow-row"><div class="k1-flow-label"><span>'+esc(r.name||code)+'</span><button type="button" class="k1-row-add" data-row-code="'+esc(code)+'" title="Thêm ô vào dãy">+</button></div><span class="k1-arrow">→</span>'+content+'</div>';};
-    var order=Object.keys(rows).filter(function(k){return rows[k]&&rows[k].code;});
-    var html='<div class="k1-map-card"><div class="k1-map-head"><div><b>'+esc(zone.name||"Khu sinh sản")+'</b><small>Sơ đồ Khu → Dãy → Ô theo dữ liệu thực tế</small></div><span class="k1-map-count">'+cells.length+' ô</span></div><div class="k1-flow-canvas"><div class="k1-flow-middle">'+order.map(function(k){return rowHtml(rows[k].code);}).join("")+'</div></div></div>';return html;
+  var isKhu1Breeding = zone.type === "breeding" && /khu\s*1/i.test(zone.name||"");
+  function renderKhu1Map(){
+    var labels = {vacant:"Trống",nursing:"Đang nuôi con",ready:"Sẵn sàng ghép",pairing:"Đang ghép",just_separated_male:"Mới tách đực",not_pregnant:"Cần theo dõi, xử lý",in_treatment:"Đang điều trị"};
+    var stateClass = function(c){ return "k1-"+String(c.state||"vacant").replace(/_/g,"-"); };
+    var realCells = zoneCells.filter(function(c){ return c && c.id && c.zoneId === zone.id; }).sort(function(a,b){ return String(a.code||"").localeCompare(String(b.code||""),undefined,{numeric:true}); });
+    var female = realCells.filter(function(c){ return c.sex === "female"; });
+    var male = realCells.filter(function(c){ return c.sex === "male"; });
+    var suffix = function(c){ var m=String(c.code||"").match(/(\\d+)$/); return m ? Number(m[1]) : 0; };
+    var fixed = {C1:[],C2:[],C3:[],C4:[],C5:[],D1:{top:[],bottom:[]},D2:{top:[],bottom:[]}};
+    female.forEach(function(c){ var n=suffix(c); var lane=n<=16?"C1":n<=25?"C2":n<=43?"C3":n<=56?"C4":"C5"; fixed[lane].push(c); });
+    male.forEach(function(c){ var n=suffix(c); var lane=n<=26?"D1":"D2"; var local=n<=26?n:n-26; fixed[lane][local<=13?"bottom":"top"].push(c); });
+    Object.keys(fixed).forEach(function(k){ if(Array.isArray(fixed[k])) fixed[k].sort(function(a,b){return suffix(a)-suffix(b);}); else {fixed[k].top.sort(function(a,b){return suffix(a)-suffix(b);});fixed[k].bottom.sort(function(a,b){return suffix(a)-suffix(b);});} });
+    var displayCode = function(c,lane){ var n=suffix(c); var local=(lane==="D2"?n-26:n); return lane+"-"+pad(local,3); };
+    var card = function(c,lane){ var state=c.state||"vacant"; return '<button type="button" class="k1-cell '+stateClass(c)+'" data-k1-cid="'+esc(c.id)+'"><strong>'+esc(displayCode(c,lane))+'</strong><span>'+esc(labels[state]||"Không xác định")+'</span></button>'; };
+    var strip = function(list,lane){ return '<div class="k1-strip-cells">'+list.map(function(c){return card(c,lane);}).join("")+'</div>'; };
+    var vertical = function(list,lane){ return '<div class="k1-vertical-cells">'+list.map(function(c){return card(c,lane);}).join("")+'</div>'; };
+    var labelled = function(label,lane,kind){ var content = kind === "k1-double-row" ? '<div class="k1-double-strips"><div class="k1-strip">'+strip(fixed[lane].bottom,lane)+'</div><div class="k1-strip">'+strip(fixed[lane].top,lane)+'</div></div>' : '<div class="k1-strip">'+strip(fixed[lane],lane)+'</div>'; return '<div class="k1-flow-row '+(kind||"")+'"><div class="k1-flow-label">'+label+'</div><span class="k1-arrow">→</span>'+content+'</div>'; };
+    var left = '<div class="k1-left-rail"><div class="k1-flow-label">Cái C5</div>'+vertical(fixed.C5,"C5")+'<span class="k1-arrow k1-arrow-up">↑</span></div>';
+    var middle = labelled("Cái C3","C3")+labelled("Cái C4","C4")+labelled("Đực Đ2","D2","k1-double-row")+labelled("Đực Đ1","D1","k1-double-row")+labelled("Cái C1","C1");
+    var right = '<div class="k1-right-rail"><div class="k1-flow-label">Cái C2</div><span class="k1-arrow k1-arrow-down">↓</span>'+vertical(fixed.C2,"C2")+'</div>';
+    var legend = Object.keys(labels).map(function(state){ return '<span><i class="k1-legend-swatch k1-'+state.replace(/_/g,"-")+'"></i>'+labels[state]+'</span>'; }).join("");
+    var uniqueIds = {}; realCells.forEach(function(c){ uniqueIds[c.id] = true; });
+    var mapCheck = Object.keys(uniqueIds).length === 114 && female.length === 62 && male.length === 52 && realCells.length === zoneCells.length;
+    var mapCheckText = mapCheck ? "114 ô · 52 đực · 62 cái" : (realCells.length+" ô · "+male.length+" đực · "+female.length+" cái");
+    return '<div class="k1-map-card"><div class="k1-map-head"><div><b>Khu 1 – Sinh sản</b><small>Sơ đồ bố trí các dãy chuồng trong '+esc(zone.name||"Khu 1")+'</small></div><span class="k1-map-count">'+mapCheckText+'</span></div><div class="k1-flow-canvas">'+left+'<div class="k1-flow-middle">'+middle+'</div>'+right+'</div><div class="k1-legend">'+legend+'</div></div>';
   }
 
+  // mục "BỐ CỤC Ô": khu nào có ô phân theo giới tính (mọi khu type="breeding"
+  // hiện tại và tạo sau này — không hard-code riêng khu nào) hiển thị 2 cột
+  // song song Đực/Cái; các khu khác (Hậu bị/Baby/Thương phẩm/Điều trị) giữ
+  // nguyên lưới 1 khối như cũ vì ô của các khu đó không phân theo giới tính.
   var cellsHtml;
-  if(zone.type === "breeding"){
-    cellsHtml = renderBreedingMap();
+  if(isKhu1Breeding){
+    cellsHtml = renderKhu1Map();
+  } else if(zone.type === "breeding"){
+    var maleCells = cellsForDisplay.filter(function(c){ return c.sex === "male"; });
+    var femaleCells = cellsForDisplay.filter(function(c){ return c.sex === "female"; });
+    var maleHtml = maleCells.map(function(c){ return renderCellCard(c, zone); }).join("") || '<div style="color:var(--gray);font-size:13px;">Không có ô đực nào khớp.</div>';
+    var femaleHtml = femaleCells.map(function(c){ return renderCellCard(c, zone); }).join("") || '<div style="color:var(--gray);font-size:13px;">Không có ô cái nào khớp.</div>';
+    cellsHtml = '<div class="cell-columns">'+
+      '<div><div class="col-head"><span class="material-symbols-outlined" style="font-size:16px;">male</span>Ô đực ('+maleCells.length+')</div><div class="cell-grid">'+maleHtml+'</div></div>'+
+      '<div><div class="col-head"><span class="material-symbols-outlined" style="font-size:16px;">female</span>Ô cái ('+femaleCells.length+')</div><div class="cell-grid">'+femaleHtml+'</div></div>'+
+    '</div>';
   } else {
     cellsHtml = '<div class="cell-grid">'+(cellsForDisplay.map(function(c){ return renderCellCard(c, zone); }).join("") || '<div style="color:var(--gray);font-size:13px;">Không có ô nào khớp.</div>')+'</div>';
   }
@@ -2068,10 +2117,9 @@ function renderZoneDetailBody(container, zone, zoneCells){
     '</div>'+
     '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">'+
       '<div style="font-weight:800;">'+esc(zone.name)+' <span style="font-weight:500;color:var(--gray);font-size:12px;">('+esc(ZONE_TYPE_LABEL[zone.type]||zone.type)+')</span></div>'+
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'+addCellBtn+breedingRowActions+delZoneBtn+'</div>'+
+      '<div style="display:flex;gap:8px;">'+addCellBtn+delZoneBtn+'</div>'+
     '</div>'+cellsHtml+'</div>';
 
-  container.querySelectorAll(".k1-row-add").forEach(function(btn){ btn.onclick=function(){ var code=btn.getAttribute("data-row-code"), rows=breedingRows(zone), key=Object.keys(rows).filter(function(k){return rows[k].code===code;})[0], r=rows[key]; if(!r)return; addCell(zone.id,{sex:r.sex,rowCode:r.code,rowName:r.name}).then(function(){renderZones();}).catch(function(e){showToast(e.message||"Không thêm được ô.");}); }; });
   container.querySelectorAll(".cell-card").forEach(function(c){ c.onclick = function(){ openCellModal(c.getAttribute("data-cid"), zone); }; });
   container.querySelectorAll("[data-k1-cid]").forEach(function(c){ c.onclick = function(){ openCellModal(c.getAttribute("data-k1-cid"), zone); }; });
   document.getElementById("btnBackZoneOverview").onclick = function(){
@@ -2088,20 +2136,13 @@ function renderZoneDetailBody(container, zone, zoneCells){
   };
   if(document.getElementById("btnAddCell")) document.getElementById("btnAddCell").onclick = function(){ handleAddCell(zone); };
   if(document.getElementById("btnAddBreedingRow")) document.getElementById("btnAddBreedingRow").onclick = function(){
-    openFormModal("Thêm dãy sinh sản",[{id:"sex",label:"Loại dãy",type:"select",options:[{value:"male",label:"Đực"},{value:"female",label:"Cái"}],required:true},{id:"layout",label:"Số hàng",type:"select",options:[{value:"one",label:"1 hàng"},{value:"two",label:"2 hàng"}],required:true},{id:"name",label:"Tên dãy",required:true}],function(v){ addBreedingRow(zone.id,v.sex,v.name,v.layout).then(function(){closeModal();renderZones();}).catch(function(e){showToast(e.message||"Không tạo được dãy.");}); },"Tạo dãy");
+    openFormModal("Thêm dãy sinh sản",[{id:"sex",label:"Loại dãy",type:"select",options:[{value:"male",label:"Đực"},{value:"female",label:"Cái"}],required:true},{id:"name",label:"Tên dãy",required:true}],function(v){ addBreedingRow(zone.id,v.sex,v.name).then(function(){closeModal();renderZones();}).catch(function(e){showToast(e.message||"Không tạo được dãy.");}); },"Tạo dãy");
   };
-  container.querySelectorAll(".breeding-row-edit").forEach(function(btn){ btn.onclick=function(){
-    var code=btn.getAttribute("data-row-code"), rows=breedingRows(zone), r=rows[Object.keys(rows).filter(function(k){return rows[k].code===code;})[0]];
-    if(!r){showToast("Không tìm thấy dãy.");return;}
-    openFormModal("Sửa dãy "+r.name,[{id:"sex",label:"Loại dãy",type:"select",options:[{value:"male",label:"Đực"},{value:"female",label:"Cái"}],value:r.sex,required:true},{id:"layout",label:"Số hàng",type:"select",options:[{value:"one",label:"1 hàng"},{value:"two",label:"2 hàng"}],value:r.layout||"one",required:true},{id:"name",label:"Tên dãy",value:r.name,required:true}],function(v){updateBreedingRow(zone.id,code,v.name,v.sex,v.layout).then(function(){closeModal();renderZones();}).catch(function(e){showToast(e.message||"Không sửa được dãy.");});},"Lưu");
-  }; });
-  container.querySelectorAll(".breeding-row-delete").forEach(function(btn){ btn.onclick=function(){ var code=btn.getAttribute("data-row-code"); if(confirm("Xác nhận xóa dãy này?")) deleteBreedingRow(zone.id,code).then(function(){renderZones();}).catch(function(e){showToast(e.message||"Không xóa được dãy.");}); }; });
   if(document.getElementById("btnAddBreedingCell")) document.getElementById("btnAddBreedingCell").onclick = function(){
-    var rows=breedingRows(zone);
+    var rows=breedingRows(zone,zoneCells.reduce(function(a,c){a[c.id]=c;return a;},{}));
     var options=Object.keys(rows).map(function(k){return {value:rows[k].code,label:rows[k].name+" ("+(rows[k].sex==="male"?"Đực":"Cái")+")"};});
-    var rowActions=Object.keys(rows).map(function(k){var r=rows[k];return '<button class="btn btn-secondary breeding-row-edit" data-row-code="'+esc(r.code)+'">Sửa dãy '+esc(r.name)+'</button>';}).join("");
     if(!options.length){showToast("Hãy tạo dãy trước khi thêm ô.");return;}
-    openFormModal("Thêm ô sinh sản",[{id:"rowCode",label:"Dãy",type:"select",options:options,required:true}],function(v){ addCell(zone.id,{sex:rows[Object.keys(rows).filter(function(k){return rows[k].code===v.rowCode;})[0]].sex,rowCode:v.rowCode,rowName:rows[Object.keys(rows).filter(function(k){return rows[k].code===v.rowCode;})[0]].name}).then(function(){closeModal();renderZones();}).catch(function(e){showToast(e.message||"Không tạo được ô.");}); },"Tạo ô");
+    openFormModal("Thêm ô sinh sản",[{id:"rowCode",label:"Dãy",type:"select",options:options,required:true}],function(v){ addCell(zone.id,{sex:rows[Object.keys(rows).filter(function(k){return rows[k].code===v.rowCode;})[0]].sex,rowCode:v.rowCode}).then(function(){closeModal();renderZones();}).catch(function(e){showToast(e.message||"Không tạo được ô.");}); },"Tạo ô");
   };
 }
 // ===== ĐIỀU HƯỚNG KHU & Ô CHUỒNG =========================================
@@ -2332,7 +2373,7 @@ function handleQRDeepLinkIfAny(){
 
 
 /* =========================================================================
-   FORM MODAL DÙNG CHUNG — thay th�� các chuỗi prompt() bằng popup/form nhập
+   FORM MODAL DÙNG CHUNG — thay thế các chuỗi prompt() bằng popup/form nhập
    liệu thật sự (nhãn rõ ràng, có validate), áp dụng cho mọi nghiệp vụ Ghép
    đôi / Chuyển khu / Điều trị / Chết / Loại thải / Cân nặng / Ghi chú...
    ========================================================================= */
@@ -2696,7 +2737,7 @@ function handleCellAction(act, c, zone){
         ], function(v){
           if(v.qty<=0 || v.qty>(c.quantity||0)){ return; }
           babyToCommercial(c.id, v.target, v.qty).then(afterAction);
-        }, "Chuy���n");
+        }, "Chuyển");
       });
     } else {
       var reasons = (c.sex==="male"?TREAT_REASON_MALE:TREAT_REASON_FEMALE).map(function(r){ return {value:r,label:r}; });
@@ -2957,9 +2998,9 @@ function renderSalesCustomers(el, data){
       (isOwner() ? '<td><button class="btn btn-danger" data-act="delCust" data-id="'+id+'">Xoá</button></td>' : '<td></td>')+'</tr>';
   }).join("") || '<tr><td colspan="5" style="color:var(--gray);">Chưa có khách hàng nào.</td></tr>';
   el.innerHTML = '<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;"><div style="font-weight:700;">Khách hàng</div>'+addBtn+'</div>'+
-    '<table><thead><tr><th>Tên</th><th>Điện thoại</th><th>��ịa chỉ</th><th>Tổng đã mua</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+    '<table><thead><tr><th>Tên</th><th>Điện thoại</th><th>Địa chỉ</th><th>Tổng đã mua</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   if(document.getElementById("btnAddCust")) document.getElementById("btnAddCust").onclick = function(){
-    openFormModal("Thêm kh��ch hàng", [
+    openFormModal("Thêm khách hàng", [
       {id:"name", label:"Tên", required:true}, {id:"phone", label:"Điện thoại"}, {id:"address", label:"Địa chỉ"}, {id:"note", label:"Ghi ch��", type:"textarea"}
     ], function(v){ addCustomer(v).then(function(){ closeModal(); renderSales(); }); }, "Lưu");
   };
@@ -3144,25 +3185,12 @@ function openAddStaffModal(){
    định / tính lại tồn kho sẽ tự thực hiện ngay khi Chủ trại đăng nhập
    lần đầu và thực hiện bất kỳ thao tác ghi nào khác. */
 if(workerModeActive){
-  // Chế độ QR công nhân tự xử lý riêng ở initWorkerModeIfNeeded() — không
-  // khởi tạo/migrate/vẽ dashboard đầy đủ phía sau màn hình QR.
-} else if(firebaseReady){
-  runMigrations().catch(function(err){
-    console.warn("Bỏ qua migration lúc khởi động (chưa đăng nhập hoặc chưa đủ quyền ghi):", err && err.message);
-  }).then(function(){
-    return recomputeCommercialStock().catch(function(err){
-      console.warn("Bỏ qua tính lại tồn kho lúc khởi động (chưa đủ quyền ghi):", err && err.message);
-    });
-  }).then(function(){
-    return refreshFacilitySwitcher().catch(function(){});
-  }).then(function(){
-    document.getElementById("mainApp").classList.remove("hidden");
-    renderCurrentView();
-    handleQRDeepLinkIfAny();
-  });
+  // Chế độ QR công nhân tự xử lý riêng ở initWorkerModeIfNeeded().
 } else {
+  // Nội dung công khai mở ngay, không phụ thuộc đăng nhập hoặc quyền ghi.
   document.getElementById("mainApp").classList.remove("hidden");
   renderCurrentView();
+  if(firebaseReady) handleQRDeepLinkIfAny();
 }
 </script>
 </body>
