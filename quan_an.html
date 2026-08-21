@@ -673,8 +673,15 @@ function renderAdminIdentity(){
   var chip = document.querySelector(".profile-chip");
   if(!chip) return;
   var acc = currentAccounts[currentUid] || {}, user = auth && auth.currentUser;
-  var name = isStaffOrOwner() ? (acc.name || (user && user.email) || "Admin") : "Chưa xác thực";
-  var roleText = isOwner() ? "Chủ quán" : (currentRole === "staff" ? "Nhân viên" : "Chỉ xem / bị giới hạn");
+  var name, roleText;
+  if(!adminAuthResolved){
+    name = "Đang xác thực"; roleText = "Đang tải quyền";
+  } else if(isStaffOrOwner()){
+    name = acc.name || (user && user.email) || "Admin";
+    roleText = isOwner() ? "Chủ quán" : "Nhân viên";
+  } else {
+    name = "Chưa xác thực"; roleText = "Chỉ xem / bị giới hạn";
+  }
   var nameEl = chip.querySelector(".profile-copy b"), roleEl = chip.querySelector(".profile-copy small");
   if(nameEl) nameEl.textContent = name;
   if(roleEl) roleEl.textContent = roleText;
@@ -682,6 +689,12 @@ function renderAdminIdentity(){
 function renderAuthBox(){
   var box = document.getElementById("authBox");
   if(!box) return;
+  if(!adminAuthResolved){
+    box.innerHTML = '<span class="role-badge">ĐANG XÁC THỰC</span>'+
+      '<div style="font-size:11px;color:var(--gray);margin-top:5px;">Đang đọc quyền Firebase Auth…</div>';
+    renderAdminIdentity();
+    return;
+  }
   if(!isStaffOrOwner()){
     box.innerHTML = '<span class="role-badge">CHƯA XÁC THỰC</span>'+
       '<div style="font-size:11px;color:var(--gray);margin-top:5px;">Cần Firebase Auth + role owner/staff</div>';
@@ -1847,26 +1860,36 @@ if(!guestTableId){
     renderCurrentView();
   }
   if(firebaseReady){
-    FirebaseService.onAuthStateChanged(function(user){
-      adminAuthResolved = true;
-      currentUid = user ? user.uid : null;
+    FirebaseService.onAuthStateChanged(function(){
+      adminAuthResolved = false;
       currentRole = null;
       currentAccounts = {};
-      if(!user || user.isAnonymous){
+      var authenticatedUser = auth && auth.currentUser;
+      currentUid = authenticatedUser ? authenticatedUser.uid : null;
+      renderAuthBox();
+      if(!authenticatedUser || authenticatedUser.isAnonymous){
+        adminAuthResolved = true;
         renderAdminAfterAuth();
         return;
       }
-      FirebaseService.read("Restaurant/Accounts/"+user.uid).then(function(account){
-        account = account || null;
-        if(account && (account.role === "owner" || account.role === "staff")){
-          currentAccounts[user.uid] = account;
-          currentRole = account.role;
+      var rolePath = "Restaurant/Accounts/"+authenticatedUser.uid+"/role";
+      FirebaseService.read(rolePath).then(function(role){
+        role = typeof role === "string" ? role.toLowerCase() : "";
+        if(role === "owner" || role === "staff"){
+          currentRole = role;
+          currentAccounts[authenticatedUser.uid] = {
+            uid: authenticatedUser.uid,
+            email: authenticatedUser.email || "",
+            name: authenticatedUser.displayName || authenticatedUser.email || "Admin",
+            role: role
+          };
           return logAccess(currentRole);
         }
         return Promise.resolve();
       }).catch(function(err){
-        console.warn("Không đọc được role Admin:", err && err.message);
+        console.warn("Không đọc được role Admin tại "+rolePath+":", err && err.message);
       }).then(function(){
+        adminAuthResolved = true;
         renderAdminAfterAuth();
         if(isStaffOrOwner()){
           runMigrations().catch(function(err){
