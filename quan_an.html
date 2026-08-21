@@ -1047,14 +1047,14 @@ var guestOrderUnsubscribe = null;
 var activeGuestOrderService = null;
 var activeGuestOrderFromOnline = false;
 var GUEST_ORDER_STATUS_LABELS = {
-  pending: "Chờ xử lý", preparing: "Đang chế biến", completed: "Đã hoàn thành",
+  pending: "Chờ xử lý", accepted: "Đã tiếp nhận", preparing: "Đang chế biến", completed: "Đã hoàn thành",
   waiting_delivery: "Chờ giao hàng", delivered: "Đã giao", served: "Phục vụ",
   payment: "Thanh toán", finished: "Hoàn tất", cancelled: "Đã huỷ"
 };
 var GUEST_ORDER_FLOW = {
-  TAKEAWAY: ["pending","preparing","completed","waiting_delivery","delivered","payment","finished"],
-  ONLINE: ["pending","preparing","completed","waiting_delivery","delivered","payment","finished"],
-  DINE_IN: ["pending","preparing","completed","served","payment","finished"]
+  TAKEAWAY: ["pending","accepted","preparing","completed","waiting_delivery","delivered","payment","finished"],
+  ONLINE: ["pending","accepted","preparing","completed","waiting_delivery","delivered","payment","finished"],
+  DINE_IN: ["pending","accepted","preparing","completed","served","payment","finished"]
 };
 function guestOrderTypeLabel(type){ return ({TAKEAWAY:"Mang về", ONLINE:"Giao hàng Online", DINE_IN:"Ăn tại quán"}[type]) || type; }
 /* Đặt hàng Online dùng một app Firebase phụ để khách Anonymous không làm
@@ -1094,23 +1094,38 @@ function guestOrderTotal(itemsMap, menuItems){
     return total + (it ? (Number(it.price)||0) * (Number(itemsMap[id])||0) : 0);
   }, 0);
 }
+function buildGuestItemDetails(itemsMap, menuItems){
+  var details = {};
+  Object.keys(itemsMap||{}).forEach(function(id){
+    var it = (menuItems||{})[id] || {};
+    var qty = Number(itemsMap[id]) || 0, unitPrice = Number(it.price) || 0;
+    details[id] = {name:it.name || id, quantity:qty, unitPrice:unitPrice, lineTotal:unitPrice*qty};
+  });
+  return details;
+}
 function createGuestOrder(orderType, tableId, itemsMap, customer, orderService){
   var service = orderService || FirebaseService;
   var currentUser = service.getCurrentUser ? service.getCurrentUser() : (auth && auth.currentUser);
   var orderId = service.generateKey("Restaurant/Orders");
-  var base = {
-    tableId: tableId || "", status: "pending", source: "guest_qr", orderType: orderType,
-    ownerUid: currentUser ? currentUser.uid : "",
-    items: itemsMap, note: customer.note || "", customerName: customer.name || "Khách QR",
-    phone: customer.phone || "", address: customer.address || "", createdAt: Date.now()
-  };
+  var prepareOrder = service.read("Restaurant/MenuItems").then(function(menuItems){
+    var itemDetails = customer.itemDetails && Object.keys(customer.itemDetails).length ? customer.itemDetails : buildGuestItemDetails(itemsMap, menuItems || {});
+    var computedTotal = Object.keys(itemDetails).reduce(function(sum,id){ return sum + (Number(itemDetails[id].lineTotal)||0); }, 0);
+    return {
+      tableId: tableId || "", status: "pending", source: "guest_qr", orderType: orderType,
+      ownerUid: currentUser ? currentUser.uid : "",
+      items: itemsMap, itemDetails: itemDetails, note: customer.note || "", customerName: customer.name || "Khách QR",
+      phone: customer.phone || "", address: customer.address || "", createdAt: Date.now(), updatedAt: Date.now(), totalAmount: computedTotal
+    };
+  });
   var writeOrder = function(tableName){
-    base.tableName = tableName || "";
-    return service.write("Restaurant/Orders/"+orderId, base).then(function(){
-      return Promise.all([
-        notifyFarmNewOrder("food", "Đơn khách "+guestOrderTypeLabel(orderType), service),
-        pushOrderAlert(orderType === "DINE_IN" ? "table" : "online", {orderId:orderId, customerName:base.customerName, tableId:tableId||"", tableName:base.tableName, message:"🛎️ Đơn khách mới – "+base.customerName}, service)
-      ]);
+    return prepareOrder.then(function(base){
+      base.tableName = tableName || "";
+      return service.write("Restaurant/Orders/"+orderId, base).then(function(){
+        return Promise.all([
+          notifyFarmNewOrder("food", "Đơn khách "+guestOrderTypeLabel(orderType), service),
+          pushOrderAlert(orderType === "DINE_IN" ? "table" : "online", {orderId:orderId, customerName:base.customerName, tableId:tableId||"", tableName:base.tableName, message:"🛎️ Đơn khách mới – "+base.customerName}, service)
+        ]);
+      });
     }).then(function(){ return orderId; });
   };
   if(orderType !== "DINE_IN") return writeOrder("");
@@ -1393,6 +1408,47 @@ function quickMenuTotal(){
     return total + (item ? (Number(item.price)||0) * (Number(quickMenuCart[id])||0) : 0);
   }, 0);
 }
+function openQuickMenuCheckout(){
+  if(Object.keys(quickMenuCart).filter(function(id){ return quickMenuCart[id] > 0; }).length === 0){ showToast("Bill đang trống."); return; }
+  var root = document.getElementById("modalRoot");
+  root.innerHTML = '<div class="modal-overlay" id="quickMenuCheckoutOverlay"><div class="modal" style="max-width:560px;">'+
+    '<h3>Xác nhận đặt hàng</h3>'+
+    '<div class="field"><label>Hình thức nhận món *</label><div class="guest-choice-row"><label><input type="radio" name="quickOrderType" value="TAKEAWAY" checked>Mang về</label><label><input type="radio" name="quickOrderType" value="ONLINE">Giao hàng Online</label></div></div>'+
+    '<div class="field"><label>Tên khách hàng *</label><input id="quickCustomerName" autocomplete="name"></div>'+
+    '<div class="field"><label>Số điện thoại *</label><input id="quickCustomerPhone" type="tel" autocomplete="tel"></div>'+
+    '<div class="field" id="quickAddressField"><label>Địa chỉ giao hàng *</label><input id="quickCustomerAddress" autocomplete="street-address"></div>'+
+    '<div class="field"><label>Ghi chú</label><textarea id="quickCustomerNote" rows="2"></textarea></div>'+
+    '<div id="quickCheckoutError" style="color:#B91C1C;font-size:12px;margin-bottom:8px;"></div>'+
+    '<div class="modal-actions"><button class="btn btn-secondary" id="quickCheckoutBackBtn">Quay lại Bill</button><button class="btn btn-primary" id="quickCheckoutSubmitBtn">Xác nhận đặt hàng</button></div>'+
+    '</div></div>';
+  function syncQuickType(){
+    var type = document.querySelector('input[name="quickOrderType"]:checked').value;
+    document.getElementById("quickAddressField").style.display = type === "ONLINE" ? "block" : "none";
+  }
+  root.querySelectorAll('input[name="quickOrderType"]').forEach(function(r){ r.onchange = syncQuickType; });
+  syncQuickType();
+  document.getElementById("quickCheckoutBackBtn").onclick = openQuickMenuBill;
+  document.getElementById("quickCheckoutSubmitBtn").onclick = function(){
+    var type = document.querySelector('input[name="quickOrderType"]:checked').value;
+    var name = document.getElementById("quickCustomerName").value.trim();
+    var phone = document.getElementById("quickCustomerPhone").value.trim();
+    var address = document.getElementById("quickCustomerAddress").value.trim();
+    var note = document.getElementById("quickCustomerNote").value.trim();
+    var error = document.getElementById("quickCheckoutError");
+    error.textContent = "";
+    if(!name || !phone){ error.textContent = "Vui lòng nhập tên khách hàng và số điện thoại."; return; }
+    if(type === "ONLINE" && !address){ error.textContent = "Vui lòng nhập địa chỉ giao hàng."; return; }
+    var submit = document.getElementById("quickCheckoutSubmitBtn"); submit.disabled = true;
+    getGuestOrderService().then(function(service){
+      return createGuestOrder(type, "", quickMenuCart, {name:name, phone:phone, address:address, note:note, itemDetails:buildGuestItemDetails(quickMenuCart, quickMenuItems), totalAmount:quickMenuTotal()}, service).then(function(orderId){
+        quickMenuCart = {};
+        root.innerHTML = "";
+        renderQuickOrderMenu();
+        showGuestOrderConfirmation(orderId, service);
+      });
+    }).catch(function(err){ submit.disabled = false; error.textContent = err && err.message ? err.message : "Không thể tạo đơn hàng."; });
+  };
+}
 function openQuickMenuBill(){
   var ids = Object.keys(quickMenuCart).filter(function(id){ return quickMenuItems[id] && quickMenuCart[id] > 0; });
   var rows = ids.map(function(id){
@@ -1406,9 +1462,9 @@ function openQuickMenuBill(){
   document.getElementById("modalRoot").innerHTML = '<div class="modal-overlay" id="quickMenuBillOverlay"><div class="modal" style="max-width:620px;"><h3>Bill / Giỏ hàng</h3>'+
     '<div style="max-height:360px;overflow:auto;">'+(rows||'<div style="color:var(--gray);font-size:13px;">Chưa có món được chọn.</div>')+'</div>'+
     '<div style="display:flex;justify-content:flex-end;font-weight:800;margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">Tổng: '+fmtVND(quickMenuTotal())+'</div>'+
-    '<div class="modal-actions"><button class="btn btn-secondary" id="quickBillContinueBtn">Tiếp tục chọn món</button><button class="btn btn-primary" id="quickBillCloseBtn">Đóng Bill</button></div></div></div>';
+    '<div class="modal-actions"><button class="btn btn-secondary" id="quickBillContinueBtn">Tiếp tục chọn món</button><button class="btn btn-primary" id="quickBillCloseBtn">Xác nhận đặt hàng</button></div></div></div>';
   document.getElementById("quickBillContinueBtn").onclick = function(){ document.getElementById("modalRoot").innerHTML = ""; };
-  document.getElementById("quickBillCloseBtn").onclick = function(){ document.getElementById("modalRoot").innerHTML = ""; };
+  document.getElementById("quickBillCloseBtn").onclick = openQuickMenuCheckout;
   document.querySelectorAll(".quickBillQty").forEach(function(input){ input.onchange = function(){ quickMenuCart[input.dataset.id] = Math.max(1, parseInt(input.value,10) || 1); openQuickMenuBill(); renderQuickOrderMenu(); }; });
   document.querySelectorAll(".quickBillRemove").forEach(function(button){ button.onclick = function(){ delete quickMenuCart[button.dataset.id]; openQuickMenuBill(); renderQuickOrderMenu(); }; });
 }
@@ -1673,7 +1729,7 @@ function openOrderBuilderModal(tableId, orderId, tables, menuItems){
   refresh();
 }
 function guestAdminActionLabel(nextStatus){
-  return ({preparing:"Nhận đơn / Đang chế biến", completed:"Hoàn thành món", waiting_delivery:"Giao hàng", delivered:"Đã giao", served:"Phục vụ", payment:"Thanh toán", finished:"Hoàn tất"}[nextStatus]) || ("Chuyển: "+guestOrderStatusLabel(nextStatus));
+  return ({accepted:"Tiếp nhận đơn hàng", preparing:"Đang chế biến", completed:"Đã hoàn thành", waiting_delivery:"Giao hàng", delivered:"Đã giao", served:"Phục vụ", payment:"Thanh toán", finished:"Hoàn tất"}[nextStatus]) || ("Chuyển: "+guestOrderStatusLabel(nextStatus));
 }
 function renderTickets(){
   var el = document.getElementById("viewContent");
@@ -1703,13 +1759,15 @@ function renderTickets(){
     var orderList = Object.keys(orders).filter(function(id){ return orders[id].source === "guest_qr"; }).sort(function(a,b){ return (orders[b].createdAt||0) - (orders[a].createdAt||0); });
     var orderRows = orderList.map(function(id){
       var o=orders[id], flow=GUEST_ORDER_FLOW[o.orderType]||GUEST_ORDER_FLOW.TAKEAWAY, statusIndex=flow.indexOf(o.status);
-      var itemLines=Object.keys(o.items||{}).map(function(k){ var it=menuItems[k]; return (it?it.name:k)+" × "+o.items[k]; }).join(", ");
+      var details=o.itemDetails||{};
+      var itemLines=Object.keys(o.items||{}).map(function(k){ var d=details[k], it=menuItems[k], qty=Number(o.items[k])||0, unit=d ? Number(d.unitPrice)||0 : (it ? Number(it.price)||0 : 0), name=d&&d.name ? d.name : (it?it.name:k); return name+" × "+qty+" ("+fmtVNDQA(unit)+")"; }).join(", ");
+      var orderTotal=Number(o.totalAmount)||Object.keys(o.items||{}).reduce(function(sum,k){ var d=details[k], it=menuItems[k], unit=d ? Number(d.unitPrice)||0 : (it ? Number(it.price)||0 : 0); return sum+(Number(o.items[k])||0)*unit; },0);
       var nextStatus = flow[statusIndex+1], actions = "";
       if(o.status !== "finished" && o.status !== "cancelled" && nextStatus) actions += '<button class="btn btn-primary guestOrderActBtn" data-id="'+id+'" data-s="'+nextStatus+'">'+guestAdminActionLabel(nextStatus)+'</button>';
       if(o.status !== "finished" && o.status !== "cancelled") actions += ' <button class="btn btn-danger guestOrderActBtn" data-id="'+id+'" data-s="cancelled">Huỷ</button>';
-      return '<tr><td>'+esc(o.customerName||"Khách QR")+'<br><span style="color:var(--gray);font-size:11px;">'+esc(o.phone||"")+(o.ownerUid?'<br><span style="font-size:10px;color:var(--gray);">Anonymous: '+esc(o.ownerUid)+'</span>':"")+'</span></td>'+
-        '<td>'+esc(guestOrderTypeLabel(o.orderType))+(o.tableName?'<br><span style="color:var(--gray);font-size:11px;">Bàn '+esc(o.tableName)+'</span>':"")+'</td>'+
-        '<td style="max-width:240px;">'+esc(itemLines)+'<br><span style="color:var(--gray);font-size:11px;">'+fmtVNDQA(guestOrderTotal(o.items, menuItems))+'</span></td>'+
+      return '<tr><td>'+esc(o.customerName||"Khách QR")+'<br><span style="color:var(--gray);font-size:11px;">'+esc(o.phone||"")+(o.address?'<br>'+esc(o.address):"")+(o.ownerUid?'<br><span style="font-size:10px;color:var(--gray);">Anonymous: '+esc(o.ownerUid)+'</span>':"")+'</span></td>'+
+        '<td>'+esc(guestOrderTypeLabel(o.orderType))+(o.tableName?'<br><span style="color:var(--gray);font-size:11px;">Bàn '+esc(o.tableName)+'</span>':"")+'<br><span style="color:var(--gray);font-size:10px;">'+esc(o.createdAt ? new Date(o.createdAt).toLocaleString("vi-VN") : "")+'</span></td>'+
+        '<td style="max-width:260px;">'+esc(itemLines)+'<br><span style="color:var(--gray);font-size:11px;font-weight:700;">Tổng: '+fmtVNDQA(orderTotal)+'</span></td>'+
         '<td><span class="badge b-'+esc(o.status)+'">'+esc(guestOrderStatusLabel(o.status))+'</span><br><span style="color:var(--gray);font-size:10px;">'+flow.map(function(s,i){return i===statusIndex?"<b>"+esc(guestOrderStatusLabel(s))+"</b>":esc(guestOrderStatusLabel(s));}).join(" → ")+'</span></td>'+
         '<td>'+actions+'</td></tr>';
     }).join("");
