@@ -257,7 +257,7 @@ var farmDashboardMedia = { imageUrl:null, videoUrl:null };
    https://firebase.google.com/docs/auth/web/start
    Bọc try/catch: nếu SDK Firebase không tải được (mạng chặn CDN, v.v.),
    ứng dụng vẫn không phát sinh lỗi Console không bắt được — sẽ hiển thị
-   thông báo chờ cấu hình thay vì màn hình tr���������������ng hoặc lỗi đỏ trong Console.
+   thông báo chờ cấu hình thay vì màn hình tr�����������������ng hoặc lỗi đỏ trong Console.
    ========================================================================= */
 var db = null, auth = null, firebaseReady = false;
 try{
@@ -504,7 +504,6 @@ var DEFAULT_ZONES = [
 // Số ô mặc định cho từng khu mặc định (mục 1.2) — dùng bởi migration v2 để
 // tự động sinh đủ số ô khi khu mặc định đó chưa có ô nào.
 var DEFAULT_ZONE_CELL_COUNTS = {
-  K1: {male:70, female:80}, K2: {male:70, female:80},
   K3: {count:50}, K4: {perSegment:2}, K5: {count:5}, K6: {count:10}
 };
 var BABY_SEGMENTS = ["3-4 lạng","5-7 lạng","8 lạng-1kg1"];
@@ -569,19 +568,7 @@ var MIGRATIONS = {
         if(!spec) return; // không phải khu mặc định (khu do chủ trại tự thêm) — bỏ qua
         if(cellCountByZone[zid]) return; // khu đã có ô — không tự sinh thêm, tránh trùng
         if(zone.type === "breeding"){
-          var pfx = ZONE_TYPE_PREFIX.breeding;
-          for(var i=1;i<=spec.male;i++){
-            var mid = FirebaseService.generateKey("Farm/Cells");
-            var mc = buildDefaultCell(zone, {zoneId:zid, sex:"male"});
-            mc.code = zone.code+"-"+pfx.male+"-"+pad(i,pfx.pad);
-            updates["Farm/Cells/"+mid] = mc;
-          }
-          for(var j=1;j<=spec.female;j++){
-            var fid = FirebaseService.generateKey("Farm/Cells");
-            var fc = buildDefaultCell(zone, {zoneId:zid, sex:"female"});
-            fc.code = zone.code+"-"+pfx.female+"-"+pad(j,pfx.pad);
-            updates["Farm/Cells/"+fid] = fc;
-          }
+          return;
         } else if(zone.type === "juvenile"){
           var jpfx = ZONE_TYPE_PREFIX.juvenile;
           for(var k=1;k<=spec.count;k++){
@@ -818,17 +805,6 @@ function addBreedingRow(zoneId, sex, name, layout){
       return FirebaseService.updateMultiPath(updates).then(function(){return true;});
     });
   }
-  function resetKhu1BreedingData(zone, layouts){
-    if(!zone || zone.type !== "breeding" || String(zone.code||"").toUpperCase() !== "K1") throw new Error("Chỉ được reset dữ liệu Khu 1.");
-    return FirebaseService.queryEqualTo("Farm/Cells","zoneId",zone.id).then(function(cells){
-      var updates={}; Object.keys(cells||{}).forEach(function(id){ updates["Farm/Cells/"+id]=null; });
-      var rowNames={C5:"Cái C5",C3:"Cái C3",C4:"Cái C4",D2:"Đực D2",D1:"Đực D1",C1:"Cái C1",C2:"Cái C2"};
-      var sexes={C5:"female",C3:"female",C4:"female",D2:"male",D1:"male",C1:"female",C2:"female"};
-      var rows={}; Object.keys(rowNames).forEach(function(code){ rows[code]={code:code,name:rowNames[code],sex:sexes[code],layout:layouts[code]==="two"?"two":"one"}; });
-      updates["Farm/Zones/"+zone.id+"/breedingRows"]=rows;
-      return FirebaseService.updateMultiPath(updates);
-    });
-  }
   function addCell(zoneId, opts){
   opts=opts||{};
   return FirebaseService.read("Farm/Zones/"+zoneId).then(function(zone){
@@ -836,9 +812,9 @@ function addBreedingRow(zoneId, sex, name, layout){
       var codes = Object.keys(cells).map(function(k){ return cells[k].code; });
       var prefix, padW;
       if(zone.type === "breeding"){
-        var pfx = ZONE_TYPE_PREFIX.breeding;
-        var rowCode = opts.rowCode || (opts.sex === "male" ? pfx.male : pfx.female);
-        prefix = zone.code + "-" + rowCode + "-"; padW = pfx.pad;
+        var rowCode = String(opts.rowCode||"").trim();
+        if(!rowCode) throw new Error("Phải chọn dãy trước khi thêm ô.");
+        prefix = zone.code + "-" + rowCode + "-"; padW = 3;
       } else {
         var p2 = ZONE_TYPE_PREFIX[zone.type];
         prefix = zone.code + "-" + p2.single; padW = p2.pad;
@@ -2052,7 +2028,7 @@ function renderZoneDetailBody(container, zone, zoneCells){
   var addCellBtn = "";
   var breedingRowActions = "";
   if(zone.type === "breeding"){
-    var actionRows = breedingRows(zone,zoneCells.reduce(function(a,c){a[c.id]=c;return a;},{}));
+    var actionRows = breedingRows(zone);
     breedingRowActions = Object.keys(actionRows).map(function(k){var r=actionRows[k];return '<button type="button" class="btn btn-secondary breeding-row-edit" data-row-code="'+esc(r.code)+'">Sửa '+esc(r.name)+'</button><button type="button" class="btn btn-danger breeding-row-delete" data-row-code="'+esc(r.code)+'">Xóa</button>';}).join("");
   }
   if(isStaffOrOwner()){
@@ -2065,7 +2041,6 @@ function renderZoneDetailBody(container, zone, zoneCells){
     }
   }
   var delZoneBtn = isOwner() ? '<button class="btn btn-danger" id="btnDelZone"><span class="material-symbols-outlined">delete</span>Xoá khu này</button>' : "";
-  var resetK1Btn = isOwner() && zone.type === "breeding" && String(zone.code||"").toUpperCase() === "K1" ? '<button class="btn btn-danger" id="btnResetK1"><span class="material-symbols-outlined">restart_alt</span>Reset dữ liệu Khu 1</button>' : "";
   function renderBreedingMap(){
     var labels={vacant:"Trống",nursing:"Đang nuôi con",ready:"Sẵn sàng ghép",pairing:"Đang ghép",just_separated_male:"Mới tách đực",not_pregnant:"Cần theo dõi, xử lý",in_treatment:"Đang điều trị"};
     var rows=breedingRows(zone), cells=zoneCells.filter(function(c){return c&&c.id&&c.zoneId===zone.id;}), byRow={};
@@ -2093,7 +2068,7 @@ function renderZoneDetailBody(container, zone, zoneCells){
     '</div>'+
     '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">'+
       '<div style="font-weight:800;">'+esc(zone.name)+' <span style="font-weight:500;color:var(--gray);font-size:12px;">('+esc(ZONE_TYPE_LABEL[zone.type]||zone.type)+')</span></div>'+
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'+addCellBtn+breedingRowActions+resetK1Btn+delZoneBtn+'</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'+addCellBtn+breedingRowActions+delZoneBtn+'</div>'+
     '</div>'+cellsHtml+'</div>';
 
   container.querySelectorAll(".k1-row-add").forEach(function(btn){ btn.onclick=function(){ var code=btn.getAttribute("data-row-code"), rows=breedingRows(zone), key=Object.keys(rows).filter(function(k){return rows[k].code===code;})[0], r=rows[key]; if(!r)return; addCell(zone.id,{sex:r.sex,rowCode:r.code,rowName:r.name}).then(function(){renderZones();}).catch(function(e){showToast(e.message||"Không thêm được ô.");}); }; });
@@ -2106,12 +2081,6 @@ function renderZoneDetailBody(container, zone, zoneCells){
   };
   var btnClear = document.getElementById("btnClearZoneFilter");
   if(btnClear) btnClear.onclick = function(){ window.__zoneDetailFilter = null; renderZones(); };
-  if(document.getElementById("btnResetK1")) document.getElementById("btnResetK1").onclick = function(){
-    if(!confirm("Reset sẽ xóa toàn bộ dãy và ô cũ của Khu 1, giữ nguyên các nghiệp vụ. Tiếp tục?")) return;
-    var rowNames={C5:"Cái C5",C3:"Cái C3",C4:"Cái C4",D2:"Đực D2",D1:"Đực D1",C1:"Cái C1",C2:"Cái C2"};
-    var fields=Object.keys(rowNames).map(function(code){return {id:code,label:rowNames[code]+" — số hàng",type:"select",options:[{value:"one",label:"1 hàng"},{value:"two",label:"2 hàng"}],required:true};});
-    openFormModal("Cấu hình dãy Khu 1",fields,function(v){ resetKhu1BreedingData(zone,v).then(function(){closeModal();showToast("Đã reset Khu 1 theo cấu hình số hàng đã chọn.");renderZones();}).catch(function(e){showToast(e.message||"Không reset được dữ liệu Khu 1.");}); },"Reset và tạo dãy");
-  };
   if(document.getElementById("btnDelZone")) document.getElementById("btnDelZone").onclick = function(){
     if(confirm("Xoá khu này sẽ xoá toàn bộ ô bên trong. Tiếp tục?")) deleteZone(window.__activeZone).then(function(){
       window.__zoneViewMode = "overview"; window.__zoneDetailFilter = null; renderZones();
@@ -2122,13 +2091,13 @@ function renderZoneDetailBody(container, zone, zoneCells){
     openFormModal("Thêm dãy sinh sản",[{id:"sex",label:"Loại dãy",type:"select",options:[{value:"male",label:"Đực"},{value:"female",label:"Cái"}],required:true},{id:"layout",label:"Số hàng",type:"select",options:[{value:"one",label:"1 hàng"},{value:"two",label:"2 hàng"}],required:true},{id:"name",label:"Tên dãy",required:true}],function(v){ addBreedingRow(zone.id,v.sex,v.name,v.layout).then(function(){closeModal();renderZones();}).catch(function(e){showToast(e.message||"Không tạo được dãy.");}); },"Tạo dãy");
   };
   container.querySelectorAll(".breeding-row-edit").forEach(function(btn){ btn.onclick=function(){
-    var code=btn.getAttribute("data-row-code"), rows=breedingRows(zone,zoneCells.reduce(function(a,c){a[c.id]=c;return a;},{})), r=rows[Object.keys(rows).filter(function(k){return rows[k].code===code;})[0]];
-    if(!r || r.legacy){showToast("Dãy cũ chỉ đọc tên và có thể dùng để thêm ô.");return;}
+    var code=btn.getAttribute("data-row-code"), rows=breedingRows(zone), r=rows[Object.keys(rows).filter(function(k){return rows[k].code===code;})[0]];
+    if(!r){showToast("Không tìm thấy dãy.");return;}
     openFormModal("Sửa dãy "+r.name,[{id:"sex",label:"Loại dãy",type:"select",options:[{value:"male",label:"Đực"},{value:"female",label:"Cái"}],value:r.sex,required:true},{id:"layout",label:"Số hàng",type:"select",options:[{value:"one",label:"1 hàng"},{value:"two",label:"2 hàng"}],value:r.layout||"one",required:true},{id:"name",label:"Tên dãy",value:r.name,required:true}],function(v){updateBreedingRow(zone.id,code,v.name,v.sex,v.layout).then(function(){closeModal();renderZones();}).catch(function(e){showToast(e.message||"Không sửa được dãy.");});},"Lưu");
   }; });
   container.querySelectorAll(".breeding-row-delete").forEach(function(btn){ btn.onclick=function(){ var code=btn.getAttribute("data-row-code"); if(confirm("Xác nhận xóa dãy này?")) deleteBreedingRow(zone.id,code).then(function(){renderZones();}).catch(function(e){showToast(e.message||"Không xóa được dãy.");}); }; });
   if(document.getElementById("btnAddBreedingCell")) document.getElementById("btnAddBreedingCell").onclick = function(){
-    var rows=breedingRows(zone,zoneCells.reduce(function(a,c){a[c.id]=c;return a;},{}));
+    var rows=breedingRows(zone);
     var options=Object.keys(rows).map(function(k){return {value:rows[k].code,label:rows[k].name+" ("+(rows[k].sex==="male"?"Đực":"Cái")+")"};});
     var rowActions=Object.keys(rows).map(function(k){var r=rows[k];return '<button class="btn btn-secondary breeding-row-edit" data-row-code="'+esc(r.code)+'">Sửa dãy '+esc(r.name)+'</button>';}).join("");
     if(!options.length){showToast("Hãy tạo dãy trước khi thêm ô.");return;}
