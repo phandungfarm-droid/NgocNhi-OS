@@ -73,6 +73,7 @@
   /* ===== LAYOUT ===== */
   .app{
     display:flex;
+    align-items:flex-start;
     min-height:100vh;
     max-width:1536px;
     margin:0 auto;
@@ -158,10 +159,11 @@
   .sidebar-user .material-symbols-outlined{color:var(--gray-light);font-size:18px;}
 
   /* ===== MAIN ===== */
-  .main{flex:1;min-width:0;padding:20px 24px 32px 24px;display:flex;flex-direction:column;gap:20px;}
+  .main{flex:1;min-width:0;margin:0;padding:0 24px 32px 24px;display:flex;flex-direction:column;gap:16px;align-self:flex-start;position:relative;top:0;}
 
   /* ---- Topbar ---- */
   .topbar{
+    margin-top:0;
     background:linear-gradient(135deg, #ffffff 0%, #F6FBF7 45%, #EEF8F1 100%);
     border:1px solid #E6F2EA;
     border-radius:var(--radius-lg);
@@ -645,12 +647,13 @@
       </div>
       <button id="btnOpenCenterLogin" type="button" title="Đăng nhập Admin"><span class="material-symbols-outlined">login</span></button>
     </div>
-  </div>
+  </aside>
 
   <div id="centerLoginOverlay" class="modal-overlay-fc hidden-view">
     <div class="modal-fc">
       <h3>Đăng nhập Trung tâm điều hành</h3>
       <div style="font-size:12px;color:var(--gray);margin-bottom:14px;">Chỉ đăng nhập khi cần chức năng Nhân viên hoặc Admin. Phiên Firebase sẽ được dùng chung khi chuyển sang các phân hệ khác.</div>
+      <div class="field"><label>Loại tài khoản</label><select id="centerLoginRole"><option value="owner">ADMIN</option><option value="staff">NHÂN VIÊN</option></select></div>
       <div class="field"><label>Email</label><input type="email" id="centerLoginEmail" placeholder="ten@ngocnhi.vn"></div>
       <div class="field"><label>Mật khẩu</label><input type="password" id="centerLoginPassword"></div>
       <div id="centerLoginError" style="color:#B91C1C;font-size:12px;margin-bottom:8px;"></div>
@@ -1324,6 +1327,7 @@
   if(centerLoginCancel) centerLoginCancel.onclick = closeCenterLogin;
   var centerLoginSubmit = document.getElementById("centerLoginSubmit");
   if(centerLoginSubmit) centerLoginSubmit.onclick = function(){
+    var requestedRole = document.getElementById("centerLoginRole").value;
     var email = document.getElementById("centerLoginEmail").value.trim();
     var pass = document.getElementById("centerLoginPassword").value;
     var errEl = document.getElementById("centerLoginError");
@@ -1332,7 +1336,13 @@
     if(!pass){ errEl.textContent = "Nhập mật khẩu."; return; }
     if(!auth){ errEl.textContent = "Firebase Auth chưa sẵn sàng."; return; }
     centerLoginSubmit.disabled = true;
-    auth.signInWithEmailAndPassword(email, pass).then(function(){ closeCenterLogin(); }).catch(function(err){ errEl.textContent = "Sai email hoặc mật khẩu."; console.warn(err); }).then(function(){ centerLoginSubmit.disabled = false; });
+    auth.signInWithEmailAndPassword(email, pass).then(function(credential){
+      var resolver = window.NgocNhiAuth && window.NgocNhiAuth.resolveRole;
+      return resolver ? resolver(auth, db, credential.user).then(function(result){
+        if(!result || result.role !== requestedRole){ return auth.signOut().then(function(){ throw new Error(requestedRole === "owner" ? "Tài khoản không có role ADMIN." : "Tài khoản không có role NHÂN VIÊN."); }); }
+        closeCenterLogin();
+      }) : Promise.reject(new Error("Chưa sẵn sàng kiểm tra role."));
+    }).catch(function(err){ errEl.textContent = err && err.message && err.message.indexOf("role") !== -1 ? err.message : "Sai email, mật khẩu hoặc role tài khoản."; console.warn(err); }).then(function(){ centerLoginSubmit.disabled = false; });
   };
 
   // ---- 4) Render 1 khung ảnh module theo đúng khung/kích thước/bo góc hiện có ----
@@ -1639,35 +1649,8 @@
   // Lắng nghe realtime — trả về hàm huỷ đăng ký (không dùng ở đây vì trang không unmount, nhưng giữ đúng chuẩn).
   function listen(path, cb){
     var r = db.ref(path);
-    var protectedPath = path !== "Restaurant/MenuItems";
-    var active = false;
-    var authUnsub = null;
-    var attach = function(){
-      if(active) return;
-      if(protectedPath && (!auth || !auth.currentUser || !isCurrentUserStaff())) return;
-      active = true;
-      r.on("value", function(snap){ cb(snap.val()); }, function(err){ console.warn("Lỗi lắng nghe "+path+":", err && err.message); });
-    };
-    var detach = function(){
-      if(active){ r.off("value"); active = false; }
-    };
-    attach();
-    if(protectedPath && auth){
-      authUnsub = auth.onAuthStateChanged(function(user){
-        detach();
-        if(!user){ return; }
-        var resolver = window.NgocNhiAuth && window.NgocNhiAuth.resolveRole;
-        var rolePromise = resolver ? resolver(auth, db, user) : Promise.resolve({role:null});
-        rolePromise.then(function(result){
-          var role = result && result.role;
-          if(role === "owner" || role === "staff") attach();
-        }).catch(function(err){ console.warn("Không xác thực quyền realtime "+path+":", err && err.message); });
-      });
-    }
-    return function(){
-      detach();
-      if(authUnsub) authUnsub();
-    };
+    r.on("value", function(snap){ cb(snap.val()); }, function(err){ console.warn("Lỗi lắng nghe "+path+":", err && err.message); });
+    return function(){ r.off("value"); };
   }
 
   var todayEl = document.getElementById("qiToday");
