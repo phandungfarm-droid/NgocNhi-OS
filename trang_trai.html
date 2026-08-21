@@ -257,7 +257,7 @@ var farmDashboardMedia = { imageUrl:null, videoUrl:null };
    https://firebase.google.com/docs/auth/web/start
    Bọc try/catch: nếu SDK Firebase không tải được (mạng chặn CDN, v.v.),
    ứng dụng vẫn không phát sinh lỗi Console không bắt được — sẽ hiển thị
-   thông báo chờ cấu hình thay vì màn hình tr�������������ng hoặc lỗi đỏ trong Console.
+   thông báo chờ cấu hình thay vì màn hình tr���������������ng hoặc lỗi đỏ trong Console.
    ========================================================================= */
 var db = null, auth = null, firebaseReady = false;
 try{
@@ -1779,7 +1779,7 @@ function refreshFacilitySwitcher(){
     facilityNamesCache = facilities;
     var sel = document.getElementById("facilitySwitcher");
     if(!sel) return;
-    sel.innerHTML = '<option value="">Cơ sở 1 (đầu mối)</option>' +
+    sel.innerHTML = '<option value="">Cơ sở 1 (��ầu mối)</option>' +
       Object.keys(facilities).map(function(id){ return '<option value="'+id+'">'+esc(facilities[id].name)+'</option>'; }).join("");
     sel.value = currentFacilityId || "";
   });
@@ -2066,56 +2066,22 @@ function renderZoneDetailBody(container, zone, zoneCells){
   }
   var delZoneBtn = isOwner() ? '<button class="btn btn-danger" id="btnDelZone"><span class="material-symbols-outlined">delete</span>Xoá khu này</button>' : "";
   var resetK1Btn = isOwner() && zone.type === "breeding" && String(zone.code||"").toUpperCase() === "K1" ? '<button class="btn btn-danger" id="btnResetK1"><span class="material-symbols-outlined">restart_alt</span>Reset dữ liệu Khu 1</button>' : "";
-  var isKhu1Breeding = zone.type === "breeding" && /khu\s*1/i.test(zone.name||"");
-  function renderKhu1Map(){
-  var labels = {vacant:"Trống",nursing:"Đang nuôi con",ready:"Sẵn sàng ghép",pairing:"Đang ghép",just_separated_male:"Mới tách đực",not_pregnant:"Cần theo dõi, xử lý",in_treatment:"Đang điều trị"};
-  var rowData = breedingRows(zone);
-    var stateClass = function(c){ return "k1-"+String(c.state||"vacant").replace(/_/g,"-"); };
-  var realCells = zoneCells.filter(function(c){ return c && c.id && c.zoneId === zone.id; }).sort(function(a,b){ return String(a.code||"").localeCompare(String(b.code||""),undefined,{numeric:true}); });
-  var rowByCode = {}; Object.keys(rowData).forEach(function(k){ rowByCode[rowData[k].code]=rowData[k]; });
-  var cellRow = function(c){ return c.rowCode && rowByCode[c.rowCode] ? c.rowCode : null; };
-  var female = realCells.filter(function(c){ return c.sex === "female"; });
-  var male = realCells.filter(function(c){ return c.sex === "male"; });
-    var suffix = function(c){ var m=String(c.code||"").match(/(\\d+)$/); return m ? Number(m[1]) : 0; };
-  var fixed = {}; Object.keys(rowByCode).forEach(function(code){ fixed[code]=[]; });
-  realCells.forEach(function(c){ var code=cellRow(c); if(!fixed[code]) fixed[code]=[]; fixed[code].push(c); });
-  Object.keys(fixed).forEach(function(code){ fixed[code].sort(function(a,b){return suffix(a)-suffix(b);}); });
-      var displayCode = function(c){ return c.code || "Không xác định"; };
-    var card = function(c,lane){ var state=c.state||"vacant"; return '<button type="button" class="k1-cell '+stateClass(c)+'" data-k1-cid="'+esc(c.id)+'"><strong>'+esc(displayCode(c,lane))+'</strong><span>'+esc(labels[state]||"Không xác định")+'</span></button>'; };
-    var strip = function(list,lane){ return '<div class="k1-strip-cells">'+list.map(function(c){return card(c,lane);}).join("")+'</div>'; };
-    var vertical = function(list,lane){ return '<div class="k1-vertical-cells">'+list.map(function(c){return card(c,lane);}).join("")+'</div>'; };
-    var labelled = function(label,lane,kind){ var list=fixed[lane]||[], mid=Math.ceil(list.length/2); var content = kind === "k1-double-row" ? '<div class="k1-double-strips"><div class="k1-strip">'+strip(list.slice(0,mid),lane)+'</div><div class="k1-strip">'+strip(list.slice(mid),lane)+'</div></div>' : '<div class="k1-strip">'+strip(list,lane)+'</div>'; return '<div class="k1-flow-row '+(kind||"")+'"><div class="k1-flow-label">'+label+'</div><span class="k1-arrow">→</span>'+content+'</div>'; };
-    var leftCode = rowByCode.C5 ? "C5" : Object.keys(rowByCode).filter(function(k){return rowByCode[k].sex==="female";}).slice(-1)[0];
-  var rightCode = rowByCode.C2 ? "C2" : Object.keys(rowByCode).filter(function(k){return rowByCode[k].sex==="female";})[1];
-  var left = '<div class="k1-left-rail"><div class="k1-flow-label">'+esc((rowByCode[leftCode]&&rowByCode[leftCode].name)||leftCode||"Cái")+'</div>'+vertical(fixed[leftCode]||[],leftCode||"")+'<span class="k1-arrow k1-arrow-up">↑</span></div>';
-    var rowLayout = function(code){ var r=rowByCode[code]||{}; return r.layout === "two" ? "two" : "one"; };
-  var renderLane = function(label,code){ var list=fixed[code]||[]; return labelled(label,code,rowLayout(code)==="two"?"k1-double-row":""); };
-  var preferred = ["C3","C4","D2","D1","C1"], ordered = preferred.filter(function(code){return rowByCode[code];});
-  Object.keys(rowByCode).forEach(function(code){if(ordered.indexOf(code)<0 && code!==leftCode && code!==rightCode) ordered.push(code);});
-  var middle = ordered.map(function(code){return renderLane(rowByCode[code].name||code,code);}).join("");
-    var right = '<div class="k1-right-rail"><div class="k1-flow-label">'+esc((rowByCode[rightCode]&&rowByCode[rightCode].name)||rightCode||"Cái")+'</div><span class="k1-arrow k1-arrow-down">↓</span>'+vertical(fixed[rightCode]||[],rightCode||"")+'</div>';
-    var legend = Object.keys(labels).map(function(state){ return '<span><i class="k1-legend-swatch k1-'+state.replace(/_/g,"-")+'"></i>'+labels[state]+'</span>'; }).join("");
-    var uniqueIds = {}; realCells.forEach(function(c){ uniqueIds[c.id] = true; });
-    var mapCheckText = realCells.length+" ô · "+male.length+" đực · "+female.length+" cái";
-    return '<div class="k1-map-card"><div class="k1-map-head"><div><b>Khu 1 – Sinh sản</b><small>Sơ đồ bố trí các dãy chuồng trong '+esc(zone.name||"Khu 1")+'</small></div><span class="k1-map-count">'+mapCheckText+'</span></div><div class="k1-flow-canvas">'+left+'<div class="k1-flow-middle">'+middle+'</div>'+right+'</div><div class="k1-legend">'+legend+'</div></div>';
+  function renderBreedingMap(){
+    var labels={vacant:"Trống",nursing:"Đang nuôi con",ready:"Sẵn sàng ghép",pairing:"Đang ghép",just_separated_male:"Mới tách đực",not_pregnant:"Cần theo dõi, xử lý",in_treatment:"Đang điều trị"};
+    var rows=breedingRows(zone), cells=zoneCells.filter(function(c){return c&&c.id&&c.zoneId===zone.id;}), byRow={};
+    Object.keys(rows).forEach(function(k){var r=rows[k];if(r&&r.code)byRow[r.code]=[];});
+    cells.forEach(function(c){if(c.rowCode&&byRow[c.rowCode])byRow[c.rowCode].push(c);});
+    Object.keys(byRow).forEach(function(k){byRow[k].sort(function(a,b){return String(a.code).localeCompare(String(b.code),undefined,{numeric:true});});});
+    var card=function(c){var state=c.state||"vacant";return '<button type="button" class="k1-cell k1-'+String(state).replace(/_/g,"-")+'" data-k1-cid="'+esc(c.id)+'"><strong>'+esc(c.code||"Không xác định")+'</strong><span>'+esc(labels[state]||"Không xác định")+'</span></button>';};
+    var strip=function(list){return '<div class="k1-strip-cells">'+list.map(card).join("")+'</div>';};
+    var rowHtml=function(code){var r=rows[Object.keys(rows).filter(function(k){return rows[k].code===code;})[0]]||{},list=byRow[code]||[],mid=Math.ceil(list.length/2),content=r.layout==="two"?'<div class="k1-double-strips"><div class="k1-strip">'+strip(list.slice(0,mid))+'</div><div class="k1-strip">'+strip(list.slice(mid))+'</div></div>':'<div class="k1-strip">'+strip(list)+'</div>';return '<div class="k1-flow-row"><div class="k1-flow-label"><span>'+esc(r.name||code)+'</span><button type="button" class="k1-row-add" data-row-code="'+esc(code)+'" title="Thêm ô vào dãy">+</button></div><span class="k1-arrow">→</span>'+content+'</div>';};
+    var order=Object.keys(rows).filter(function(k){return rows[k]&&rows[k].code;});
+    var html='<div class="k1-map-card"><div class="k1-map-head"><div><b>'+esc(zone.name||"Khu sinh sản")+'</b><small>Sơ đồ Khu → Dãy → Ô theo dữ liệu thực tế</small></div><span class="k1-map-count">'+cells.length+' ô</span></div><div class="k1-flow-canvas"><div class="k1-flow-middle">'+order.map(function(k){return rowHtml(rows[k].code);}).join("")+'</div></div></div>';return html;
   }
 
-  // mục "BỐ CỤC Ô": khu nào có ô phân theo giới tính (mọi khu type="breeding"
-  // hiện tại và tạo sau này — không hard-code riêng khu nào) hiển thị 2 cột
-  // song song Đực/Cái; các khu khác (Hậu bị/Baby/Thương phẩm/Điều trị) giữ
-  // nguyên lưới 1 khối như cũ vì ô của các khu đó không phân theo giới tính.
   var cellsHtml;
-  if(isKhu1Breeding){
-    cellsHtml = renderKhu1Map();
-  } else if(zone.type === "breeding"){
-    var maleCells = cellsForDisplay.filter(function(c){ return c.sex === "male"; });
-    var femaleCells = cellsForDisplay.filter(function(c){ return c.sex === "female"; });
-    var maleHtml = maleCells.map(function(c){ return renderCellCard(c, zone); }).join("") || '<div style="color:var(--gray);font-size:13px;">Không có ô đực nào khớp.</div>';
-    var femaleHtml = femaleCells.map(function(c){ return renderCellCard(c, zone); }).join("") || '<div style="color:var(--gray);font-size:13px;">Không có ô cái nào khớp.</div>';
-    cellsHtml = '<div class="cell-columns">'+
-      '<div><div class="col-head"><span class="material-symbols-outlined" style="font-size:16px;">male</span>Ô đực ('+maleCells.length+')</div><div class="cell-grid">'+maleHtml+'</div></div>'+
-      '<div><div class="col-head"><span class="material-symbols-outlined" style="font-size:16px;">female</span>Ô cái ('+femaleCells.length+')</div><div class="cell-grid">'+femaleHtml+'</div></div>'+
-    '</div>';
+  if(zone.type === "breeding"){
+    cellsHtml = renderBreedingMap();
   } else {
     cellsHtml = '<div class="cell-grid">'+(cellsForDisplay.map(function(c){ return renderCellCard(c, zone); }).join("") || '<div style="color:var(--gray);font-size:13px;">Không có ô nào khớp.</div>')+'</div>';
   }
@@ -2130,6 +2096,7 @@ function renderZoneDetailBody(container, zone, zoneCells){
       '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'+addCellBtn+breedingRowActions+resetK1Btn+delZoneBtn+'</div>'+
     '</div>'+cellsHtml+'</div>';
 
+  container.querySelectorAll(".k1-row-add").forEach(function(btn){ btn.onclick=function(){ var code=btn.getAttribute("data-row-code"), rows=breedingRows(zone), key=Object.keys(rows).filter(function(k){return rows[k].code===code;})[0], r=rows[key]; if(!r)return; addCell(zone.id,{sex:r.sex,rowCode:r.code,rowName:r.name}).then(function(){renderZones();}).catch(function(e){showToast(e.message||"Không thêm được ô.");}); }; });
   container.querySelectorAll(".cell-card").forEach(function(c){ c.onclick = function(){ openCellModal(c.getAttribute("data-cid"), zone); }; });
   container.querySelectorAll("[data-k1-cid]").forEach(function(c){ c.onclick = function(){ openCellModal(c.getAttribute("data-k1-cid"), zone); }; });
   document.getElementById("btnBackZoneOverview").onclick = function(){
@@ -2396,7 +2363,7 @@ function handleQRDeepLinkIfAny(){
 
 
 /* =========================================================================
-   FORM MODAL DÙNG CHUNG — thay thế các chuỗi prompt() bằng popup/form nhập
+   FORM MODAL DÙNG CHUNG — thay th�� các chuỗi prompt() bằng popup/form nhập
    liệu thật sự (nhãn rõ ràng, có validate), áp dụng cho mọi nghiệp vụ Ghép
    đôi / Chuyển khu / Điều trị / Chết / Loại thải / Cân nặng / Ghi chú...
    ========================================================================= */
