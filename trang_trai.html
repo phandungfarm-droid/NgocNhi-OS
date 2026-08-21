@@ -2052,10 +2052,15 @@ function renderZoneDetailBody(container, zone, zoneCells){
     cellsForDisplay = bucket ? bucket.cells : zoneCells;
   }
 
+  // Khu 1 giữ cấu trúc ban đầu: không phân theo dãy, chỉ hiển thị hai nhóm ô đực/cái.
+  var isKhu1Breeding = zone.type === "breeding" && /khu\s*1/i.test(zone.name||"");
+  var useKhu1Map = false;
   var addCellBtn = "";
   if(isStaffOrOwner()){
-  if(zone.type === "breeding"){
-  addCellBtn = '<button class="btn btn-secondary" id="btnAddBreedingRow"><span class="material-symbols-outlined">view_column</span>Thêm dãy</button><button class="btn btn-primary" id="btnAddBreedingCell"><span class="material-symbols-outlined">add</span>Thêm ô</button>';
+    if(zone.type === "breeding" && !isKhu1Breeding){
+      addCellBtn = '<button class="btn btn-secondary" id="btnAddBreedingRow"><span class="material-symbols-outlined">view_column</span>Thêm dãy</button><button class="btn btn-primary" id="btnAddBreedingCell"><span class="material-symbols-outlined">add</span>Thêm ô</button>';
+    } else if(zone.type === "breeding"){
+      addCellBtn = '<button class="btn btn-primary" id="btnAddCell"><span class="material-symbols-outlined">add</span>Thêm ô</button>';
     } else if(zone.type === "baby"){
       addCellBtn = '<button class="btn btn-primary" id="btnAddCell"><span class="material-symbols-outlined">add</span>Thêm ô Baby</button>';
     } else {
@@ -2063,7 +2068,6 @@ function renderZoneDetailBody(container, zone, zoneCells){
     }
   }
   var delZoneBtn = isOwner() ? '<button class="btn btn-danger" id="btnDelZone"><span class="material-symbols-outlined">delete</span>Xoá khu này</button>' : "";
-  var isKhu1Breeding = zone.type === "breeding" && /khu\s*1/i.test(zone.name||"");
   function renderKhu1Map(){
     var labels = {vacant:"Trống",nursing:"Đang nuôi con",ready:"Sẵn sàng ghép",pairing:"Đang ghép",just_separated_male:"Mới tách đực",not_pregnant:"Cần theo dõi, xử lý",in_treatment:"Đang điều trị"};
     var stateClass = function(c){ return "k1-"+String(c.state||"vacant").replace(/_/g,"-"); };
@@ -2095,7 +2099,7 @@ function renderZoneDetailBody(container, zone, zoneCells){
   // song song Đực/Cái; các khu khác (Hậu bị/Baby/Thương phẩm/Điều trị) giữ
   // nguyên lưới 1 khối như cũ vì ô của các khu đó không phân theo giới tính.
   var cellsHtml;
-  if(isKhu1Breeding){
+  if(useKhu1Map){
     cellsHtml = renderKhu1Map();
   } else if(zone.type === "breeding"){
     var maleCells = cellsForDisplay.filter(function(c){ return c.sex === "male"; });
