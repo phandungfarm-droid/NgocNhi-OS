@@ -224,6 +224,7 @@
 <div id="loginOverlay" class="modal-overlay hidden">
   <div class="modal">
     <h3>Đăng nhập Trang trại</h3>
+    <div class="field"><label>Loại tài khoản</label><select id="loginRole"><option value="owner">ADMIN</option><option value="staff">NHÂN VIÊN</option></select></div>
     <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="ten@ngocnhi.vn"></div>
     <div class="field"><label>Mật khẩu</label><input type="password" id="loginPassword"></div>
     <div id="loginError" style="color:#B91C1C;font-size:12px;margin-bottom:8px;"></div>
@@ -715,6 +716,7 @@ function renderAuthBox(){
 }
 
 document.getElementById("loginSubmitBtn").onclick = function(){
+  var requestedRole = document.getElementById("loginRole").value;
   var email = document.getElementById("loginEmail").value.trim();
   var pass  = document.getElementById("loginPassword").value;
   var errEl = document.getElementById("loginError");
@@ -726,10 +728,14 @@ document.getElementById("loginSubmitBtn").onclick = function(){
   var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if(!email || !EMAIL_RE.test(email)){ errEl.textContent = "Nhập đúng định dạng email."; return; }
   if(!pass){ errEl.textContent = "Nhập mật khẩu."; return; }
-  FirebaseService.signIn(email, pass).then(function(){
-    document.getElementById("loginOverlay").classList.add("hidden");
-  }).catch(function(){
-    errEl.textContent = "Sai email hoặc mật khẩu.";
+  FirebaseService.signIn(email, pass).then(function(credential){
+    var resolver = window.NgocNhiAuth && window.NgocNhiAuth.resolveRole;
+    return resolver ? resolver(auth, db, credential.user).then(function(result){
+      if(!result || result.role !== requestedRole){ return auth.signOut().then(function(){ throw new Error(requestedRole === "owner" ? "Tài khoản không có role ADMIN." : "Tài khoản không có role NHÂN VIÊN."); }); }
+      document.getElementById("loginOverlay").classList.add("hidden");
+    }) : Promise.reject(new Error("Chưa sẵn sàng kiểm tra role."));
+  }).catch(function(err){
+    errEl.textContent = err && err.message && err.message.indexOf("role") !== -1 ? err.message : "Sai email, mật khẩu hoặc role tài khoản.";
   });
 };
 document.getElementById("loginCancelBtn").onclick = function(){
@@ -2054,11 +2060,14 @@ function renderZoneDetailBody(container, zone, zoneCells){
 
   // Khu 1 giữ cấu trúc ban đầu: không phân theo dãy, chỉ hiển thị hai nhóm ô đực/cái.
   var isKhu1Breeding = zone.type === "breeding" && /khu\s*1/i.test(zone.name||"");
+  var isKhu2Breeding = zone.type === "breeding" && /khu\s*2/i.test(zone.name||"");
   var useKhu1Map = false;
   var addCellBtn = "";
   if(isStaffOrOwner()){
-    if(zone.type === "breeding" && !isKhu1Breeding){
+    if(zone.type === "breeding" && !isKhu1Breeding && !isKhu2Breeding){
       addCellBtn = '<button class="btn btn-secondary" id="btnAddBreedingRow"><span class="material-symbols-outlined">view_column</span>Thêm dãy</button><button class="btn btn-primary" id="btnAddBreedingCell"><span class="material-symbols-outlined">add</span>Thêm ô</button>';
+    } else if(zone.type === "breeding" && isKhu2Breeding){
+      addCellBtn = '<button class="btn btn-primary" id="btnAddBreedingCell"><span class="material-symbols-outlined">add</span>Thêm ô</button>';
     } else if(zone.type === "breeding"){
       addCellBtn = '<button class="btn btn-primary" id="btnAddCell"><span class="material-symbols-outlined">add</span>Thêm ô</button>';
     } else if(zone.type === "baby"){
@@ -2199,9 +2208,13 @@ function handleAddCell(zone){
   if(zone.type === "baby"){
     var seg = prompt("Phân khúc cân nặng ("+BABY_SEGMENTS.join(" / ")+"):", BABY_SEGMENTS[0]);
     if(seg===null) return;
-    addCell(window.__activeZone,{weightSegment:seg}).then(renderZones);
+    addCell(zone.id,{weightSegment:seg}).then(renderZones).catch(function(e){showToast(e.message||"Không tạo được ô.");});
+  } else if(zone.type === "breeding"){
+    openFormModal("Thêm ô sinh sản",[{id:"sex",label:"Giới tính ô",type:"select",options:[{value:"male",label:"Đực"},{value:"female",label:"Cái"}],required:true}],function(v){
+      addCell(zone.id,{sex:v.sex}).then(function(){closeModal();renderZones();}).catch(function(e){showToast(e.message||"Không tạo được ô.");});
+    },"Tạo ô");
   } else {
-    addCell(window.__activeZone,{}).then(renderZones);
+    addCell(zone.id,{}).then(renderZones).catch(function(e){showToast(e.message||"Không tạo được ô.");});
   }
 }
 function badge(state){
