@@ -343,6 +343,9 @@
 var FIREBASE_CONFIG = window.FIREBASE_CONFIG || {};
 
 var currentView = "overview";
+var quickMenuMode = false;
+var quickMenuCart = {};
+var quickMenuItems = {};
 
 /* Khung quảng cáo Tổng quan — media chỉ tồn tại trong phiên trình duyệt,
    không ghi Firebase/database và không tác động các luồng nghiệp vụ khác. */
@@ -409,6 +412,8 @@ function wireQuickActions(){
         if(onlineFab) onlineFab.click();
         return;
       }
+      if(target === "menu") quickMenuMode = true;
+      else quickMenuMode = false;
       activateRestaurantView(target);
     };
     action.onkeydown = function(event){
@@ -1251,7 +1256,9 @@ document.getElementById("guestConfirmCloseBtn").onclick = function(){ document.g
 document.getElementById("navList").addEventListener("click", function(e){
   var item = e.target.closest(".nav-item"); if(!item) return;
   document.querySelectorAll(".nav-item").forEach(function(n){ n.classList.remove("active"); });
-  item.classList.add("active"); currentView = item.getAttribute("data-view"); renderCurrentView();
+  item.classList.add("active"); currentView = item.getAttribute("data-view");
+  if(currentView !== "menu") quickMenuMode = false;
+  renderCurrentView();
 });
 function renderCurrentView(){
   if(guestTableId) return;
@@ -1271,7 +1278,7 @@ function renderCurrentView(){
   document.getElementById("viewTitle").textContent = titles[currentView][0];
   document.getElementById("viewSub").textContent = titles[currentView][1];
   if(currentView==="overview") renderOverview();
-  else if(currentView==="menu") renderMenu();
+  else if(currentView==="menu") quickMenuMode ? renderQuickOrderMenu() : renderMenu();
   else if(currentView==="tables") renderTables();
   else if(currentView==="tickets") renderTickets();
   else if(currentView==="accounts") renderAccounts();
@@ -1340,6 +1347,58 @@ function renderOverview(){
     wireDashboardAdControls();
     wireQuickActions();
   });
+}
+function quickMenuTotal(){
+  return Object.keys(quickMenuCart).reduce(function(total,id){
+    var item = quickMenuItems[id];
+    return total + (item ? (Number(item.price)||0) * (Number(quickMenuCart[id])||0) : 0);
+  }, 0);
+}
+function openQuickMenuBill(){
+  var ids = Object.keys(quickMenuCart).filter(function(id){ return quickMenuItems[id] && quickMenuCart[id] > 0; });
+  var rows = ids.map(function(id){
+    var item = quickMenuItems[id], qty = quickMenuCart[id];
+    return '<div class="guest-bill-row" style="align-items:center;gap:8px;">'+
+      '<span class="bill-name" style="flex:1;">'+esc(item.name)+'</span>'+
+      '<input class="quickBillQty" data-id="'+id+'" type="number" min="1" value="'+qty+'" style="width:58px;padding:6px;border:1px solid var(--border);border-radius:6px;">'+
+      '<span class="bill-price" style="min-width:92px;text-align:right;">'+fmtVND((Number(item.price)||0)*qty)+'</span>'+
+      '<button class="btn btn-danger quickBillRemove" data-id="'+id+'">Xóa</button></div>';
+  }).join("");
+  document.getElementById("modalRoot").innerHTML = '<div class="modal-overlay" id="quickMenuBillOverlay"><div class="modal" style="max-width:620px;"><h3>Bill / Giỏ hàng</h3>'+
+    '<div style="max-height:360px;overflow:auto;">'+(rows||'<div style="color:var(--gray);font-size:13px;">Chưa có món được chọn.</div>')+'</div>'+
+    '<div style="display:flex;justify-content:flex-end;font-weight:800;margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">Tổng: '+fmtVND(quickMenuTotal())+'</div>'+
+    '<div class="modal-actions"><button class="btn btn-secondary" id="quickBillContinueBtn">Tiếp tục chọn món</button><button class="btn btn-primary" id="quickBillCloseBtn">Đóng Bill</button></div></div></div>';
+  document.getElementById("quickBillContinueBtn").onclick = function(){ document.getElementById("modalRoot").innerHTML = ""; };
+  document.getElementById("quickBillCloseBtn").onclick = function(){ document.getElementById("modalRoot").innerHTML = ""; };
+  document.querySelectorAll(".quickBillQty").forEach(function(input){ input.onchange = function(){ quickMenuCart[input.dataset.id] = Math.max(1, parseInt(input.value,10) || 1); openQuickMenuBill(); renderQuickOrderMenu(); }; });
+  document.querySelectorAll(".quickBillRemove").forEach(function(button){ button.onclick = function(){ delete quickMenuCart[button.dataset.id]; openQuickMenuBill(); renderQuickOrderMenu(); }; });
+}
+function renderQuickOrderMenu(){
+  var el = document.getElementById("viewContent");
+  el.innerHTML = '<div class="card">Đang tải thực đơn…</div>';
+  FirebaseService.read("Restaurant/MenuItems").then(function(items){
+    quickMenuItems = items || {};
+    var categories = [];
+    Object.keys(quickMenuItems).forEach(function(id){ var category = quickMenuItems[id].category || "Khác"; if(categories.indexOf(category) === -1) categories.push(category); });
+    var sections = categories.map(function(category){
+      var itemCards = Object.keys(quickMenuItems).filter(function(id){ return (quickMenuItems[id].category || "Khác") === category; }).map(function(id){
+        var item = quickMenuItems[id], available = isItemAvailable(item), qty = quickMenuCart[id] || 0;
+        return '<div class="item-card">'+
+          '<div class="item-thumb">'+(item.imageUrl ? '<img src="'+esc(item.imageUrl)+'" alt="'+esc(item.name)+'">' : '<span class="no-img material-symbols-outlined">image</span>')+'</div>'+
+          '<div class="name">'+esc(item.name)+'</div>'+
+          '<div class="price">'+esc(item.priceNote || fmtVND(item.price))+'</div>'+
+          '<div style="margin-top:6px;"><span class="badge '+(available ? "b-available" : "b-unavailable")+'">'+(available ? "Còn hàng" : "Hết hàng")+'</span>'+(qty ? ' <span style="font-size:11px;color:var(--gray);">Đã chọn: '+qty+'</span>' : '')+'</div>'+
+          '<button class="btn btn-primary quickChooseDish" data-id="'+id+'" '+(available ? '' : 'disabled')+' style="margin-top:10px;width:100%;">Chọn món</button>'+
+          '</div>';
+      }).join("");
+      return '<div class="section-title" style="margin:16px 0 8px;">'+esc(category)+'</div><div class="item-grid">'+itemCards+'</div>';
+    }).join("");
+    var count = Object.keys(quickMenuCart).reduce(function(sum,id){ return sum + (quickMenuCart[id] || 0); }, 0);
+    el.innerHTML = '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;"><div><b>Thực đơn gọi món</b><div style="color:var(--gray);font-size:12px;margin-top:4px;">Chọn món để thêm vào Bill</div></div><button class="btn btn-primary" id="quickMenuBillBtn">Bill / Giỏ hàng ('+count+')</button></div></div>'+
+      '<div class="card"><div>'+sections+'</div></div>';
+    el.querySelectorAll(".quickChooseDish").forEach(function(button){ button.onclick = function(){ var id = button.dataset.id; quickMenuCart[id] = (quickMenuCart[id] || 0) + 1; renderQuickOrderMenu(); }; });
+    document.getElementById("quickMenuBillBtn").onclick = openQuickMenuBill;
+  }).catch(function(err){ el.innerHTML = '<div class="card">Không tải được thực đơn: '+esc(err && err.message ? err.message : "Lỗi không xác định")+'</div>'; });
 }
 function renderMenu(){
   var el = document.getElementById("viewContent");
