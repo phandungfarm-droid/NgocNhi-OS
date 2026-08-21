@@ -1,0 +1,40 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "Restaurant": {
+      "MenuItems": {
+        ".read": "auth != null",
+        ".write": "auth != null && (root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+      },
+      "Tables": {
+        ".read": "auth != null",
+        "$tableId": {
+          ".write": "auth != null && (root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+        }
+      },
+      "Orders": {
+        ".read": "auth != null && (auth.token.firebase.sign_in_provider == 'anonymous' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+        "$orderId": {
+          ".read": "auth != null && ((auth.token.firebase.sign_in_provider == 'anonymous' && data.child('ownerUid').val() == auth.uid) || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+          ".write": "auth != null && (( !data.exists() && auth.token.firebase.sign_in_provider == 'anonymous' && newData.child('ownerUid').val() == auth.uid && newData.child('source').val() == 'guest_qr') || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+        }
+      },
+      "Accounts": {
+        ".read": "auth != null && root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner'",
+        "$uid": {
+          ".read": "auth != null && (auth.uid == $uid || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')",
+          ".write": "auth != null && root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner'"
+        }
+      },
+      "OrderAlerts": {
+        ".read": "auth != null && (root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+        ".write": "auth != null && (root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+      },
+      "Tickets": {
+        ".read": "auth != null && (root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+        ".write": "auth != null && (auth.token.firebase.sign_in_provider == 'anonymous' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+      }
+    }
+  }
+}
