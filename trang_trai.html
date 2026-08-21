@@ -257,7 +257,7 @@ var farmDashboardMedia = { imageUrl:null, videoUrl:null };
    https://firebase.google.com/docs/auth/web/start
    Bọc try/catch: nếu SDK Firebase không tải được (mạng chặn CDN, v.v.),
    ứng dụng vẫn không phát sinh lỗi Console không bắt được — sẽ hiển thị
-   thông báo chờ cấu hình thay vì màn hình tr�����������ng hoặc lỗi đỏ trong Console.
+   thông báo chờ cấu hình thay vì màn hình tr�������������ng hoặc lỗi đỏ trong Console.
    ========================================================================= */
 var db = null, auth = null, firebaseReady = false;
 try{
@@ -818,11 +818,13 @@ function addBreedingRow(zoneId, sex, name, layout){
       return FirebaseService.updateMultiPath(updates).then(function(){return true;});
     });
   }
-  function resetKhu1BreedingData(zone){
+  function resetKhu1BreedingData(zone, layouts){
     if(!zone || zone.type !== "breeding" || String(zone.code||"").toUpperCase() !== "K1") throw new Error("Chỉ được reset dữ liệu Khu 1.");
     return FirebaseService.queryEqualTo("Farm/Cells","zoneId",zone.id).then(function(cells){
       var updates={}; Object.keys(cells||{}).forEach(function(id){ updates["Farm/Cells/"+id]=null; });
-      var rows={C5:{code:"C5",name:"Cái C5",sex:"female",layout:"one"},C3:{code:"C3",name:"Cái C3",sex:"female",layout:"one"},C4:{code:"C4",name:"Cái C4",sex:"female",layout:"one"},D2:{code:"D2",name:"Đực D2",sex:"male",layout:"two"},D1:{code:"D1",name:"Đực D1",sex:"male",layout:"two"},C1:{code:"C1",name:"Cái C1",sex:"female",layout:"one"},C2:{code:"C2",name:"Cái C2",sex:"female",layout:"one"}};
+      var rowNames={C5:"Cái C5",C3:"Cái C3",C4:"Cái C4",D2:"Đực D2",D1:"Đực D1",C1:"Cái C1",C2:"Cái C2"};
+      var sexes={C5:"female",C3:"female",C4:"female",D2:"male",D1:"male",C1:"female",C2:"female"};
+      var rows={}; Object.keys(rowNames).forEach(function(code){ rows[code]={code:code,name:rowNames[code],sex:sexes[code],layout:layouts[code]==="two"?"two":"one"}; });
       updates["Farm/Zones/"+zone.id+"/breedingRows"]=rows;
       return FirebaseService.updateMultiPath(updates);
     });
@@ -2139,7 +2141,9 @@ function renderZoneDetailBody(container, zone, zoneCells){
   if(btnClear) btnClear.onclick = function(){ window.__zoneDetailFilter = null; renderZones(); };
   if(document.getElementById("btnResetK1")) document.getElementById("btnResetK1").onclick = function(){
     if(!confirm("Reset sẽ xóa toàn bộ dãy và ô cũ của Khu 1, giữ nguyên các nghiệp vụ. Tiếp tục?")) return;
-    resetKhu1BreedingData(zone).then(function(){showToast("Đã reset dữ liệu Khu 1. Hãy thêm ô vào 7 dãy mới.");renderZones();}).catch(function(e){showToast(e.message||"Không reset được dữ liệu Khu 1.");});
+    var rowNames={C5:"Cái C5",C3:"Cái C3",C4:"Cái C4",D2:"Đực D2",D1:"Đực D1",C1:"Cái C1",C2:"Cái C2"};
+    var fields=Object.keys(rowNames).map(function(code){return {id:code,label:rowNames[code]+" — số hàng",type:"select",options:[{value:"one",label:"1 hàng"},{value:"two",label:"2 hàng"}],required:true};});
+    openFormModal("Cấu hình dãy Khu 1",fields,function(v){ resetKhu1BreedingData(zone,v).then(function(){closeModal();showToast("Đã reset Khu 1 theo cấu hình số hàng đã chọn.");renderZones();}).catch(function(e){showToast(e.message||"Không reset được dữ liệu Khu 1.");}); },"Reset và tạo dãy");
   };
   if(document.getElementById("btnDelZone")) document.getElementById("btnDelZone").onclick = function(){
     if(confirm("Xoá khu này sẽ xoá toàn bộ ô bên trong. Tiếp tục?")) deleteZone(window.__activeZone).then(function(){
