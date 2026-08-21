@@ -332,6 +332,16 @@
 </div>
 
 <div id="modalRoot"></div>
+<div id="restaurantLoginOverlay" class="modal-overlay hidden">
+  <div class="modal" style="max-width:420px;">
+    <h3>Đăng nhập Nhân viên / Admin</h3>
+    <div style="font-size:12px;color:var(--gray);margin-bottom:14px;">Chỉ cần đăng nhập khi sử dụng chức năng quản trị. Phiên Firebase hiện có từ Trung tâm điều hành sẽ được dùng lại.</div>
+    <div class="field"><label>Email</label><input type="email" id="restaurantLoginEmail" placeholder="ten@ngocnhi.vn"></div>
+    <div class="field"><label>Mật khẩu</label><input type="password" id="restaurantLoginPassword"></div>
+    <div id="restaurantLoginError" style="color:#B91C1C;font-size:12px;margin-bottom:8px;"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" id="restaurantLoginCancel">Đóng</button><button class="btn btn-primary" id="restaurantLoginSubmit">Đăng nhập</button></div>
+  </div>
+</div>
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
@@ -672,7 +682,18 @@ function isOwner(){ return currentRole === "owner"; }
 function isStaffOrOwner(){ return currentRole === "owner" || currentRole === "staff"; }
 function logAccess(role){
   if(!role || !isStaffOrOwner()) return Promise.resolve();
-  return FirebaseService.transaction("Restaurant/AccessLog/"+todayStr()+"/"+role, function(cur){ return (cur||0)+1; });
+  return FirebaseService.transaction("Restaurant/AccessLog/"+todayStr()+"/"+role, function(cur){ return (cur||0)+1; }).catch(function(){ return null; });
+}
+var pendingRestaurantAction = null;
+function openRestaurantLogin(){ document.getElementById("restaurantLoginOverlay").classList.remove("hidden"); }
+function closeRestaurantLogin(){ document.getElementById("restaurantLoginOverlay").classList.add("hidden"); }
+function requireRestaurantRole(requiredRole, action){
+  var allowed = requiredRole === "owner" ? isOwner() : isStaffOrOwner();
+  if(allowed){ if(typeof action === "function") action(); return true; }
+  pendingRestaurantAction = typeof action === "function" ? action : null;
+  if(!auth || !auth.currentUser || auth.currentUser.isAnonymous || !adminAuthResolved) openRestaurantLogin();
+  else showToast(requiredRole === "owner" ? "Chức năng này chỉ dành cho Chủ quán/Admin." : "Chức năng này cần quyền Nhân viên hoặc Chủ quán.");
+  return false;
 }
 function renderAdminIdentity(){
   var chip = document.querySelector(".profile-chip");
@@ -701,17 +722,35 @@ function renderAuthBox(){
     return;
   }
   if(!isStaffOrOwner()){
-    box.innerHTML = '<span class="role-badge">CHƯA XÁC THỰC</span>'+
-      '<div style="font-size:11px;color:var(--gray);margin-top:5px;">Cần Firebase Auth + role owner/staff</div>';
+    box.innerHTML = '<span class="role-badge">KHÁCH HÀNG</span>'+
+      '<div style="font-size:11px;color:var(--gray);margin-top:5px;">Chỉ xem menu và sử dụng chức năng dành cho khách.</div>'+
+      '<button id="btnOpenRestaurantLogin">Đăng nhập Nhân viên/Admin</button>';
+    var loginBtn = document.getElementById("btnOpenRestaurantLogin");
+    if(loginBtn) loginBtn.onclick = openRestaurantLogin;
     renderAdminIdentity();
     return;
   }
   box.innerHTML = '<span class="role-badge '+(isOwner()?"role-owner":"role-staff")+'">'+(isOwner()?"CHỦ QUÁN":"NHÂN VIÊN")+'</span>'+
-    '<button id="btnEnablePush">Bật thông báo đơn hàng</button>';
+    '<button id="btnEnablePush">Bật thông báo đơn hàng</button><button id="btnRestaurantLogout">Đăng xuất toàn hệ thống</button>';
   var btn = document.getElementById("btnEnablePush");
   if(btn) btn.onclick = enablePushNotifications;
+  var logoutBtn = document.getElementById("btnRestaurantLogout");
+  if(logoutBtn) logoutBtn.onclick = function(){ FirebaseService.signOut(); };
   renderAdminIdentity();
 }
+var restaurantLoginSubmit = document.getElementById("restaurantLoginSubmit");
+if(document.getElementById("restaurantLoginCancel")) document.getElementById("restaurantLoginCancel").onclick = closeRestaurantLogin;
+if(restaurantLoginSubmit) restaurantLoginSubmit.onclick = function(){
+  var email = document.getElementById("restaurantLoginEmail").value.trim();
+  var pass = document.getElementById("restaurantLoginPassword").value;
+  var errEl = document.getElementById("restaurantLoginError");
+  errEl.textContent = "";
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ errEl.textContent = "Nhập đúng định dạng email."; return; }
+  if(!pass){ errEl.textContent = "Nhập mật khẩu."; return; }
+  if(!auth){ errEl.textContent = "Firebase Auth chưa sẵn sàng."; return; }
+  restaurantLoginSubmit.disabled = true;
+  auth.signInWithEmailAndPassword(email, pass).then(function(){ closeRestaurantLogin(); }).catch(function(){ errEl.textContent = "Sai email hoặc mật khẩu."; }).then(function(){ restaurantLoginSubmit.disabled = false; });
+};
 
 /* =========================================================================
    THỰC ĐƠN (mục 1 đặc tả Quán ăn) — bao gồm quy tắc tự động ẩn món "dúi"
@@ -1289,8 +1328,8 @@ function renderOverview(){
   el.innerHTML = '<div class="card">Đang tải…</div>';
   Promise.all([
     FirebaseService.read("Restaurant/MenuItems"),
-    FirebaseService.read("Restaurant/Tables"),
-    FirebaseService.read("Restaurant/Orders")
+    isStaffOrOwner() ? FirebaseService.read("Restaurant/Tables") : Promise.resolve({}),
+    isStaffOrOwner() ? FirebaseService.read("Restaurant/Orders") : Promise.resolve({})
   ]).then(function(res){
     var items = res[0]||{}, tables = res[1]||{}, orders = res[2]||{};
     var availableCount = Object.keys(items).filter(function(id){ return isItemAvailable(items[id]); }).length;
@@ -1456,7 +1495,7 @@ function renderMenu(){
 function renderTables(){
   var el = document.getElementById("viewContent");
   el.innerHTML = '<div class="card">Đang tải…</div>';
-  Promise.all([FirebaseService.read("Restaurant/Tables"), FirebaseService.read("Restaurant/Orders"), FirebaseService.read("Restaurant/MenuItems")]).then(function(res){
+  Promise.all([FirebaseService.read("Restaurant/Tables"), isStaffOrOwner() ? FirebaseService.read("Restaurant/Orders") : Promise.resolve({}), FirebaseService.read("Restaurant/MenuItems")]).then(function(res){
     var tables = res[0]||{}, orders = res[1]||{}, items = res[2]||{};
     var addBtn = isStaffOrOwner() ? '<button class="btn btn-primary" id="btnAddTable"><span class="material-symbols-outlined">add</span>Thêm bàn</button>' : "";
     var tableIds = Object.keys(tables);
@@ -1638,7 +1677,7 @@ function guestAdminActionLabel(nextStatus){
 }
 function renderTickets(){
   var el = document.getElementById("viewContent");
-  if(!isStaffOrOwner()){ el.innerHTML = '<div class="card">Chỉ tài khoản đã đăng nhập mới quản lý được phiếu đặt.</div>'; return; }
+  if(!isStaffOrOwner()){ requireRestaurantRole("staff", renderTickets); el.innerHTML = '<div class="card">Đăng nhập Nhân viên/Admin để quản lý đơn hàng.</div>'; return; }
   el.innerHTML = '<div class="card">Đang tải…</div>';
   Promise.all([FirebaseService.read("Restaurant/Tickets"), FirebaseService.read("Restaurant/Orders"), FirebaseService.read("Restaurant/MenuItems")]).then(function(res){
     var tickets = res[0] || {}, orders = res[1] || {}, menuItems = res[2] || {};
@@ -1687,7 +1726,7 @@ function renderTickets(){
 }
 function renderAccounts(){
   var el = document.getElementById("viewContent");
-  if(!isOwner()){ el.innerHTML = '<div class="card">Chỉ Chủ quán mới quản lý được tài khoản.</div>'; return; }
+  if(!isOwner()){ requireRestaurantRole("owner", renderAccounts); el.innerHTML = '<div class="card">Đăng nhập Admin để quản lý tài khoản.</div>'; return; }
   el.innerHTML = '<div class="card">Đang tải…</div>';
   Promise.all([FirebaseService.read("Restaurant/Accounts"), FirebaseService.read("Restaurant/AccessLog")]).then(function(res){
     var accounts = res[0]||{}, accessLog = res[1]||{};
@@ -1827,7 +1866,7 @@ if(firebaseReady && !guestTableId){
     renderOrderAlertsModalBody();
   });
 }
-document.getElementById("btnOrderAlerts").onclick = function(){ openOrderAlertsModal(); };
+document.getElementById("btnOrderAlerts").onclick = function(){ requireRestaurantRole("staff", openOrderAlertsModal); };
 function openOrderAlertsModal(){
   document.getElementById("modalRoot").innerHTML =
     '<div class="modal-overlay" id="orderAlertsModalOverlay"><div class="modal">'+
@@ -1919,42 +1958,31 @@ if(!guestTableId){
     renderCurrentView();
   }
   if(firebaseReady){
-    FirebaseService.onAuthStateChanged(function(){
+    FirebaseService.onAuthStateChanged(function(authenticatedUser){
       adminAuthResolved = false;
       currentRole = null;
       currentAccounts = {};
-      var authenticatedUser = auth && auth.currentUser;
       currentUid = authenticatedUser ? authenticatedUser.uid : null;
       renderAuthBox();
-      if(!authenticatedUser || authenticatedUser.isAnonymous){
-        adminAuthResolved = true;
-        renderAdminAfterAuth();
-        return;
-      }
-      var rolePath = "Restaurant/Accounts/"+authenticatedUser.uid+"/role";
-      FirebaseService.read(rolePath).then(function(role){
-        role = typeof role === "string" ? role.toLowerCase() : "";
-        if(role === "owner" || role === "staff"){
-          currentRole = role;
-          currentAccounts[authenticatedUser.uid] = {
-            uid: authenticatedUser.uid,
-            email: authenticatedUser.email || "",
-            name: authenticatedUser.displayName || authenticatedUser.email || "Admin",
-            role: role
-          };
-          return logAccess(currentRole);
-        }
-        return Promise.resolve();
-      }).catch(function(err){
-        console.warn("Không đọc được role Admin tại "+rolePath+":", err && err.message);
-      }).then(function(){
+      var resolver = window.NgocNhiAuth && window.NgocNhiAuth.resolveRole;
+      var rolePromise = resolver ? resolver(auth, db, authenticatedUser) : Promise.resolve({uid:currentUid, role:null, account:null});
+      rolePromise.then(function(result){
+        currentRole = result && result.role ? result.role : null;
+        if(result && result.account && currentUid) currentAccounts[currentUid] = result.account;
         adminAuthResolved = true;
         renderAdminAfterAuth();
         if(isStaffOrOwner()){
-          runMigrations().catch(function(err){
-            console.warn("Bỏ qua migration lúc khởi động (chưa đủ quyền ghi):", err && err.message);
-          });
+          logAccess(currentRole);
+          runMigrations().catch(function(err){ console.warn("Bỏ qua migration lúc khởi động (chưa đủ quyền ghi):", err && err.message); });
         }
+        var pending = pendingRestaurantAction;
+        pendingRestaurantAction = null;
+        if(pending && isStaffOrOwner()) pending();
+      }).catch(function(err){
+        console.warn("Không đọc được role dùng chung của Quán ăn:", err && err.message);
+        currentRole = null;
+        adminAuthResolved = true;
+        renderAdminAfterAuth();
       });
     });
   } else {
