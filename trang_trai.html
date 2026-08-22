@@ -258,7 +258,7 @@ var farmDashboardMedia = { imageUrl:null, videoUrl:null };
    https://firebase.google.com/docs/auth/web/start
    Bọc try/catch: nếu SDK Firebase không tải được (mạng chặn CDN, v.v.),
    ứng dụng vẫn không phát sinh lỗi Console không bắt được — sẽ hiển thị
-   thông báo chờ cấu hình thay vì màn hình tr�������ng hoặc lỗi đỏ trong Console.
+   thông báo chờ cấu hình thay vì màn hình trắng hoặc lỗi đỏ trong Console.
    ========================================================================= */
 var db = null, auth = null, firebaseReady = false;
 try{
@@ -899,7 +899,7 @@ function separateFromMale(femaleCellId){
       updates["Farm/Cells/"+maleCellId+"/pairStartDate"] = null;
     }
     return FirebaseService.updateMultiPath(updates).then(function(){
-      addHistory(femaleCellId, "Tách gh��p", "");
+      addHistory(femaleCellId, "Tách ghép", "");
       if(maleCellId) addHistory(maleCellId, "Tách ghép — quay lại sẵn sàng ghép", "");
     });
   });
@@ -1192,7 +1192,7 @@ function loadCommercialCellsOf(facilityId){
 /* =========================================================================
    THAO TÁC CHUNG CHO MỌI Ô CHUỒNG (áp dụng ở MỌI khu, không phụ thuộc trạng
    thái hiện tại): Ghi chú, Cân nặng, Chết, Loại thải, Cập nhật trạng thái
-   thủ công. Bổ sung đ�� quản trị luôn thao tác được đầy đủ nghiệp vụ từ
+   thủ công. Bổ sung để quản trị luôn thao tác được đầy đủ nghiệp vụ từ
    giao diện quản lý, không bị giới hạn chỉ theo state như trước.
    ========================================================================= */
 function addNote(cellId, note){
@@ -1250,7 +1250,7 @@ function recordLoss(cellId, zoneType, action, opts){
   }
   return Promise.reject(new Error("Không xác định được loại khu."));
 }
-// Cập nhật trạng thái th�� công — dùng khi cần sửa sai lệch trạng thái, không
+// Cập nhật trạng thái thủ công — dùng khi cần sửa sai lệch trạng thái, không
 // đi qua luồng nghiệp vụ thông thường. Ghi lịch sử đầy đủ để truy vết.
 function manualSetBreedingState(cellId, newState){
   return FirebaseService.updateAt("Farm/Cells/"+cellId, {state:newState}).then(function(){
@@ -1508,7 +1508,7 @@ function exportSalesExcel(data){
   });
   var expRows = Object.keys(data.expenses).map(function(id){
     var e = data.expenses[id];
-    return { "Ng��y": e.date, "Loại chi": e.type||"", "Chi tiết": e.detail||"", "Số tiền": e.amount||0, "Ghi chú": e.note||"" };
+    return { "Ngày": e.date, "Loại chi": e.type||"", "Chi tiết": e.detail||"", "Số tiền": e.amount||0, "Ghi chú": e.note||"" };
   });
   var s = computeSalesSummary(data, "all");
   var profitRows = [
@@ -1810,7 +1810,7 @@ function renderCurrentView(){
     return;
   }
   var titles = {
-    overview:["Tổng quan trang tr��i","Thống kê thời gian thực toàn bộ đàn"],
+    overview:["Tổng quan trang trại","Thống kê thời gian thực toàn bộ đàn"],
     zones:["Khu & Ô chuồng","Quản lý cấu trúc khu, ô và vòng đời từng cá thể"],
     tasks:["Việc cần làm hôm nay","Tổng hợp việc đến hạn / quá hạn"],
     alerts:["Cảnh báo & Báo cáo","Nhật ký cảnh báo tự động gửi cho Chủ trại"],
@@ -1872,7 +1872,7 @@ function renderOverview(){
   }).catch(function(err){ console.warn("Không thể tải dashboard trang trại:",err&&err.message); el.innerHTML='<div class="card">Không thể tải dữ liệu tổng quan. Vui lòng kiểm tra kết nối Firebase.</div>'; });
 }
 // Mục đích của từng LOẠI khu — mô tả chức năng chung của loại khu (không phải
-// dữ liệu riêng của 1 khu c�� thể nào), dùng để hiển thị ở Tổng quan Khu.
+// dữ liệu riêng của 1 khu cụ thể nào), dùng để hiển thị ở Tổng quan Khu.
 var ZONE_TYPE_PURPOSE = {
   breeding: "Nuôi ghép đôi đực/cái, theo dõi mang thai, sinh sản và nuôi con.",
   juvenile: "Nuôi hậu bị (đực/cái) cho tới khi đủ thể trạng để chuyển lên khu sinh sản.",
@@ -2742,7 +2742,7 @@ function handleCellAction(act, c, zone){
     } else {
       loadCellOptions(function(oc,oz){ return oz.type==="treatment" && oc.status==="empty"; }, function(oc,oz){ return oz.code+" - "+oc.code; }).then(function(opts){
         openFormModal("Chuyển khu Điều trị — Ô "+c.code, [
-          {id:"target", label:"Ô Đi���u trị đích (trống)", type:"select", options:opts, required:true},
+          {id:"target", label:"Ô Điều trị đích (trống)", type:"select", options:opts, required:true},
           {id:"problem", label:"Loại vấn đề", type:"text", required:true},
           {id:"note", label:"Ghi chú", type:"text"},
           {id:"days", label:"Số ngày dự kiến điều trị", type:"number", value:10}
@@ -2809,7 +2809,7 @@ function handleCellAction(act, c, zone){
     var fields = [{id:"qty", label:"Số lượng cộng thêm", type:"number", required:true}];
     if(zone.type==="baby") fields.push({id:"seg", label:"Đổi phân khúc (để nguyên nếu không đổi)", type:"select",
       options:[{value:"",label:"— Không đổi —"}].concat(BABY_SEGMENTS.map(function(s){return {value:s,label:s};})), value:c.weightSegment});
-    openFormModal("Nhập s��� liệu — Ô "+c.code, fields, function(v){ addStockToCell(c.id, v.qty, v.seg||null).then(afterAction); }, "Nhập");
+    openFormModal("Nhập số liệu — Ô "+c.code, fields, function(v){ addStockToCell(c.id, v.qty, v.seg||null).then(afterAction); }, "Nhập");
   }
   else if(act === "exportSale"){
     openFormModal("Bán / Ghi nhận xuất — Ô "+c.code, [
@@ -3024,7 +3024,7 @@ function renderSalesCustomers(el, data){
     '<table><thead><tr><th>Tên</th><th>Điện thoại</th><th>Địa chỉ</th><th>Tổng đã mua</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   if(document.getElementById("btnAddCust")) document.getElementById("btnAddCust").onclick = function(){
     openFormModal("Thêm khách hàng", [
-      {id:"name", label:"Tên", required:true}, {id:"phone", label:"Điện thoại"}, {id:"address", label:"Địa chỉ"}, {id:"note", label:"Ghi ch��", type:"textarea"}
+      {id:"name", label:"Tên", required:true}, {id:"phone", label:"Điện thoại"}, {id:"address", label:"Địa chỉ"}, {id:"note", label:"Ghi chú", type:"textarea"}
     ], function(v){ addCustomer(v).then(function(){ closeModal(); renderSales(); }); }, "Lưu");
   };
   el.querySelectorAll('[data-act="delCust"]').forEach(function(btn){
@@ -3204,7 +3204,7 @@ function openAddStaffModal(){
    sẽ từ chối các lệnh ghi này (permission-denied) — đây là hành vi ĐÚNG
    và MONG MUỐN. Vì vậy bắt buộc phải có .catch() ở đây để một lượt từ
    chối ghi không làm treo cả luồng khởi động (nếu không, khách tham quan
-   mở trang sẽ không bao giờ thấy được mainApp). Việc kh���i tạo khu mặc
+   mở trang sẽ không bao giờ thấy được mainApp). Việc khởi tạo khu mặc
    định / tính lại tồn kho sẽ tự thực hiện ngay khi Chủ trại đăng nhập
    lần đầu và thực hiện bất kỳ thao tác ghi nào khác. */
 if(workerModeActive){
