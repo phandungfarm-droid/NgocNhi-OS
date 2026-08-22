@@ -540,6 +540,9 @@ function renderOverview(){
       '</div></div>'+
       '<div class="card" style="margin-top:14px;"><div style="font-weight:700;margin-bottom:10px;">Hợp đồng đang xử lý sắp diễn ra</div>'+
       '<table><thead><tr><th>Khách hàng</th><th>Ngày tổ chức</th></tr></thead><tbody>'+upcomingHtml+'</tbody></table></div>';
+  }).catch(function(err){
+    console.warn("Không đọc được dữ liệu công khai Tiệc cưới:", err && err.message);
+    el.innerHTML = '<div class="card">Không tải được dữ liệu công khai Tiệc cưới. Vui lòng kiểm tra Firebase Rules.</div>';
   });
 }
 
@@ -601,6 +604,9 @@ function renderPackages(){
     el.querySelectorAll('[data-act="del"]').forEach(function(b){
       b.onclick = function(){ if(confirm("Xoá gói dịch vụ này?")) deletePackage(b.dataset.id).then(renderPackages); };
     });
+  }).catch(function(err){
+    console.warn("Không đọc được gói dịch vụ công khai Tiệc cưới:", err && err.message);
+    el.innerHTML = '<div class="card">Không tải được gói dịch vụ. Vui lòng kiểm tra Firebase Rules.</div>';
   });
 }
 function openAddPackageModal(){
