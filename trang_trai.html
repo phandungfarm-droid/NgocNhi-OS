@@ -751,6 +751,8 @@ if(firebaseReady){
       if(result && result.account && currentUid) currentAccounts[currentUid] = result.account;
       renderAuthBox();
       renderCurrentView();
+      stopFarmPrivateJobs();
+      startFarmPrivateJobs();
       if(isStaffOrOwner()){
         runMigrations().catch(function(err){ console.warn("Bỏ qua migration Farm khi chưa đủ quyền:", err && err.message); }).then(function(){
           return recomputeCommercialStock().catch(function(err){ console.warn("Bỏ qua tính lại tồn kho Farm:", err && err.message); });
@@ -766,6 +768,7 @@ if(firebaseReady){
       currentUid = user ? user.uid : null;
       currentRole = "visitor";
       currentAccounts = {};
+      stopFarmPrivateJobs();
       renderAuthBox(); renderCurrentView();
     });
   });
@@ -1577,6 +1580,14 @@ function releaseDuiReservation(contractId){ return FirebaseService.remove("Farm/
       trang_trai.html lắng nghe node này (xem listenIncomingEvents() dưới
       đây), phát cảnh báo, rồi xoá event đã xử lý.
    ========================================================================= */
+var farmPrivateUnsubs = [], farmPrivateIntervals = [], farmPrivateJobsStarted = false;
+function stopFarmPrivateJobs(){
+  farmPrivateUnsubs.forEach(function(unsub){ try{ if(typeof unsub === "function") unsub(); }catch(e){} });
+  farmPrivateUnsubs = [];
+  farmPrivateIntervals.forEach(function(timer){ clearInterval(timer); });
+  farmPrivateIntervals = [];
+  farmPrivateJobsStarted = false;
+}
 function listenIncomingEvents(){
   return FirebaseService.listen("Farm/IncomingEvents", function(events){
     if(!events) return;
@@ -1592,7 +1603,14 @@ function listenIncomingEvents(){
     });
   });
 }
-if(firebaseReady){ listenIncomingEvents(); }
+function startFarmPrivateJobs(){
+  if(!firebaseReady || !isOwner() || farmPrivateJobsStarted) return;
+  farmPrivateJobsStarted = true;
+  farmPrivateUnsubs.push(listenIncomingEvents());
+  autoAdvanceRecovering().catch(function(){}).then(function(){ return scanIncidents().catch(function(){}); });
+  farmPrivateIntervals.push(setInterval(function(){ autoAdvanceRecovering().catch(function(){}).then(function(){ scanIncidents().catch(function(){}); }); }, 10*60*1000));
+  farmPrivateIntervals.push(setInterval(maybeSendDailyDigest, 60*1000));
+}
 
 /* =========================================================================
    CẢNH BÁO TỰ ĐỘNG (mục 9.1, 9.2) — quét định kỳ mỗi 10 phút
@@ -1668,11 +1686,7 @@ function maybeSendDailyDigest(){
     });
   });
 }
-if(firebaseReady){
-  autoAdvanceRecovering().catch(function(){}).then(function(){ scanIncidents(); });
-  setInterval(function(){ autoAdvanceRecovering().catch(function(){}).then(function(){ scanIncidents(); }); }, 10*60*1000);
-  setInterval(maybeSendDailyDigest, 60*1000);
-}
+
 
 /* =========================================================================
    THỐNG KÊ TỔNG QUAN (mục 11)
