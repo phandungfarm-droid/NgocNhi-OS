@@ -1325,6 +1325,9 @@ function renderGuestMenu(){
     });
     container.innerHTML = html || '<div style="color:var(--gray);font-size:13px;">Hiện chưa có món.</div>';
     container.querySelectorAll(".guestChooseBtn").forEach(function(b){ b.onclick=function(){ guestCart[b.dataset.id]=(guestCart[b.dataset.id]||0)+1; renderGuestMenu(); updateGuestCartBar(); }; });
+  }).catch(function(err){
+    console.warn("Không đọc được thực đơn khách Quán ăn:", err && err.message);
+    container.innerHTML = '<div class="card">Không tải được thực đơn. Vui lòng kiểm tra Firebase Rules.</div>';
   });
 }
 function updateGuestCartBar(){
@@ -1505,6 +1508,9 @@ function renderOverview(){
       '</div></section>';
     wireDashboardAdControls();
     wireQuickActions();
+  }).catch(function(err){
+    console.warn("Không đọc được dữ liệu công khai Quán ăn:", err && err.message);
+    el.innerHTML = '<div class="card">Không tải được dữ liệu công khai Quán ăn. Vui lòng kiểm tra Firebase Rules.</div>';
   });
 }
 function quickMenuTotal(){
@@ -1651,6 +1657,9 @@ function renderMenu(){
       var it = list.filter(function(x){ return x.id === b.dataset.id; })[0];
       if(it) openMenuItemImageModal(it);
     };});
+  }).catch(function(err){
+    console.warn("Không đọc được thực đơn công khai Quán ăn:", err && err.message);
+    el.innerHTML = '<div class="card">Không tải được thực đơn. Vui lòng kiểm tra Firebase Rules.</div>';
   });
 }
 function tableIsOccupied(table){ return !!table && String(table.status||"").toLowerCase() === "occupied"; }
@@ -1721,6 +1730,9 @@ function renderTables(){
     el.querySelectorAll(".editOrderBtn").forEach(function(b){ b.onclick=function(){ openOrderBuilderModal(b.getAttribute("data-tid"), b.getAttribute("data-oid"), tables, items); }; });
     el.querySelectorAll(".completeBtn").forEach(function(b){ b.onclick=function(){ if(confirm("Xác nhận thanh toán và đóng đơn này?")) completeOrder(b.dataset.oid).then(renderTables); }; });
     el.querySelectorAll(".cancelBtn").forEach(function(b){ b.onclick=function(){ if(confirm("Huỷ đơn này?")) cancelOrder(b.dataset.oid).then(renderTables); }; });
+  }).catch(function(err){
+    console.warn("Không đọc được bàn công khai Quán ăn:", err && err.message);
+    el.innerHTML = '<div class="card">Không tải được danh sách bàn. Vui lòng kiểm tra Firebase Rules.</div>';
   });
 }
 function fmtVNDQA(n){ n = Number(n)||0; return n.toLocaleString("vi-VN")+"đ"; }
