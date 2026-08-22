@@ -84,6 +84,9 @@
         "$tableId": {
           "status": {
             ".write": "auth != null && auth.token.firebase.sign_in_provider == 'anonymous' && (data.val() == null || data.val() == 'empty') && newData.val() == 'occupied'"
+          },
+          "activeOrderId": {
+            ".write": "auth != null && auth.token.firebase.sign_in_provider == 'anonymous' && !data.exists() && root.child('Restaurant/Orders').child(newData.val()).child('ownerUid').val() == auth.uid && root.child('Restaurant/Orders').child(newData.val()).child('source').val() == 'guest_qr' && root.child('Restaurant/Orders').child(newData.val()).child('orderType').val() == 'DINE_IN' && root.child('Restaurant/Orders').child(newData.val()).child('status').val() == 'pending' && root.child('Restaurant/Orders').child(newData.val()).child('tableId').val() == $tableId"
           }
         }
       },
@@ -91,7 +94,7 @@
         ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
         ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
         "$orderId": {
-          ".read": "auth != null && ((data.child('ownerUid').val() == auth.uid && auth.token.firebase.sign_in_provider == 'anonymous') || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+          ".read": "auth != null && ((data.child('ownerUid').val() == auth.uid && auth.token.firebase.sign_in_provider == 'anonymous') || (auth.token.firebase.sign_in_provider == 'anonymous' && data.child('orderType').val() == 'DINE_IN' && data.child('status').val() != 'finished' && data.child('status').val() != 'cancelled' && root.child('Restaurant/Tables').child(data.child('tableId').val()).child('activeOrderId').val() == $orderId) || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
           ".write": "auth != null && !data.exists() && auth.token.firebase.sign_in_provider == 'anonymous' && newData.child('source').val() == 'guest_qr' && newData.child('ownerUid').val() == auth.uid && newData.child('status').val() == 'pending' && (newData.child('orderType').val() == 'TAKEAWAY' || newData.child('orderType').val() == 'ONLINE' || newData.child('orderType').val() == 'DINE_IN')",
           ".validate": "newData.hasChildren(['source','ownerUid','status','orderType','items','createdAt'])"
         }
