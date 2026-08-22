@@ -137,6 +137,7 @@
   <div class="modal" style="max-width:420px;">
     <h3>Đăng nhập Nhân viên / Admin</h3>
     <div style="font-size:12px;color:var(--gray);margin-bottom:14px;">Phiên Firebase hiện có từ Trung tâm điều hành sẽ được dùng lại trên Tiệc cưới.</div>
+    <div class="field"><label>Loại tài khoản</label><select id="weddingLoginRole"><option value="owner">ADMIN</option><option value="staff">NHÂN VIÊN</option></select></div>
     <div class="field"><label>Email</label><input type="email" id="weddingLoginEmail" placeholder="ten@ngocnhi.vn"></div>
     <div class="field"><label>Mật khẩu</label><input type="password" id="weddingLoginPassword"></div>
     <div id="weddingLoginError" style="color:#B91C1C;font-size:12px;margin-bottom:8px;"></div>
@@ -250,12 +251,18 @@ function renderWeddingAuthBox(){
 var weddingLoginSubmit = document.getElementById("weddingLoginSubmit");
 if(document.getElementById("weddingLoginCancel")) document.getElementById("weddingLoginCancel").onclick = closeWeddingLogin;
 if(weddingLoginSubmit) weddingLoginSubmit.onclick = function(){
-  var email = document.getElementById("weddingLoginEmail").value.trim(), pass = document.getElementById("weddingLoginPassword").value, errEl = document.getElementById("weddingLoginError");
+  var requestedRole = document.getElementById("weddingLoginRole").value, email = document.getElementById("weddingLoginEmail").value.trim(), pass = document.getElementById("weddingLoginPassword").value, errEl = document.getElementById("weddingLoginError");
   errEl.textContent = "";
   if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ errEl.textContent = "Nhập đúng định dạng email."; return; }
   if(!pass){ errEl.textContent = "Nhập mật khẩu."; return; }
   weddingLoginSubmit.disabled = true;
-  FirebaseService.signIn(email, pass).then(function(){ closeWeddingLogin(); }).catch(function(){ errEl.textContent = "Sai email hoặc mật khẩu."; }).then(function(){ weddingLoginSubmit.disabled = false; });
+  FirebaseService.signIn(email, pass).then(function(credential){
+    var resolver = window.NgocNhiAuth && window.NgocNhiAuth.resolveRole;
+    return resolver ? resolver(auth, db, credential.user).then(function(result){
+      if(!result || result.role !== requestedRole){ return auth.signOut().then(function(){ throw new Error(requestedRole === "owner" ? "Tài khoản không có role ADMIN." : "Tài khoản không có role NHÂN VIÊN."); }); }
+      closeWeddingLogin();
+    }) : Promise.reject(new Error("Chưa sẵn sàng kiểm tra role."));
+  }).catch(function(err){ errEl.textContent = err && err.message && err.message.indexOf("role") !== -1 ? err.message : "Sai email, mật khẩu hoặc role tài khoản."; }).then(function(){ weddingLoginSubmit.disabled = false; });
 };
 
 /* =========================================================================
