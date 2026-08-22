@@ -2152,6 +2152,12 @@ function renderZoneDetailBody(container, zone, zoneCells){
     openFormModal("Thêm dãy sinh sản",[{id:"sex",label:"Loại dãy",type:"select",options:[{value:"male",label:"Đực"},{value:"female",label:"Cái"}],required:true},{id:"name",label:"Tên dãy",required:true}],function(v){ addBreedingRow(zone.id,v.sex,v.name).then(function(){closeModal();renderZones();}).catch(function(e){showToast(e.message||"Không tạo được dãy.");}); },"Tạo dãy");
   };
   if(document.getElementById("btnAddBreedingCell")) document.getElementById("btnAddBreedingCell").onclick = function(){
+    if(isKhu2Breeding){
+      openFormModal("Thêm ô sinh sản Khu 2",[{id:"sex",label:"Giới tính ô",type:"select",options:[{value:"male",label:"Đực"},{value:"female",label:"Cái"}],required:true}],function(v){
+        addCell(zone.id,{sex:v.sex}).then(function(){closeModal();renderZones();}).catch(function(e){showToast(e.message||"Không tạo được ô.");});
+      },"Tạo ô");
+      return;
+    }
     var rows=breedingRows(zone,zoneCells.reduce(function(a,c){a[c.id]=c;return a;},{}));
     var options=Object.keys(rows).map(function(k){return {value:rows[k].code,label:rows[k].name+" ("+(rows[k].sex==="male"?"Đực":"Cái")+")"};});
     if(!options.length){showToast("Hãy tạo dãy trước khi thêm ô.");return;}
@@ -2175,7 +2181,7 @@ function renderZones(){
     }).join("");
     var addZoneBtn = isOwner() ? '<button class="btn btn-secondary" id="btnAddZone"><span class="material-symbols-outlined">add</span>Thêm khu</button>' : "";
     var qrZoneBtn = zoneIds.length ? '<button class="btn btn-secondary" id="btnQRZone"><span class="material-symbols-outlined">qr_code_2</span>QR khu này</button>' : "";
-    var zone = zones[window.__activeZone];
+    var zone = zones[window.__activeZone] ? Object.assign({id:window.__activeZone}, zones[window.__activeZone]) : null;
     var zoneCells = Object.keys(cells).filter(function(id){ return cells[id].zoneId === window.__activeZone; }).map(function(id){ return Object.assign({id:id}, cells[id]); });
     zoneCells.sort(function(a,b){ return (a.code||"").localeCompare(b.code||""); });
 
