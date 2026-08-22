@@ -1964,16 +1964,28 @@ function renderOnlineOrderBody(){
   });
 }
 /* Cập nhật badge Đặt hàng Online cho cả Ticket cũ và Order khách dùng chung. */
-var latestTicketsForBadge = {}, latestGuestOrdersForBadge = {};
+var latestTicketsForBadge = {}, latestGuestOrdersForBadge = {}, restaurantPrivateUnsubs = [];
 function refreshTicketBadge(){
   var ticketCount = Object.values(latestTicketsForBadge||{}).filter(function(t){ return t.status==="new"; }).length;
   var orderCount = Object.values(latestGuestOrdersForBadge||{}).filter(function(o){ return o.source==="guest_qr" && o.status==="pending"; }).length;
   var badge = document.getElementById("ticketBadge"), total = ticketCount + orderCount;
   if(badge){ badge.textContent = total; badge.classList.toggle("hidden", total===0); }
 }
-if(firebaseReady){
-  FirebaseService.listen("Restaurant/Tickets", function(tickets){ latestTicketsForBadge = tickets || {}; refreshTicketBadge(); });
-  FirebaseService.listen("Restaurant/Orders", function(orders){ latestGuestOrdersForBadge = orders || {}; refreshTicketBadge(); });
+function bindRestaurantPrivateListeners(role){
+  restaurantPrivateUnsubs.forEach(function(unsub){ try{ unsub(); }catch(e){} });
+  restaurantPrivateUnsubs = [];
+  latestTicketsForBadge = {}; latestGuestOrdersForBadge = {}; latestOrderAlerts = {};
+  refreshTicketBadge();
+  if(role !== "owner" && role !== "staff") return;
+  restaurantPrivateUnsubs.push(FirebaseService.listen("Restaurant/Tickets", function(tickets){ latestTicketsForBadge = tickets || {}; refreshTicketBadge(); }));
+  restaurantPrivateUnsubs.push(FirebaseService.listen("Restaurant/Orders", function(orders){ latestGuestOrdersForBadge = orders || {}; refreshTicketBadge(); }));
+  restaurantPrivateUnsubs.push(FirebaseService.listen("Restaurant/OrderAlerts", function(alerts){
+    latestOrderAlerts = alerts || {};
+    var unreadCount = Object.keys(latestOrderAlerts).filter(function(id){ return latestOrderAlerts[id].status === "unread"; }).length;
+    var badge = document.getElementById("orderAlertBadge");
+    if(badge){ badge.textContent = unreadCount; badge.classList.toggle("hidden", unreadCount===0); }
+    if(document.getElementById("orderAlertsModalOverlay")) renderOrderAlertsModalBody();
+  }));
 }
 
 /* =========================================================================
@@ -1986,16 +1998,6 @@ if(firebaseReady){
    ========================================================================= */
 var latestOrderAlerts = {};
 var NOTIFICATION_PHONE = "0967823801"; // số nhận cảnh báo tạm thời — lưu kèm token để nhận diện thiết bị
-if(firebaseReady && !guestTableId){
-  FirebaseService.listen("Restaurant/OrderAlerts", function(alerts){
-    latestOrderAlerts = alerts || {};
-    var unreadCount = Object.keys(latestOrderAlerts).filter(function(id){ return latestOrderAlerts[id].status==="unread"; }).length;
-    var badge = document.getElementById("orderAlertBadge");
-    if(badge){ badge.textContent = unreadCount; badge.classList.toggle("hidden", unreadCount===0); }
-    if(!document.getElementById("orderAlertsModalOverlay")) return; // modal đang mở thì vẽ lại realtime
-    renderOrderAlertsModalBody();
-  });
-}
 document.getElementById("btnOrderAlerts").onclick = function(){ requireRestaurantRole("staff", openOrderAlertsModal); };
 function openOrderAlertsModal(){
   document.getElementById("modalRoot").innerHTML =
@@ -2101,6 +2103,7 @@ if(!guestTableId){
         if(result && result.account && currentUid) currentAccounts[currentUid] = result.account;
         adminAuthResolved = true;
         renderAdminAfterAuth();
+        bindRestaurantPrivateListeners(currentRole);
         if(isStaffOrOwner()){
           logAccess(currentRole);
           runMigrations().catch(function(err){ console.warn("Bỏ qua migration lúc khởi động (chưa đủ quyền ghi):", err && err.message); });
@@ -2113,6 +2116,7 @@ if(!guestTableId){
         currentRole = null;
         adminAuthResolved = true;
         renderAdminAfterAuth();
+        bindRestaurantPrivateListeners(null);
       });
     });
   } else {
