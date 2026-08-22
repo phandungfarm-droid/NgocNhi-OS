@@ -311,6 +311,7 @@
     <div class="topbar">
       <div class="page-heading"><h1 id="viewTitle">Tổng quan</h1><div class="sub" id="viewSub">—</div></div>
       <div class="topbar-actions" id="topbarActions">
+        <button class="btn btn-secondary" id="btnOrderTracking" type="button">Theo dõi đơn hàng</button>
         <div class="date-picker"><span class="material-symbols-outlined">calendar_today</span><span>20/08/2026</span><span class="material-symbols-outlined chevron">expand_more</span></div>
         <div class="profile-chip"><span class="profile-avatar"><span class="material-symbols-outlined">person</span></span><span class="profile-copy"><b>Admin</b><small>Quản trị hệ thống</small></span><span class="material-symbols-outlined profile-chevron">expand_more</span></div>
       </div>
@@ -1096,6 +1097,11 @@ var guestOrderUnsubscribe = null;
 var guestOrderTrackingService = null;
 var guestCurrentBillUnsubscribe = null;
 var activeGuestOrderService = null;
+var orderTrackingIndexUnsubscribe = null;
+var orderTrackingItemUnsubs = [];
+var orderTrackingSearchToken = 0;
+var orderTrackingOrders = {};
+var orderTrackingPhoneKey = null;
 var activeGuestOrderFromOnline = false;
 var GUEST_ORDER_STATUS_LABELS = {
   pending: "Chờ xử lý", accepted: "Đã tiếp nhận", preparing: "Đang chế biến", completed: "Đã hoàn thành",
@@ -1160,6 +1166,23 @@ function orderDateParts(date){
   function pad2(value){ return value < 10 ? "0" + value : String(value); }
   return {display:pad2(date.getDate()) + pad2(date.getMonth()+1) + date.getFullYear(), key:date.getFullYear() + pad2(date.getMonth()+1) + pad2(date.getDate())};
 }
+function normalizeOrderPhone(phone){ return String(phone || "").replace(/[^0-9+]/g, "").replace(/^00/, "+"); }
+function fallbackOrderPhoneKey(normalized){
+  var hash = 2166136261;
+  for(var i=0;i<normalized.length;i++){ hash ^= normalized.charCodeAt(i); hash = Math.imul(hash, 16777619); }
+  return "p" + (hash >>> 0).toString(16);
+}
+function orderPhoneKey(phone){
+  var normalized = normalizeOrderPhone(phone);
+  if(window.crypto && window.crypto.subtle && window.TextEncoder){
+    return window.crypto.subtle.digest("SHA-256", new window.TextEncoder().encode(normalized)).then(function(buffer){
+      var bytes = new Uint8Array(buffer), hex = "";
+      for(var i=0;i<bytes.length;i++) hex += bytes[i].toString(16).padStart(2,"0");
+      return "p" + hex;
+    }).catch(function(){ return fallbackOrderPhoneKey(normalized); });
+  }
+  return Promise.resolve(fallbackOrderPhoneKey(normalized));
+}
 function reserveDailyOrderCode(service){
   service = service || FirebaseService;
   if(!service.transaction) return Promise.reject(new Error("Không hỗ trợ cấp mã đơn an toàn."));
@@ -1175,8 +1198,8 @@ function createGuestOrder(orderType, tableId, itemsMap, customer, orderService){
   var service = orderService || FirebaseService;
   var currentUser = service.getCurrentUser ? service.getCurrentUser() : (auth && auth.currentUser);
   var orderId = service.generateKey("Restaurant/Orders");
-  var prepareOrder = Promise.all([reserveDailyOrderCode(service), service.read("Restaurant/MenuItems")]).then(function(results){
-    var orderCode = results[0], menuItems = results[1];
+  var prepareOrder = Promise.all([reserveDailyOrderCode(service), service.read("Restaurant/MenuItems"), orderPhoneKey(customer.phone)]).then(function(results){
+    var orderCode = results[0], menuItems = results[1], phoneKey = results[2];
     var itemDetails = customer.itemDetails && Object.keys(customer.itemDetails).length ? customer.itemDetails : buildGuestItemDetails(itemsMap, menuItems || {});
     var computedTotal = Object.keys(itemDetails).reduce(function(sum,id){ return sum + (Number(itemDetails[id].lineTotal)||0); }, 0);
     return {
@@ -1185,7 +1208,7 @@ function createGuestOrder(orderType, tableId, itemsMap, customer, orderService){
       ownerUid: currentUser ? currentUser.uid : "",
       parentOrderId: customer.parentOrderId || "", isTableAddon: !!customer.parentOrderId,
       items: itemsMap, itemDetails: itemDetails, note: customer.note || "", customerName: customer.name || "Khách QR",
-      phone: customer.phone || "", address: customer.address || "", createdAt: Date.now(), updatedAt: Date.now(), totalAmount: computedTotal
+      phone: customer.phone || "", phoneKey: phoneKey, address: customer.address || "", createdAt: Date.now(), updatedAt: Date.now(), totalAmount: computedTotal
     };
   });
   var writeOrder = function(tableName){
@@ -1193,7 +1216,9 @@ function createGuestOrder(orderType, tableId, itemsMap, customer, orderService){
       base.tableName = tableName || "";
       return service.write("Restaurant/Orders/"+orderId, base).then(function(){
         var linkTable = orderType === "DINE_IN" && !base.isTableAddon ? service.updateAt("Restaurant/Tables/"+tableId, {activeOrderId:orderId}) : Promise.resolve();
-        return linkTable.then(function(){
+        var trackingRecord = {orderId:orderId, orderCode:base.orderCode, createdAt:base.createdAt, updatedAt:base.updatedAt, status:base.status, orderType:base.orderType, items:base.itemDetails||{}, totalAmount:base.totalAmount};
+        var trackingWrite = base.phoneKey && base.ownerUid ? service.write("Restaurant/OrderTracking/"+base.ownerUid+"/"+base.phoneKey+"/"+orderId, trackingRecord) : Promise.resolve();
+        return Promise.all([linkTable, trackingWrite]).then(function(){
           return Promise.all([
             notifyFarmNewOrder("food", "Đơn khách "+guestOrderTypeLabel(orderType), service),
             pushOrderAlert(orderType === "DINE_IN" ? "table" : "online", {orderId:orderId, customerName:base.customerName, tableId:tableId||"", tableName:base.tableName, message:(base.isTableAddon ? "🛎️ Gọi thêm món – Bàn "+(base.tableName||tableId) : "🛎️ Đơn khách mới – "+base.customerName)}, service)
@@ -1786,7 +1811,94 @@ function renderTables(){
   });
 }
 function fmtVNDQA(n){ n = Number(n)||0; return n.toLocaleString("vi-VN")+"đ"; }
-function closeModal(){ document.getElementById("modalRoot").innerHTML = ""; }
+function stopOrderTrackingItemListeners(){
+  orderTrackingItemUnsubs.forEach(function(unsub){ if(typeof unsub === "function") unsub(); });
+  orderTrackingItemUnsubs = [];
+}
+function stopOrderTrackingListeners(){
+  orderTrackingSearchToken++;
+  if(orderTrackingIndexUnsubscribe){ orderTrackingIndexUnsubscribe(); orderTrackingIndexUnsubscribe=null; }
+  stopOrderTrackingItemListeners();
+  orderTrackingOrders = {};
+  orderTrackingPhoneKey = null;
+}
+function trackingOrderItemsText(order){
+  var details = order && order.itemDetails || {}, items = order && order.items || {}, keys = Object.keys(details).length ? Object.keys(details) : Object.keys(items);
+  return keys.map(function(id){
+    var d = details[id] || {}, qty = Number(d.quantity || items[id]) || 0, name = d.name || id;
+    return esc(name)+" × "+qty;
+  }).join(", ") || "(không có món)";
+}
+function renderOrderTrackingResults(orders, emptyText){
+  var body = document.getElementById("orderTrackingResults");
+  if(!body) return;
+  var list = Object.keys(orders||{}).map(function(id){ return Object.assign({id:id}, orders[id]); }).filter(function(order){ return order && order.id; }).sort(function(a,b){ return (b.createdAt||0)-(a.createdAt||0); });
+  if(!list.length){ body.innerHTML = '<div style="color:var(--gray);font-size:12px;padding:10px 0;">'+esc(emptyText || "Không tìm thấy đơn hàng.")+'</div>'; return; }
+  body.innerHTML = list.map(function(order){
+    var total = Number(order.totalAmount)||0;
+    return '<div style="border:1px solid var(--border);border-radius:10px;padding:11px 12px;margin-top:9px;background:#fff;">'+
+      '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;"><b>'+esc(order.orderCode||order.id)+'</b><span class="badge b-'+esc(order.status||"pending")+'">'+esc(guestOrderStatusLabel(order.status))+'</span></div>'+
+      '<div style="margin-top:5px;font-size:11px;color:var(--gray);">Thời gian đặt: '+esc(order.createdAt ? new Date(order.createdAt).toLocaleString("vi-VN") : "—")+'</div>'+
+      '<div style="margin-top:7px;font-size:12px;"><b>Món:</b> '+trackingOrderItemsText(order)+'</div>'+
+      '<div style="margin-top:7px;font-weight:800;">Tổng tiền: '+fmtVNDQA(total)+'</div>'+
+      '</div>';
+  }).join("");
+}
+function listenGuestOrdersByPhone(phone, service){
+  stopOrderTrackingListeners();
+  var searchToken = orderTrackingSearchToken;
+  service = service || FirebaseService;
+  var user = service.getCurrentUser ? service.getCurrentUser() : null;
+  if(!user || !user.uid){ renderOrderTrackingResults({}, "Không thể xác thực phiên khách."); return; }
+  orderTrackingOrders = {};
+  orderPhoneKey(phone).then(function(phoneKey){
+    if(searchToken !== orderTrackingSearchToken) return;
+    orderTrackingPhoneKey = phoneKey;
+    var indexPath = "Restaurant/OrderTracking/"+user.uid+"/"+phoneKey;
+    orderTrackingIndexUnsubscribe = service.listen(indexPath, function(index){
+      stopOrderTrackingItemListeners();
+      orderTrackingOrders = {};
+      var entries = index || {}, ids = Object.keys(entries);
+      if(!ids.length){ renderOrderTrackingResults({}, "Không tìm thấy đơn hàng với số điện thoại này."); return; }
+      ids.forEach(function(id){
+        var entry = entries[id] || {}, orderId = entry.orderId || id;
+        var unsub = service.listen("Restaurant/Orders/"+orderId, function(order){
+          if(order){ orderTrackingOrders[orderId] = Object.assign({id:orderId}, order); }
+          else delete orderTrackingOrders[orderId];
+          renderOrderTrackingResults(orderTrackingOrders, "Không tìm thấy đơn hàng với số điện thoại này.");
+        }, function(){
+          delete orderTrackingOrders[orderId];
+          renderOrderTrackingResults(orderTrackingOrders, "Không tìm thấy đơn hàng với số điện thoại này.");
+        });
+        orderTrackingItemUnsubs.push(unsub);
+      });
+    }, function(){
+      renderOrderTrackingResults({}, "Không tìm thấy đơn hàng với số điện thoại này.");
+    });
+  }).catch(function(){ renderOrderTrackingResults({}, "Không tìm thấy đơn hàng với số điện thoại này."); });
+}
+function openOrderTrackingModal(){
+  stopOrderTrackingListeners();
+  var root = document.getElementById("modalRoot");
+  if(isStaffOrOwner()){
+    root.innerHTML = '<div class="modal-overlay"><div class="modal" style="max-width:760px;"><h3>Theo dõi đơn hàng</h3><div style="font-size:12px;color:var(--gray);margin-bottom:10px;">Chế độ Staff/Admin: hiển thị toàn bộ đơn hàng và cập nhật realtime.</div><div id="orderTrackingResults"><div class="card">Đang tải…</div></div><div class="modal-actions"><button class="btn btn-secondary" id="orderTrackingCloseBtn">Đóng</button></div></div></div>';
+    document.getElementById("orderTrackingCloseBtn").onclick = closeModal;
+    orderTrackingIndexUnsubscribe = FirebaseService.listen("Restaurant/Orders", function(orders){ renderOrderTrackingResults(orders||{}, "Chưa có đơn hàng."); }, function(){ renderOrderTrackingResults({}, "Không tải được danh sách đơn hàng."); });
+    return;
+  }
+  root.innerHTML = '<div class="modal-overlay"><div class="modal" style="max-width:560px;"><h3>Theo dõi đơn hàng</h3><div style="font-size:12px;color:var(--gray);margin-bottom:12px;">Nhập đúng số điện thoại đã dùng khi đặt hàng. Bạn chỉ xem được đơn thuộc phiên khách của mình.</div><div class="field"><label>Số điện thoại đã đặt hàng</label><input id="orderTrackingPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0967823801"></div><div id="orderTrackingError" style="color:#B91C1C;font-size:12px;margin-bottom:6px;"></div><div id="orderTrackingResults"></div><div class="modal-actions"><button class="btn btn-secondary" id="orderTrackingCloseBtn">Đóng</button><button class="btn btn-primary" id="orderTrackingSearchBtn">Tìm đơn hàng</button></div></div></div>';
+  document.getElementById("orderTrackingCloseBtn").onclick = closeModal;
+  document.getElementById("orderTrackingSearchBtn").onclick = function(){
+    var phone = document.getElementById("orderTrackingPhone").value.trim();
+    if(!normalizeOrderPhone(phone)){ document.getElementById("orderTrackingError").textContent = "Vui lòng nhập số điện thoại."; return; }
+    document.getElementById("orderTrackingError").textContent = "";
+    document.getElementById("orderTrackingResults").innerHTML = '<div style="color:var(--gray);font-size:12px;padding:10px 0;">Đang tìm đơn hàng…</div>';
+    getGuestOrderService().then(function(service){ listenGuestOrdersByPhone(phone, service); }).catch(function(){ renderOrderTrackingResults({}, "Không thể xác thực phiên khách."); });
+  };
+  document.getElementById("orderTrackingPhone").focus();
+}
+function closeModal(){ stopOrderTrackingListeners(); document.getElementById("modalRoot").innerHTML = ""; }
+document.getElementById("btnOrderTracking").onclick = openOrderTrackingModal;
 /* =========================================================================
    HOÁ ĐƠN BÀN — Bàn Trống bấm vào để tạo hoá đơn mới (giỏ tạm trong bộ nhớ,
    chỉ ghi Firebase khi bấm "Tạo hoá đơn"); Bàn Đang phục vụ bấm vào để mở
