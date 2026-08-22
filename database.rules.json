@@ -90,6 +90,13 @@
           }
         }
       },
+      "OrderCounters": {
+        "$dateKey": {
+          ".read": "auth != null && (auth.token.firebase.sign_in_provider == 'anonymous' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+          ".write": "auth != null && (auth.token.firebase.sign_in_provider == 'anonymous' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff') && newData.isNumber() && (data.val() == null ? newData.val() == 1 : newData.val() == data.val() + 1)",
+          ".validate": "newData.isNumber() && newData.val() > 0"
+        }
+      },
       "Orders": {
         ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
         ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
