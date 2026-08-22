@@ -248,6 +248,7 @@
     <div class="sub">Chọn món bạn muốn gọi</div>
   </div>
   <div id="guestCurrentBill" class="hidden" style="margin:0 16px 12px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:#fff;box-shadow:0 1px 2px rgba(16,24,40,.04);font-size:12px;"></div>
+  <div id="guestTrackingBar" class="hidden" style="margin:0 16px 12px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;"><span id="guestTrackingText"></span><button class="btn btn-secondary" id="guestTrackOrderBtn" type="button">Theo dõi đơn hàng</button></div>
   <div id="guestSorryBanner" class="sorry-banner hidden">Xin lỗi quý khách, hiện món dúi tạm hết hàng.</div>
   <div id="guestMenu"></div>
   <div class="guest-cart-bar">
@@ -275,7 +276,7 @@
     <h3 id="guestConfirmTitle">Đã gửi order!</h3>
     <p id="guestConfirmText" style="color:var(--gray);font-size:13px;">Nhà bếp đã nhận được yêu cầu của bạn.</p>
     <div id="guestOrderStatus" style="margin-top:12px;text-align:left;"></div>
-    <div class="modal-actions" style="justify-content:center;"><button class="btn btn-primary" id="guestConfirmCloseBtn">Đóng</button></div>
+    <div class="modal-actions" style="justify-content:center;"><button class="btn btn-secondary" id="guestConfirmTrackBtn">Theo dõi đơn hàng</button><button class="btn btn-primary" id="guestConfirmCloseBtn">Đóng</button></div>
   </div>
 </div>
 
@@ -908,10 +909,11 @@ function deleteTable(tableId){ return FirebaseService.remove("Restaurant/Tables/
    ĐƠN TẠI QUÁN — nhân viên tạo (mục 3) & khách tự gọi qua QR (mục 4)
    ========================================================================= */
 function createOrder(tableId, itemsMap, source){
-  return FirebaseService.write("Restaurant/Tables/"+tableId+"/status", "occupied").then(function(){
-    var orderId = FirebaseService.generateKey("Restaurant/Orders");
+  return reserveDailyOrderCode(FirebaseService).then(function(orderCode){
+    return FirebaseService.write("Restaurant/Tables/"+tableId+"/status", "occupied").then(function(){
+      var orderId = FirebaseService.generateKey("Restaurant/Orders");
       return FirebaseService.write("Restaurant/Orders/"+orderId, {
-        tableId: tableId, status:"serving", source: source, items: itemsMap, note:"", createdAt: Date.now()
+        tableId: tableId, status:"serving", source: source, orderCode:orderCode, items: itemsMap, note:"", createdAt: Date.now()
       }).then(function(){
         return FirebaseService.updateAt("Restaurant/Tables/"+tableId, {activeOrderId:orderId}).then(function(){
           return FirebaseService.read("Restaurant/Tables/"+tableId+"/name");
@@ -926,6 +928,7 @@ function createOrder(tableId, itemsMap, source){
         ]);
       }).then(function(){ return orderId; });
     });
+  });
 }
 // Thêm 1 món vào đơn đang phục vụ (cộng dồn số lượng nếu món đã có trong đơn).
 function addItemToOrder(orderId, menuItemId, qty){
@@ -1088,7 +1091,9 @@ var guestCart = {}; // {menuItemId: qty}
 var guestTableId = null;
 var guestExistingTableOrderId = null;
 var guestOrderId = null;
+var guestOrderCode = null;
 var guestOrderUnsubscribe = null;
+var guestOrderTrackingService = null;
 var guestCurrentBillUnsubscribe = null;
 var activeGuestOrderService = null;
 var activeGuestOrderFromOnline = false;
@@ -1125,6 +1130,7 @@ function getGuestOrderService(){
       },
       write: function(path, value){ return guestDb.ref(path).set(value === undefined ? null : value); },
       updateAt: function(path, partial){ return guestDb.ref(path).update(partial); },
+      transaction: function(path, fn){ return guestDb.ref(path).transaction(fn); },
       push: function(path, value){ var r=guestDb.ref(path).push(); return r.set(value).then(function(){ return r.key; }); },
       generateKey: function(path){ return guestDb.ref(path).push().key; },
       getCurrentUser: function(){ return guestAuth.currentUser; }
@@ -1149,15 +1155,33 @@ function buildGuestItemDetails(itemsMap, menuItems){
   });
   return details;
 }
+function orderDateParts(date){
+  date = date || new Date();
+  function pad2(value){ return value < 10 ? "0" + value : String(value); }
+  return {display:pad2(date.getDate()) + pad2(date.getMonth()+1) + date.getFullYear(), key:date.getFullYear() + pad2(date.getMonth()+1) + pad2(date.getDate())};
+}
+function reserveDailyOrderCode(service){
+  service = service || FirebaseService;
+  if(!service.transaction) return Promise.reject(new Error("Không hỗ trợ cấp mã đơn an toàn."));
+  var parts = orderDateParts();
+  return service.transaction("Restaurant/OrderCounters/"+parts.key, function(current){ return (Number(current) || 0) + 1; }).then(function(result){
+    var sequence = result && result.snapshot ? Number(result.snapshot.val()) : NaN;
+    if(!isFinite(sequence) || sequence < 1) throw new Error("Không cấp được số thứ tự đơn hàng.");
+    var suffix = sequence < 10 ? "00"+sequence : (sequence < 100 ? "0"+sequence : String(sequence));
+    return "QA-"+parts.display+"-"+suffix;
+  });
+}
 function createGuestOrder(orderType, tableId, itemsMap, customer, orderService){
   var service = orderService || FirebaseService;
   var currentUser = service.getCurrentUser ? service.getCurrentUser() : (auth && auth.currentUser);
   var orderId = service.generateKey("Restaurant/Orders");
-  var prepareOrder = service.read("Restaurant/MenuItems").then(function(menuItems){
+  var prepareOrder = Promise.all([reserveDailyOrderCode(service), service.read("Restaurant/MenuItems")]).then(function(results){
+    var orderCode = results[0], menuItems = results[1];
     var itemDetails = customer.itemDetails && Object.keys(customer.itemDetails).length ? customer.itemDetails : buildGuestItemDetails(itemsMap, menuItems || {});
     var computedTotal = Object.keys(itemDetails).reduce(function(sum,id){ return sum + (Number(itemDetails[id].lineTotal)||0); }, 0);
     return {
       tableId: tableId || "", status: "pending", source: "guest_qr", orderType: orderType,
+      orderCode: orderCode,
       ownerUid: currentUser ? currentUser.uid : "",
       parentOrderId: customer.parentOrderId || "", isTableAddon: !!customer.parentOrderId,
       items: itemsMap, itemDetails: itemDetails, note: customer.note || "", customerName: customer.name || "Khách QR",
@@ -1258,16 +1282,42 @@ function bindGuestCurrentBill(orderId, service){
     renderGuestCurrentBill(null);
   });
 }
+function updateGuestTrackingBar(order){
+  var bar = document.getElementById("guestTrackingBar"), text = document.getElementById("guestTrackingText");
+  if(!bar || !text || !guestOrderId) return;
+  var code = order && order.orderCode ? order.orderCode : (guestOrderCode || guestOrderId);
+  var status = order ? " — "+guestOrderStatusLabel(order.status) : "";
+  text.textContent = "Mã đơn: "+code+status;
+  bar.classList.remove("hidden");
+}
+function openGuestOrderTracking(){
+  if(!guestOrderId) return;
+  document.getElementById("guestConfirmOverlay").classList.remove("hidden");
+}
+function bindGuestOrderTracking(orderId, service){
+  if(guestOrderUnsubscribe){ guestOrderUnsubscribe(); guestOrderUnsubscribe=null; }
+  guestOrderTrackingService = service;
+  guestOrderUnsubscribe = service.listen("Restaurant/Orders/"+orderId, function(order){
+    if(!order) return;
+    order.id = orderId;
+    guestOrderCode = order.orderCode || guestOrderCode || orderId;
+    renderGuestOrderStatus(order);
+    updateGuestTrackingBar(order);
+    document.getElementById("guestConfirmTitle").textContent = order.status === "finished" ? "Đơn đã hoàn tất" : "Theo dõi đơn hàng";
+    document.getElementById("guestConfirmText").textContent = "Mã đơn: "+guestOrderCode+" — Trạng thái được cập nhật theo thời gian thực.";
+  }, function(){
+    document.getElementById("guestConfirmText").textContent = "Mã đơn: "+(guestOrderCode || orderId)+" — Không thể cập nhật trạng thái lúc này.";
+  });
+}
 function showGuestOrderConfirmation(orderId, orderService){
   var service = orderService || FirebaseService;
   guestOrderId = orderId;
-  if(guestOrderUnsubscribe) guestOrderUnsubscribe();
-  guestOrderUnsubscribe = service.listen("Restaurant/Orders/"+orderId, function(order){
-    if(!order) return;
-    order.id = orderId; renderGuestOrderStatus(order);
-    document.getElementById("guestConfirmTitle").textContent = order.status === "finished" ? "Đơn đã hoàn tất" : "Đã gửi đơn!";
-    document.getElementById("guestConfirmText").textContent = "Mã đơn: "+orderId+" — Nhà bếp sẽ cập nhật trạng thái cho bạn.";
-  });
+  guestOrderCode = null;
+  bindGuestOrderTracking(orderId, service);
+  var trackBtn = document.getElementById("guestConfirmTrackBtn");
+  if(trackBtn) trackBtn.onclick = openGuestOrderTracking;
+  var persistentTrackBtn = document.getElementById("guestTrackOrderBtn");
+  if(persistentTrackBtn) persistentTrackBtn.onclick = openGuestOrderTracking;
   document.getElementById("guestConfirmOverlay").classList.remove("hidden");
 }
 (function initGuestModeIfNeeded(){
@@ -1410,7 +1460,7 @@ document.getElementById("guestCheckoutSubmitBtn").onclick = function(){
     showGuestOrderConfirmation(orderId, usedService);
   }).catch(function(err){ btn.disabled=false; showToast(err&&err.message?err.message:"Không thể tạo đơn."); });
 };
-document.getElementById("guestConfirmCloseBtn").onclick = function(){ document.getElementById("guestConfirmOverlay").classList.add("hidden"); if(guestOrderUnsubscribe){guestOrderUnsubscribe();guestOrderUnsubscribe=null;} };
+document.getElementById("guestConfirmCloseBtn").onclick = function(){ document.getElementById("guestConfirmOverlay").classList.add("hidden"); };
 
 /* =========================================================================
    UI — RENDER CÁC MÀN HÌNH (chỉ chạy khi không ở chế độ khách QR)
@@ -1886,7 +1936,7 @@ function renderTickets(){
       var nextStatus = flow[statusIndex+1], actions = "";
       if(o.status !== "finished" && o.status !== "cancelled" && nextStatus) actions += '<button class="btn btn-primary guestOrderActBtn" data-id="'+id+'" data-s="'+nextStatus+'">'+guestAdminActionLabel(nextStatus)+'</button>';
       if(o.status !== "finished" && o.status !== "cancelled") actions += ' <button class="btn btn-danger guestOrderActBtn" data-id="'+id+'" data-s="cancelled">Huỷ</button>';
-      return '<tr><td>'+esc(o.customerName||"Khách QR")+'<br><span style="color:var(--gray);font-size:11px;">'+esc(o.phone||"")+(o.address?'<br>'+esc(o.address):"")+(o.ownerUid?'<br><span style="font-size:10px;color:var(--gray);">Anonymous: '+esc(o.ownerUid)+'</span>':"")+'</span></td>'+
+      return '<tr><td>'+esc(o.customerName||"Khách QR")+'<br><span style="color:var(--gray);font-size:11px;">Mã đơn: '+esc(o.orderCode||id)+'<br>'+esc(o.phone||"")+(o.address?'<br>'+esc(o.address):"")+(o.ownerUid?'<br><span style="font-size:10px;color:var(--gray);">Anonymous: '+esc(o.ownerUid)+'</span>':"")+'</span></td>'+
         '<td>'+esc(guestOrderTypeLabel(o.orderType))+(o.tableName?'<br><span style="color:var(--gray);font-size:11px;">Bàn '+esc(o.tableName)+'</span>':"")+'<br><span style="color:var(--gray);font-size:10px;">'+esc(o.createdAt ? new Date(o.createdAt).toLocaleString("vi-VN") : "")+'</span></td>'+
         '<td style="max-width:260px;">'+esc(itemLines)+'<br><span style="color:var(--gray);font-size:11px;font-weight:700;">Tổng: '+fmtVNDQA(orderTotal)+'</span></td>'+
         '<td><span class="badge b-'+esc(o.status)+'">'+esc(guestOrderStatusLabel(o.status))+'</span><br><span style="color:var(--gray);font-size:10px;">'+flow.map(function(s,i){return i===statusIndex?"<b>"+esc(guestOrderStatusLabel(s))+"</b>":esc(guestOrderStatusLabel(s));}).join(" → ")+'</span></td>'+
