@@ -2,7 +2,6 @@
   "rules": {
     ".read": false,
     ".write": false,
-
     "SystemSettings": {
       "ModuleImages": {
         ".read": true
@@ -15,7 +14,6 @@
         ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')"
       }
     },
-
     "Farm": {
       "Info": {
         ".read": true,
@@ -69,7 +67,6 @@
         ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
       }
     },
-
     "Restaurant": {
       "_meta": {
         ".read": true
@@ -87,24 +84,6 @@
           },
           "activeOrderId": {
             ".write": "auth != null && auth.token.firebase.sign_in_provider == 'anonymous' && !data.exists() && root.child('Restaurant/Orders').child(newData.val()).child('ownerUid').val() == auth.uid && root.child('Restaurant/Orders').child(newData.val()).child('source').val() == 'guest_qr' && root.child('Restaurant/Orders').child(newData.val()).child('orderType').val() == 'DINE_IN' && root.child('Restaurant/Orders').child(newData.val()).child('status').val() == 'pending' && root.child('Restaurant/Orders').child(newData.val()).child('tableId').val() == $tableId"
-          }
-        }
-      },
-      "OrderCounters": {
-        "$dateKey": {
-          ".read": "auth != null && (auth.token.firebase.sign_in_provider == 'anonymous' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
-          ".write": "auth != null && (auth.token.firebase.sign_in_provider == 'anonymous' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff') && newData.isNumber() && (data.val() == null ? newData.val() == 1 : newData.val() == data.val() + 1)",
-          ".validate": "newData.isNumber() && newData.val() > 0"
-        }
-      },
-      "OrderTracking": {
-        "$uid": {
-          "$phoneKey": {
-            ".read": "auth != null && auth.uid == $uid && auth.token.firebase.sign_in_provider == 'anonymous'",
-            "$orderId": {
-              ".write": "auth != null && ((auth.token.firebase.sign_in_provider == 'anonymous' && auth.uid == $uid && !data.exists() && root.child('Restaurant/Orders').child($orderId).child('ownerUid').val() == auth.uid && root.child('Restaurant/Orders').child($orderId).child('phoneKey').val() == $phoneKey) || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
-              ".validate": "newData.hasChildren(['orderId','orderCode','createdAt','updatedAt','status','orderType','items','totalAmount'])"
-            }
           }
         }
       },
@@ -143,9 +122,28 @@
         "$token": {
           ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
         }
+      },
+      "OrderCounters": {
+        "$date": {
+          ".read": "auth != null && auth.token.firebase.sign_in_provider == 'anonymous'",
+          ".write": "auth != null && auth.token.firebase.sign_in_provider == 'anonymous'",
+          ".validate": "newData.isNumber() && ((data.val() == null && newData.val() == 1) || (data.isNumber() && newData.val() == data.val() + 1))"
+        }
+      },
+      "OrderTracking": {
+        "$uid": {
+          ".read": "auth != null && auth.uid == $uid",
+          "$phoneKey": {
+            ".read": "auth != null && auth.uid == $uid",
+            "$orderId": {
+              ".read": "auth != null && auth.uid == $uid",
+              ".write": "auth != null && auth.token.firebase.sign_in_provider == 'anonymous' && auth.uid == $uid && !data.exists() && newData.child('orderId').val() == $orderId && root.child('Restaurant/Orders').child($orderId).child('ownerUid').val() == auth.uid && root.child('Restaurant/Orders').child($orderId).child('phoneKey').val() == $phoneKey",
+              ".validate": "newData.hasChildren(['orderId','orderCode','createdAt','updatedAt','status','orderType'])"
+            }
+          }
+        }
       }
     },
-
     "Wedding": {
       "Packages": {
         ".read": true,
@@ -164,7 +162,6 @@
         ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')"
       }
     },
-
     "AdminCenter": {
       "Transactions": {
         ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')",
@@ -174,7 +171,6 @@
         }
       }
     },
-
     "Suppliers": {
       ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')",
       ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')"
