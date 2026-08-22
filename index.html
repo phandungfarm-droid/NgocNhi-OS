@@ -1772,6 +1772,7 @@
     if(!resolver || !apply){ renderFinanceGate(); return; }
     resolver(auth, db, user).then(function(result){
       apply(result);
+      bindCenterPrivateListeners(result && result.role ? result.role : null);
       renderFinanceGate();
       var fv = document.getElementById("financeView");
       if(fv && !fv.classList.contains("hidden-view") && !isAdminUser()) showDashboard();
@@ -1783,6 +1784,7 @@
     }).catch(function(err){
       console.warn("Không đọc được role dùng chung:", err && err.message);
       apply({uid:user ? user.uid : null, role:null, account:null});
+      bindCenterPrivateListeners(null);
       renderFinanceGate();
     });
   });
@@ -1793,6 +1795,7 @@
      state, sau đó gọi renderAlerts()/renderFinanceStats() để vẽ lại phần phụ
      thuộc. Tránh mỗi listener tự vẽ riêng lẻ (dễ vẽ đè, mất đồng bộ số liệu).
      ========================================================================= */
+  var centerPrivateUnsubs = [];
   var state = {
     farmAlerts: [],            // Farm/AlertLog
     ticketsNew: [],            // Restaurant/Tickets (status=new)
@@ -1833,21 +1836,8 @@
 
   listen("Farm/Cells", function(cells){ setEl("qiFarmCells", Object.keys(cells||{}).length+" ô"); renderFarmPanel(cells); });
 
-  listen("Restaurant/Tickets", function(tickets){
-    tickets = tickets || {};
-    var newOnes = Object.keys(tickets).filter(function(id){ return tickets[id].status==="new"; })
-      .map(function(id){ return Object.assign({id:id}, tickets[id]); });
-    setEl("qiTicketsNew", newOnes.length+" phiếu");
-    state.ticketsNew = newOnes;
-    renderAlerts();
-  });
-
-  listen("Wedding/Customers", function(c){
-    latestCustomers = c || {};
-    setEl("qiWeddingCustomers", Object.keys(latestCustomers).length+" khách");
-    renderWeddingPanel();
-    renderContractsPanel();
-  });
+  setEl("qiTicketsNew", "—");
+  setEl("qiWeddingCustomers", "—");
 
   /* ---------------- Panel Trang trại (realtime) ---------------- */
   var latestZones = {};
@@ -1891,19 +1881,8 @@
     }
   }
 
-  listen("Farm/AlertLog", function(log){
-    log = log || {};
-    var items = Object.keys(log).map(function(k){ return log[k]; }).sort(function(a,b){return (b.reportedAt||0)-(a.reportedAt||0);});
-    var el = document.getElementById("fpAlerts");
-    if(el){
-      el.innerHTML = items.slice(0,5).map(function(i){
-        return '<div class="row"><span class="icon-badge"><span class="material-symbols-outlined">warning</span></span>'+
-          '<span class="name">Ô '+esc(i.cellCode)+' — '+(i.kind==="treat"?"cần theo dõi sức khoẻ":"đến hạn công việc")+'</span></div>';
-      }).join("") || '<div class="row" style="color:var(--gray);">Chưa có cảnh báo nào.</div>';
-    }
-    state.farmAlerts = items.slice(0,10);
-    renderAlerts();
-  });
+  var farmAlertsPublicPlaceholder = document.getElementById("fpAlerts");
+  if(farmAlertsPublicPlaceholder) farmAlertsPublicPlaceholder.innerHTML = '<div class="row" style="color:var(--gray);">Đăng nhập để xem cảnh báo vận hành.</div>';
 
   /* ---------------- Đa cơ sở (realtime) — Cơ sở 1 là trại này; Cơ sở 2 trở
      đi chỉ chuyển thương phẩm về Cơ sở 1, không có chiều ngược lại. Mỗi cơ
@@ -1912,46 +1891,19 @@
      từng cơ sở, đúng theo kiến trúc đa cơ sở hiện có của trang_trai.html). */
   var facilityStockUnsub = {}; // id -> hàm huỷ lắng nghe, để dọn khi danh sách cơ sở đổi
   var facilityStocks = {};     // id -> tồn thương phẩm hiện tại của cơ sở đó
-  listen("Facilities", function(facilities){
-    facilities = facilities || {};
-    var ids = Object.keys(facilities);
-    // Huỷ lắng nghe các cơ sở không còn tồn tại
-    Object.keys(facilityStockUnsub).forEach(function(id){
-      if(ids.indexOf(id)===-1){ facilityStockUnsub[id](); delete facilityStockUnsub[id]; delete facilityStocks[id]; }
-    });
-    // Lắng nghe tồn thương phẩm thật của từng cơ sở (Facilities/{id}/Farm/CommercialStock/total)
-    ids.forEach(function(id){
-      if(facilityStockUnsub[id]) return;
-      facilityStockUnsub[id] = listen("Facilities/"+id+"/Farm/CommercialStock/total", function(total){
-        facilityStocks[id] = total || 0;
-        renderFacilityStockTotal();
-      });
-    });
-    renderFacilityStockTotal();
-  });
+  renderFacilityStockTotal();
   function renderFacilityStockTotal(){
     var total = Object.keys(facilityStocks).reduce(function(sum,id){ return sum + (facilityStocks[id]||0); }, 0);
     setEl("fpFacilityStock", total+" con");
     renderKhoPanel();
   }
-  listen("FacilityTransfers", function(transfers){
-    transfers = transfers || {};
-    var items = Object.keys(transfers).map(function(id){ return transfers[id]; }).sort(function(a,b){ return (a.date<b.date)?1:-1; });
-    var el = document.getElementById("fpFacilityTransfers");
-    if(el){
-      el.innerHTML = items.slice(0,5).map(function(t){
-        return '<div class="row"><span class="icon-badge"><span class="material-symbols-outlined">local_shipping</span></span>'+
-          '<span class="name">'+esc(t.facilityName)+' (ô '+esc(t.sourceCellCode||"")+') → '+esc(t.toLabel)+' (ô '+esc(t.targetCellCode||"")+') — '+t.qty+' con ('+fmtDateFull(t.date)+') — '+esc(t.status)+'</span></div>';
-      }).join("") || '<div class="row" style="color:var(--gray);">Chưa có phiếu chuyển nào.</div>';
-    }
-    state.facilityTransfers = items;
-    renderKhoPanel();
-  });
+  var facilityTransferPlaceholder = document.getElementById("fpFacilityTransfers");
+  if(facilityTransferPlaceholder) facilityTransferPlaceholder.innerHTML = '<div class="row" style="color:var(--gray);">Đăng nhập để xem chuyển kho.</div>';
 
   /* ---------------- Panel Quán ăn (realtime) ---------------- */
   var latestTables = {}, latestOrders = {};
   listen("Restaurant/Tables", function(tables){ latestTables = tables || {}; renderRestaurantPanel(); });
-  listen("Restaurant/Orders", function(orders){ latestOrders = orders || {}; renderRestaurantPanel(); });
+  latestOrders = {};
   function renderRestaurantPanel(){
     var items = latestMenuItems, tables = latestTables, orders = latestOrders, stock = latestDuiStock;
     function isAvail(it){
@@ -1990,8 +1942,7 @@
   /* ---------------- Panel Tiệc cưới (realtime) ---------------- */
   var latestCustomers={}, latestPackages={}, latestContracts={}, latestExternal={};
   listen("Wedding/Packages", function(p){ latestPackages = p || {}; renderWeddingPanel(); renderContractsPanel(); });
-  listen("Wedding/ExternalRevenue", function(e){ latestExternal = e || {}; renderWeddingPanel(); });
-  listen("Wedding/Contracts", function(c){ latestContracts = c || {}; renderWeddingPanel(); renderAlerts(); renderContractsPanel(); });
+  latestExternal = {}; latestContracts = {};
   // Panel "Hợp đồng" của Trung tâm điều hành (chỉ đọc — mục 1: Wedding/Contracts).
   // Tái dùng đúng latestContracts/latestCustomers/latestPackages đã có ở trên,
   // KHÔNG thêm listener/collection Firebase mới nào.
@@ -2075,28 +2026,46 @@
     setEl("fnRestaurant", fmtVND(byModule.restaurant||0));
     setEl("fnOther", fmtVND(byModule.khac||0));
   }
-  listen("Farm/Sales/Transactions", function(tx){ state.farmSalesTx = tx || {}; renderFinanceStats(); });
-  listen("Farm/Sales/Expenses", function(exp){ state.farmSalesExp = exp || {}; renderFinanceStats(); });
-  listen("AdminCenter/Transactions", function(txns){
-    state.txns = txns || {};
-    renderFinanceStats();
+  function renderPrivateCenterListeners(){
+    var tickets = state.ticketsNew || [];
+    setEl("qiTicketsNew", tickets.length ? tickets.length+" phiếu" : "0 phiếu");
+    renderAlerts(); renderRestaurantPanel(); renderWeddingPanel(); renderContractsPanel(); renderFinanceStats();
+  }
+  function bindCenterPrivateListeners(role){
+    centerPrivateUnsubs.forEach(function(unsub){ try{ unsub(); }catch(e){} });
+    centerPrivateUnsubs = [];
+    if(role !== "owner" && role !== "staff") return;
+    centerPrivateUnsubs.push(listen("Restaurant/Tickets", function(tickets){
+      tickets = tickets || {};
+      state.ticketsNew = Object.keys(tickets).filter(function(id){ return tickets[id].status === "new"; }).map(function(id){ return Object.assign({id:id}, tickets[id]); });
+      renderPrivateCenterListeners();
+    }));
+    centerPrivateUnsubs.push(listen("Wedding/Customers", function(c){ latestCustomers = c || {}; setEl("qiWeddingCustomers", Object.keys(latestCustomers).length+" khách"); renderPrivateCenterListeners(); }));
+    centerPrivateUnsubs.push(listen("Wedding/Contracts", function(c){ latestContracts = c || {}; renderPrivateCenterListeners(); }));
+    centerPrivateUnsubs.push(listen("Farm/Sales/Transactions", function(tx){ state.farmSalesTx = tx || {}; renderPrivateCenterListeners(); }));
+    centerPrivateUnsubs.push(listen("Farm/Sales/Expenses", function(exp){ state.farmSalesExp = exp || {}; renderPrivateCenterListeners(); }));
+    centerPrivateUnsubs.push(listen("Facilities", function(facilities){
+      facilities = facilities || {}; var ids = Object.keys(facilities);
+      Object.keys(facilityStockUnsub).forEach(function(id){ if(ids.indexOf(id)===-1){ facilityStockUnsub[id](); delete facilityStockUnsub[id]; delete facilityStocks[id]; } });
+      ids.forEach(function(id){ if(facilityStockUnsub[id]) return; facilityStockUnsub[id] = listen("Facilities/"+id+"/Farm/CommercialStock/total", function(total){ facilityStocks[id] = total || 0; renderFacilityStockTotal(); }); });
+      renderFacilityStockTotal();
+    }));
+    centerPrivateUnsubs.push(listen("FacilityTransfers", function(transfers){ state.facilityTransfers = Object.keys(transfers || {}).map(function(id){ return transfers[id]; }); renderKhoPanel(); }));
+    if(role === "owner"){
+      centerPrivateUnsubs.push(listen("Farm/AlertLog", function(log){ state.farmAlerts = Object.keys(log || {}).map(function(k){ return log[k]; }).sort(function(a,b){ return (b.reportedAt||0)-(a.reportedAt||0); }).slice(0,10); renderAlerts(); }));
+      centerPrivateUnsubs.push(listen("Wedding/ExternalRevenue", function(e){ latestExternal = e || {}; renderPrivateCenterListeners(); }));
+      centerPrivateUnsubs.push(listen("AdminCenter/Transactions", function(txns){ state.txns = txns || {}; renderFinanceStats(); renderTransactionTable(); }));
+      centerPrivateUnsubs.push(listen("Suppliers", function(s){ state.suppliers = s || {}; renderSuppliersPanel(); }));
+      centerPrivateUnsubs.push(listen("SupplierReceipts", function(r){ state.supplierReceipts = r || {}; renderSuppliersPanel(); renderAlerts(); }));
+    }
+  }
+  function renderTransactionTable(){
     var body = document.getElementById("fnTxnBody");
     if(!body) return;
-    var ids = Object.keys(state.txns).sort(function(a,b){ return (state.txns[b].date||"").localeCompare(state.txns[a].date||""); });
-    body.innerHTML = ids.map(function(id){
-      var t = state.txns[id];
-      return '<tr><td>'+fmtDateFull(t.date)+'</td><td><span class="txn-badge '+(t.type==="thu"?"txn-thu":"txn-chi")+'">'+(t.type==="thu"?"Thu":"Chi")+'</span></td>'+
-        '<td>'+esc(MODULE_LABEL[t.module]||t.module||"—")+'</td><td>'+fmtVND(t.amount)+'</td><td>'+esc(t.note||"")+'</td>'+
-        '<td><button class="txn-del" data-id="'+id+'">Xoá</button></td></tr>';
-    }).join("") || '<tr><td colspan="6" style="color:var(--gray);">Chưa có giao dịch nào.</td></tr>';
-    body.querySelectorAll(".txn-del").forEach(function(b){
-      b.addEventListener("click", function(){
-        if(!isAdminUser()){ return; }
-        if(confirm("Xoá giao dịch này?")) db.ref("AdminCenter/Transactions/"+b.getAttribute("data-id")).remove();
-      });
-    });
-  });
-
+    var ids = Object.keys(state.txns || {}).sort(function(a,b){ return (state.txns[b].date||"").localeCompare(state.txns[a].date||""); });
+    body.innerHTML = ids.map(function(id){ var t=state.txns[id]; return '<tr><td>'+fmtDateFull(t.date)+'</td><td><span class="txn-badge '+(t.type==="thu"?"txn-thu":"txn-chi")+'">'+(t.type==="thu"?"Thu":"Chi")+'</span></td><td>'+esc(MODULE_LABEL[t.module]||t.module||"—")+'</td><td>'+fmtVND(t.amount)+'</td><td>'+esc(t.note||"")+'</td><td><button class="txn-del" data-id="'+id+'">Xoá</button></td></tr>'; }).join("") || '<tr><td colspan="6" style="color:var(--gray);">Chưa có giao dịch nào.</td></tr>';
+    body.querySelectorAll(".txn-del").forEach(function(b){ b.addEventListener("click", function(){ if(isAdminUser() && confirm("Xoá giao dịch này?")) db.ref("AdminCenter/Transactions/"+b.getAttribute("data-id")).remove(); }); });
+  }
   var btnAddTxn = document.getElementById("btnAddTxn");
   if(btnAddTxn) btnAddTxn.addEventListener("click", function(){ if(isAdminUser()) openAddTxnModal(); });
   function openAddTxnModal(){
@@ -2188,9 +2157,6 @@
       });
     }
   }
-  listen("Suppliers", function(s){ state.suppliers = s || {}; renderSuppliersPanel(); });
-  listen("SupplierReceipts", function(r){ state.supplierReceipts = r || {}; renderSuppliersPanel(); renderAlerts(); });
-
   function wireSupplierRowActions(){
     document.querySelectorAll('[data-sup-act="receipt"]').forEach(function(btn){
       btn.addEventListener("click", function(){ if(isAdminUser()) openSupplierReceiptModal(btn.getAttribute("data-id")); });
