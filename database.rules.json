@@ -2,39 +2,173 @@
   "rules": {
     ".read": false,
     ".write": false,
+
+    "SystemSettings": {
+      "ModuleImages": {
+        ".read": true
+      },
+      "ModuleVideos": {
+        ".read": true
+      },
+      "PhotoLibrary": {
+        ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')",
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')"
+      }
+    },
+
+    "Farm": {
+      "Info": {
+        ".read": true,
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+      },
+      "Zones": {
+        ".read": true,
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+      },
+      "Cells": {
+        ".read": true,
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+      },
+      "CommercialStock": {
+        "total": {
+          ".read": true,
+          ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+        }
+      },
+      "_meta": {
+        ".read": true
+      },
+      "Accounts": {
+        "$uid": {
+          ".read": "auth != null && (auth.uid == $uid || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')",
+          ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')"
+        }
+      },
+      "AccessLog": {
+        ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+      },
+      "DailyDigestLog": {
+        ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+      },
+      "AlertLog": {
+        ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')",
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+      },
+      "IncomingEvents": {
+        ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+      },
+      "WeddingReservations": {
+        ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+      },
+      "Sales": {
+        ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+      }
+    },
+
     "Restaurant": {
+      "_meta": {
+        ".read": true
+      },
       "MenuItems": {
-        ".read": "auth != null",
-        ".write": "auth != null && (root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+        ".read": true,
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
       },
       "Tables": {
-        ".read": "auth != null",
+        ".read": true,
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
         "$tableId": {
-          ".write": "auth != null && (root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+          "status": {
+            ".write": "auth != null && auth.token.firebase.sign_in_provider == 'anonymous' && (data.val() == null || data.val() == 'empty') && newData.val() == 'occupied'"
+          }
         }
       },
       "Orders": {
-        ".read": "auth != null && (auth.token.firebase.sign_in_provider == 'anonymous' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+        ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
         "$orderId": {
-          ".read": "auth != null && ((auth.token.firebase.sign_in_provider == 'anonymous' && data.child('ownerUid').val() == auth.uid) || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
-          ".write": "auth != null && (( !data.exists() && auth.token.firebase.sign_in_provider == 'anonymous' && newData.child('ownerUid').val() == auth.uid && newData.child('source').val() == 'guest_qr') || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+          ".read": "auth != null && ((data.child('ownerUid').val() == auth.uid && auth.token.firebase.sign_in_provider == 'anonymous') || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+          ".write": "auth != null && !data.exists() && auth.token.firebase.sign_in_provider == 'anonymous' && newData.child('source').val() == 'guest_qr' && newData.child('ownerUid').val() == auth.uid && newData.child('status').val() == 'pending' && (newData.child('orderType').val() == 'TAKEAWAY' || newData.child('orderType').val() == 'ONLINE' || newData.child('orderType').val() == 'DINE_IN')",
+          ".validate": "newData.hasChildren(['source','ownerUid','status','orderType','items','createdAt'])"
         }
-      },
-      "Accounts": {
-        ".read": "auth != null && root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner'",
-        "$uid": {
-          ".read": "auth != null && (auth.uid == $uid || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')",
-          ".write": "auth != null && root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner'"
-        }
-      },
-      "OrderAlerts": {
-        ".read": "auth != null && (root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
-        ".write": "auth != null && (root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
       },
       "Tickets": {
-        ".read": "auth != null && (root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
-        ".write": "auth != null && (auth.token.firebase.sign_in_provider == 'anonymous' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+        ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+      },
+      "Accounts": {
+        "$uid": {
+          ".read": "auth != null && (auth.uid == $uid || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')",
+          ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')"
+        }
+      },
+      "AccessLog": {
+        ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+      },
+      "OrderAlerts": {
+        ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+        "$alertId": {
+          ".write": "auth != null && !data.exists() && auth.token.firebase.sign_in_provider == 'anonymous' && newData.child('orderId').exists() && root.child('Restaurant/Orders').child(newData.child('orderId').val()).child('ownerUid').val() == auth.uid && newData.child('status').val() == 'unread' && (newData.child('kind').val() == 'online' || newData.child('kind').val() == 'table')",
+          ".validate": "newData.hasChildren(['kind','status','createdAt','orderId'])"
+        }
+      },
+      "NotificationTokens": {
+        "$token": {
+          ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+        }
       }
+    },
+
+    "Wedding": {
+      "Packages": {
+        ".read": true,
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+      },
+      "Customers": {
+        ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+      },
+      "Contracts": {
+        ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+      },
+      "ExternalRevenue": {
+        ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')",
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')"
+      }
+    },
+
+    "AdminCenter": {
+      "Transactions": {
+        ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')",
+        ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')",
+        "$transactionId": {
+          ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff') && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || (newData.child('type').val() == 'thu' && newData.child('module').val() == 'restaurant'))"
+        }
+      }
+    },
+
+    "Suppliers": {
+      ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')",
+      ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')"
+    },
+    "SupplierReceipts": {
+      ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')",
+      ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner')"
+    },
+    "Facilities": {
+      ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+      ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
+    },
+    "FacilityTransfers": {
+      ".read": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')",
+      ".write": "auth != null && (root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Farm/Accounts').child(auth.uid).child('role').val() == 'staff' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'owner' || root.child('Restaurant/Accounts').child(auth.uid).child('role').val() == 'staff')"
     }
   }
 }
